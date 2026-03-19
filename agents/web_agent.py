@@ -167,22 +167,37 @@ def _search_duckduckgo(query: str, max_results: int = 5) -> List[str]:
 
     try:
         logger.info(f"[WebAgent] DuckDuckGo search: {query}")
-        results = DDGS().text(query, max_results=max_results)
+
+        # Try multiple backends — 'api' is most reliable,
+        # fall back to 'lite' then default if needed
+        results = []
+        for backend in ("api", "lite", None):
+            try:
+                kwargs = {"keywords": query, "max_results": max_results}
+                if backend:
+                    kwargs["backend"] = backend
+                results = DDGS().text(**kwargs)
+                if results:
+                    logger.info(f"[WebAgent] DDG backend '{backend or 'default'}' returned {len(results)} results")
+                    break
+            except Exception:
+                continue
 
         urls = []
         skip_domains = [
             "youtube.com", "facebook.com", "twitter.com", "x.com",
             "instagram.com", "reddit.com", "linkedin.com", "pinterest.com",
+            "zhihu.com", "baidu.com",
         ]
 
         for r in results:
             href = r.get("href", "")
-            if href and not any(d in href for d in skip_domains):
+            if href and href.startswith("http") and not any(d in href for d in skip_domains):
                 urls.append(href)
                 logger.info(f"[WebAgent]   → {r.get('title', '?')[:70]}")
                 logger.info(f"[WebAgent]     {href[:100]}")
 
-        logger.info(f"[WebAgent] DuckDuckGo returned {len(urls)} URLs")
+        logger.info(f"[WebAgent] DuckDuckGo returning {len(urls)} usable URLs")
         return urls
 
     except Exception as e:

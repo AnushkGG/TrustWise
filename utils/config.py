@@ -17,6 +17,9 @@ class Config:
     DATA_DIR = BASE_DIR / "data"
     RAW_DATA_DIR = DATA_DIR / "raw"
     PLANS_DIR = DATA_DIR / "plans"
+    STRUCTURED_DATA_DIR = DATA_DIR / "structured"
+    TRUSTED_DATA_DIR = DATA_DIR / "trusted"
+    DB_PATH = DATA_DIR / "trustwise.db"
     CONFIG_DIR = BASE_DIR / "config"
     
     # LLM Settings
@@ -35,6 +38,11 @@ class Config:
     # System Settings
     SAVE_PLANS: bool = os.getenv("SAVE_PLANS", "true").lower() == "true"
     SAVE_RAW_DATA: bool = os.getenv("SAVE_RAW_DATA", "true").lower() == "true"
+    SAVE_STRUCTURED_DATA: bool = os.getenv("SAVE_STRUCTURED_DATA", "true").lower() == "true"
+    SAVE_TRUSTED_DATA: bool = os.getenv("SAVE_TRUSTED_DATA", "true").lower() == "true"
+    SAVE_TO_DB: bool = os.getenv("SAVE_TO_DB", "true").lower() == "true"
+    ENABLE_DB_CACHE: bool = os.getenv("ENABLE_DB_CACHE", "true").lower() == "true"
+    DB_CACHE_MIN_ITEMS: int = int(os.getenv("DB_CACHE_MIN_ITEMS", "3"))
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
     @classmethod
@@ -42,6 +50,8 @@ class Config:
         """Create necessary directories if they don't exist."""
         cls.RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
         cls.PLANS_DIR.mkdir(parents=True, exist_ok=True)
+        cls.STRUCTURED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+        cls.TRUSTED_DATA_DIR.mkdir(parents=True, exist_ok=True)
         cls.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     
     @classmethod

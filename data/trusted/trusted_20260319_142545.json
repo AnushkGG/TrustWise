@@ -1,0 +1,346 @@
+{
+  "query": "Tell me about graph neural networks",
+  "validated_count": 10,
+  "trusted_count": 3,
+  "dropped_count": 7,
+  "trusted_items": [
+    {
+      "title": "The Ferrers bound for spanning trees in bipartite graphs",
+      "content": "We prove Ehrenborg's conjecture that every connected bipartite graph $G$ with parts of size $m$ and $n$ has at most $\\frac{1}{mn}\\prod_{v\\in V(G)} \\operatorname{deg}(v)$ spanning trees, and that equality holds if and only if $G$ is a Ferrers graph. The proof is fully formalized in Lean 4.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17997v1.pdf",
+      "published_at": "2026-03-18T17:57:40Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Boon Suan Ho"
+      ],
+      "categories": [
+        "math.CO"
+      ],
+      "arxiv_id": "2603.17997v1",
+      "trust": {
+        "score": 0.9,
+        "relevance": 0.333,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Moderate content length",
+          "Query relevance: 0.33"
+        ]
+      }
+    },
+    {
+      "title": "TDAD: Test-Driven Agentic Development - Reducing Code Regressions in AI Coding Agents via Graph-Based Impact Analysis",
+      "content": "AI coding agents can resolve real-world software issues, yet they frequently introduce regressions, breaking tests that previously passed. Current benchmarks focus almost exclusively on resolution rate, leaving regression behavior under-studied. This paper presents TDAD (Test-Driven Agentic Development), an open-source tool and benchmark methodology that combines abstract-syntax-tree (AST) based code-test graph construction with weighted impact analysis to surface the tests most likely affected by a proposed change. Evaluated on SWE-bench Verified with two local models (Qwen3-Coder 30B on 100 instances and Qwen3.5-35B-A3B on 25 instances), TDAD's GraphRAG workflow reduced test-level regressions by 70% (6.08% to 1.82%) and improved resolution from 24% to 32% when deployed as an agent skill. A surprising finding is that TDD prompting alone increased regressions (9.94%), revealing that smaller models benefit more from contextual information (which tests to verify) than from procedural instructions (how to do TDD). An autonomous auto-improvement loop raised resolution from 12% to 60% on a 10-instance subset with 0% regression. These findings suggest that for AI agent tool design, surfacing contextual information outperforms prescribing procedural workflows. All code, data, and logs are publicly available at https://github.com/pepealonso95/TDAD.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17973v1.pdf",
+      "published_at": "2026-03-18T17:38:22Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Pepe Alonso"
+      ],
+      "categories": [
+        "cs.SE",
+        "cs.AI"
+      ],
+      "arxiv_id": "2603.17973v1",
+      "trust": {
+        "score": 1.0,
+        "relevance": 0.333,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.33"
+        ]
+      }
+    },
+    {
+      "title": "State-dependent temperature control in Langevin diffusions using numerical exploratory Hamiltonian-Jacobi-Bellman equations",
+      "content": "Choosing how much noise to add in Langevin dynamics is essential for making these algorithms effective in challenging optimization problems. One promising approach is to determine this noise by solving Hamilton-Jacobi-Bellman (HJB) equations and their exploratory variants. Though these ideas have been demonstrated to work well in one dimension, extension to high-dimensional minimization has been limited by two unresolved numerical challenges: setting reliable control bounds and stably computing the second-order information (Hessians) required by the equations. These issues and the broader impact of HJB parameters have not been systematically examined. This work provides the first such investigation. We introduce principled control bounds and develop a physics-informed neural network framework that embeds the structure of exploratory HJB equations directly into training, stabilizing computation, and enabling accurate estimation of state-dependent noise in high-dimensional problems. Numerical experiments demonstrate that the resulting method remains robust and effective well beyond low-dimensional test cases.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17934v1.pdf",
+      "published_at": "2026-03-18T17:09:04Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Taorui Wang",
+        "Xun Li",
+        "Gu Wang",
+        "Zhongqiang Zhang"
+      ],
+      "categories": [
+        "math.NA",
+        "math.OC"
+      ],
+      "arxiv_id": "2603.17934v1",
+      "trust": {
+        "score": 1.0,
+        "relevance": 0.333,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.33"
+        ]
+      }
+    }
+  ],
+  "all_items": [
+    {
+      "title": "Practice Problems",
+      "content": "* Sign In\n* Deep Learning Basics\n* Neural Networks Basics\n* Deep Learning Models\n* Deep Learning Frameworks\n* Model Evaluation\n* Deep Learning Projects\n* [Course](https://www.geeksforgeeks.org/courses/complete-data-science-and-machine-learning-career-program-with-ai)\n* [Practice Problems](https://www.geeksforgeeks.org/explore)\n* [Data Science](https://www.geeksforgeeks.org/data-science/data-science-for-beginners/)\n* [Machine Learning](https://www.geeksforgeeks.org/machine-learning/machine-learning/)\n* [Share Your Experiences](https://write.geeksforgeeks.org/#experiences)\nDeep Learning Basics\n* [Introduction to Deep Learning](https://www.geeksforgeeks.org/deep-learning/introduction-deep-learning/)\n* [Artificial intelligence vs Machine Learning vs Deep Learning](https://www.geeksforgeeks.org/artificial-intelligence/artificial-intelligence-vs-machine-learning-vs-deep-learning/)\n* [Deep Learning Examples: Practical Applications in Real Life](https://www.geeksforgeeks.org/deep-learning/deep-learning-examples/)\n* [Challenges in Deep Learning](https://www.geeksforgeeks.org/deep-learning/challenges-in-deep-learning/)\n* [Why Deep Learning is Important](https://www.geeksforgeeks.org/deep-learning/why-deep-learning-is-important/)\nNeural Networks Basics\n* [What is a Neural Network?](https://www.geeksforgeeks.org/deep-learning/neural-networks-a-beginners-guide/)\n* [Types of Neural Networks](https://www.geeksforgeeks.org/deep-learning/types-of-neural-networks/)\n* [Layers in Artificial Neural Networks (ANN)](https://www.geeksforgeeks.org/deep-learning/layers-in-artificial-neural-networks-ann/)\n* [Activation functions in Neural Networks](https://www.geeksforgeeks.org/machine-learning/activation-functions-neural-networks/)\n* [Feedforward Neural Network](https://www.geeksforgeeks.org/deep-learning/feedforward-neural-network/)\n* [Backpropagation in Neural Network](https://www.geeksforgeeks.org/machine-learning/backpropagation-in-neural-network/)\nDeep Learning Models\n* [Convolutional Neural Network (CNN) in Deep Learning](https://www.geeksforgeeks.org/deep-learning/convolutional-neural-network-cnn-in-machine-learning/)\n* [Introduction to Recurrent Neural Networks](https://www.geeksforgeeks.org/machine-learning/introduction-to-recurrent-neural-network/)\n* [What is LSTM - Long Short Term Memory?](https://www.geeksforgeeks.org/deep-learning/deep-learning-introduction-to-long-short-term-memory/)\n* [Gated Recurrent Unit Networks](https://www.geeksforgeeks.org/machine-learning/gated-recurrent-unit-networks/)\n* [Transformers in Machine Learning](https://www.geeksforgeeks.org/machine-learning/getting-started-with-transformers/)\n* [Autoencoders in Machine Learning](https://www.geeksforgeeks.org/machine-learning/auto-encoders/)\n* [Generative Adversarial Network (GAN)](https://www.geeksforgeeks.org/deep-learning/generative-adversarial-network-gan/)\nDeep Learning Frameworks\n* [TensorFlow Tutorial](https://www.geeksforgeeks.org/deep-learning/tensorflow/)\n* [PyTorch Tutorial](https://www.geeksforgeeks.org/deep-learning/pytorch-tutorial-2/)\n* [Caffe : Deep Learning Framework](https://www.geeksforgeeks.org/deep-learning/caffe-deep-learning-framework/)\n* [Apache MXNet - Deep Learning Framework](https://www.geeksforgeeks.org/deep-learning/apache-mxnet-the-scalable-and-flexible-deep-learning-framework/)\n* [Theano in Python](https://www.geeksforgeeks.org/python/theano-in-python/)\nModel Evaluation\n* [Gradient Descent Algorithm in Machine Learning](https://www.geeksforgeeks.org\n... (truncated)",
+      "source": "https://www.geeksforgeeks.org/deep-learning/what-are-graph-neural-networks/",
+      "url": "https://www.geeksforgeeks.org/deep-learning/what-are-graph-neural-networks/",
+      "published_at": null,
+      "content_type": "web",
+      "query": "Tell me about graph neural networks",
+      "trust": {
+        "score": 0.55,
+        "relevance": 0.667,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "geeksforgeeks.org",
+        "reasons": [
+          "Source not in trusted whitelist",
+          "Sufficient content length",
+          "Query relevance: 0.67"
+        ]
+      }
+    },
+    {
+      "title": "Jump to content",
+      "content": "[Jump to content](https://en.wikipedia.org/wiki/Graph_neural_network#bodyContent)\nFrom Wikipedia, the free encyclopedia\nClass of artificial neural networks\n| Part of a series on |\n| --- |\n|  [Machine learning](https://en.wikipedia.org/wiki/Machine_learning \"Machine learning\")and [data mining](https://en.wikipedia.org/wiki/Data_mining \"Data mining\")  |\n|  Paradigms\n* [Supervised learning](https://en.wikipedia.org/wiki/Supervised_learning \"Supervised learning\")\n* [Unsupervised learning](https://en.wikipedia.org/wiki/Unsupervised_learning \"Unsupervised learning\")\n* [Semi-supervised learning](https://en.wikipedia.org/wiki/Semi-supervised_learning \"Semi-supervised learning\")\n* [Self-supervised learning](https://en.wikipedia.org/wiki/Self-supervised_learning \"Self-supervised learning\")\n* [Reinforcement learning](https://en.wikipedia.org/wiki/Reinforcement_learning \"Reinforcement learning\")\n* [Meta-learning](https://en.wikipedia.org/wiki/Meta-learning_\\(computer_science\\) \"Meta-learning \\(computer science\\)\")\n* [Online learning](https://en.wikipedia.org/wiki/Online_machine_learning \"Online machine learning\")\n* [Batch learning](https://en.wikipedia.org/wiki/Batch_learning \"Batch learning\")\n* [Curriculum learning](https://en.wikipedia.org/wiki/Curriculum_learning \"Curriculum learning\")\n* [Rule-based learning](https://en.wikipedia.org/wiki/Rule-based_machine_learning \"Rule-based machine learning\")\n* [Neuro-symbolic AI](https://en.wikipedia.org/wiki/Neuro-symbolic_AI \"Neuro-symbolic AI\")\n* [Neuromorphic engineering](https://en.wikipedia.org/wiki/Neuromorphic_engineering \"Neuromorphic engineering\")\n* [Quantum machine learning](https://en.wikipedia.org/wiki/Quantum_machine_learning \"Quantum machine learning\")\n|\n|  Problems\n* [Classification](https://en.wikipedia.org/wiki/Statistical_classification \"Statistical classification\")\n* [Generative modeling](https://en.wikipedia.org/wiki/Generative_model \"Generative model\")\n* [Dimensionality reduction](https://en.wikipedia.org/wiki/Dimensionality_reduction \"Dimensionality reduction\")\n* [Density estimation](https://en.wikipedia.org/wiki/Density_estimation \"Density estimation\")\n* [Anomaly detection](https://en.wikipedia.org/wiki/Anomaly_detection \"Anomaly detection\")\n* [Data cleaning](https://en.wikipedia.org/wiki/Data_cleaning \"Data cleaning\")\n* [Association rules](https://en.wikipedia.org/wiki/Association_rule_learning \"Association rule learning\")\n* [Semantic analysis](https://en.wikipedia.org/wiki/Semantic_analysis_\\(machine_learning\\) \"Semantic analysis \\(machine learning\\)\")\n* [Structured prediction](https://en.wikipedia.org/wiki/Structured_prediction \"Structured prediction\")\n* [Feature engineering](https://en.wikipedia.org/wiki/Feature_engineering \"Feature engineering\")\n* [Feature learning](https://en.wikipedia.org/wiki/Feature_learning \"Feature learning\")\n* [Learning to rank](https://en.wikipedia.org/wiki/Learning_to_rank \"Learning to rank\")\n* [Grammar induction](https://en.wikipedia.org/wiki/Grammar_induction \"Grammar induction\")\n* [Ontology learning](https://en.wikipedia.org/wiki/Ontology_learning \"Ontology learning\")\n* [Multimodal learning](https://en.wikipedia.org/wiki/Multimodal_learning \"Multimodal learning\")\n|\n|  [Supervised learning](https://en.wikipedia.org/wiki/Supervised_learning \"Supervised learning\")(**[classification](https://en.wikipedia.org/wiki/Statistical_classification \"Statistical classification\")** • )\n* [Apprenticeship learning](https://en.wikipedia.org/wiki/Apprenticeship_learnin\n... (truncated)",
+      "source": "https://en.wikipedia.org/wiki/Graph_neural_network",
+      "url": "https://en.wikipedia.org/wiki/Graph_neural_network",
+      "published_at": null,
+      "content_type": "web",
+      "query": "Tell me about graph neural networks",
+      "trust": {
+        "score": 0.55,
+        "relevance": 1.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "en.wikipedia.org",
+        "reasons": [
+          "Source not in trusted whitelist",
+          "Sufficient content length",
+          "Query relevance: 1.00"
+        ]
+      }
+    },
+    {
+      "title": "Skip to main content",
+      "content": "[Skip to main content](https://www.datacamp.com/tutorial/comprehensive-introduction-graph-neural-networks-gnns-tutorial#main)\n## What is a Graph?\nA Graph is the type of data structure that contains nodes and edges. A node can be a person, place, or thing, and the edges define the relationship between nodes. The edges can be directed and undirected based on directional dependencies.\nIn the example below, the blue circles are nodes, and the arrows are edges. The direction of edges defines dependencies between two nodes.\nImage by Author\nLet’s learn about the complex Graph dataset: [Jazz Musicians Network](https://datarepository.wolframcloud.com/resources/Jazz-Musicians-Network). It contains 198 nodes and 2742 edges. In the community graph plot below, different colors of nodes represent various communities of Jazz musicians and the edges connecting them. There is a web of collaboration where a single musician has relationships within and outside the community.\nCommunity Graph Plot by [Jazz Musicians Network](https://datarepository.wolframcloud.com/resources/Jazz-Musicians-Network)\nGraphs are excellent in dealing with complex problems with relationships and interactions. They are used in pattern recognition, social networks analysis, recommendation systems, and semantic analysis. Creating graph-based solutions is a whole new field that offers rich insights into complex and interlinked datasets.\n## Graphs with NetworkX\nIn this section, we will learn to create a graph using [NetworkX](https://networkx.org).\nThe code below is influenced by Daniel Holmberg's [blog](https://towardsdatascience.com/graph-neural-networks-in-python-c310c7c18c83) on Graph Neural Networks in Python.\n1. Create networkx’s **DiGraph** object “H”\n2. Add nodes that contain different labels, colors, and size\n3. Add edges to create a relationship between two nodes. For example, “(0,1)” means that **0** has a directional dependency on **1**. We will create bidirectional relationships by adding “(1,0)”\n4. Extract colors and sizes in the form of lists\n5. Plot the graph using networkx’s **draw** function\n```\nimport networkx as nx\nH = nx.DiGraph()\n#adding nodes\nH.add_nodes_from([\n(0, {\"color\": \"blue\", \"size\": 250}),\n(1, {\"color\": \"yellow\", \"size\": 400}),\n(2, {\"color\": \"orange\", \"size\": 150}),\n(3, {\"color\": \"red\", \"size\": 600})\n])\n#adding edges\nH.add_edges_from([\n(0, 1),\n(1, 2),\n(1, 0),\n(1, 3),\n(2, 3),\n(3,0)\n])\nnode_colors = nx.get_node_attributes(H, \"color\").values()\ncolors = list(node_colors)\nnode_sizes = nx.get_node_attributes(H, \"size\").values()\nsizes = list(node_sizes)\n#Plotting Graph\nnx.draw(H, with_labels=True, node_color=colors, node_size=sizes)\nPowered By [](https://www.datacamp.com/datalab)\nWas this AI assistant helpful? Yes No\n```\nIn the next step, we will convert the data structure from directional to an undirectional graph using the **to_undirected()** function.\n```\n#converting to undirected graph\nG = H.to_undirected()\nnx.draw(G, with_labels=True, node_color=colors, node_size=sizes)\nPowered By [](https://www.datacamp.com/datalab)\nWas this AI assistant helpful? Yes No\n```\n## Why is it Hard to Analyze a Graph?\nGraph-based data structures have drawbacks, and data scientists must understand them before developing graph-based solutions.\n1. A graph exists in non-euclidean space. It does not exist in 2D or 3D space, which makes it harder to interpret the data. To visualize the structure in 2D space, you must use various dimensionality reduction tools.\n2. Graphs are dynamic; t\n... (truncated)",
+      "source": "https://www.datacamp.com/tutorial/comprehensive-introduction-graph-neural-networks-gnns-tutorial",
+      "url": "https://www.datacamp.com/tutorial/comprehensive-introduction-graph-neural-networks-gnns-tutorial",
+      "published_at": null,
+      "content_type": "web",
+      "query": "Tell me about graph neural networks",
+      "trust": {
+        "score": 0.55,
+        "relevance": 1.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "datacamp.com",
+        "reasons": [
+          "Source not in trusted whitelist",
+          "Sufficient content length",
+          "Query relevance: 1.00"
+        ]
+      }
+    },
+    {
+      "title": "What is a GNN (graph neural network)?",
+      "content": "#  What is a GNN (graph neural network)?\nBy [Joshua Noble](https://www.ibm.com/think/author/joshua-noble)\n##  Introducing GNNs\nGraph neural networks (GNNs) are a deep neural network architecture that is popular both in practical applications and cutting-edge [machine learning](https://www.ibm.com/think/topics/machine-learning) research. They use a neural network model to represent data about entities and their relationships. They’re useful for real-world [data mining](https://www.ibm.com/think/topics/data-mining), understanding social networks, [knowledge graphs](https://www.ibm.com/think/topics/knowledge-graph), recommender systems and bioinformatics.\nThe development of GNNs drew inspiration from deep learning algorithms such as [convolutional neural networks](https://www.ibm.com/think/topics/convolutional-neural-networks) (CNNs) and [recurrent neural networks](https://www.ibm.com/think/topics/recurrent-neural-networks) (RNNs) but they have several key differences. CNNs are designed for data that has a grid-like structure like the pixels of an image. Any one pixel can be connected to, at most, eight other pixels. Conversely, RNNs are tailored to sequence structures where each element can be connected to two other elements at most, like a string of words in a text. In graph-structured data though, any element can have one or more connections and might have no consistency between the numbers of connections for a specific element.\nGraph neural networks are an implementation of geometric deep learning, which is classified into four fundamental categories:\n**Graph-based learning** , which learns about graph-like data.\n**Grid-based learning** , which learns about data-like images and other data types that can be described by grids.\n**Group-based learning** , which learns about how information relates to a parent group. This is powerful when data is acquired from a group like a sphere, for instance, geological data from different sources across the Earth.\n**Mesh-based learning** , which learns about how information is spread across an irregular mesh, such as analyzing and predicting elements of a 3D model of an object.\nGNNs are an area of active [artificial intelligence](https://www.ibm.com/think/topics/artificial-intelligence) research but are well supported by libraries and toolkits that are built in languages such as Python and frameworks including TensorFlow and PyTorch.\n##  What is a graph?\nA set of objects and the connections between them can be expressed as a graph. Computer science researchers developed neural networks to operate on graph data structures.\nA graph represents the relations, which are called ‘edges’ between a collection of entities, which are called ‘nodes.’ Mathematically, a graph _G_ is defined as a tuple of a set of nodes and vertices _V_ , and a set of edges and links. _E:G = (V, E)_. Each edge is a pair of two vertices and represents a connection between them.\nTo further describe each node, edge or the entire graph, we can store information in each of these pieces of the graph.\nThe vertices (sometimes called nodes) of a graph are connected by edges\nGraphs can be further described by assigning directionality with each edge. A graph is described as being either directed or undirected. An undirected graph represents a relationship, which is bidirectional. If Rosa has a sibling Juan, then Juan also has a sibling, Rosa. The relationship between Rosa and her sibling doesn’t have any directionality, it just connects them t\n... (truncated)",
+      "source": "https://www.ibm.com/think/topics/graph-neural-network",
+      "url": "https://www.ibm.com/think/topics/graph-neural-network",
+      "published_at": null,
+      "content_type": "web",
+      "query": "Tell me about graph neural networks",
+      "trust": {
+        "score": 0.55,
+        "relevance": 1.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "ibm.com",
+        "reasons": [
+          "Source not in trusted whitelist",
+          "Sufficient content length",
+          "Query relevance: 1.00"
+        ]
+      }
+    },
+    {
+      "title": "Are you a robot?",
+      "content": "# Are you a robot?\nPlease confirm you are a human by completing the captcha challenge below.\nVerification successful. Waiting for www.sciencedirect.com to respond\n* **Reference number:** 9ded25e28c4aa6ad\n* **IP Address:** 106.213.87.51\n* **User Agent:** Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/116.0.0.0 Safari/537.36\n* **Timestamp:** 2026-03-19 14:25:43 UTC",
+      "source": "https://www.sciencedirect.com/science/article/pii/S2666651021000012",
+      "url": "https://www.sciencedirect.com/science/article/pii/S2666651021000012",
+      "published_at": null,
+      "content_type": "web",
+      "query": "Tell me about graph neural networks",
+      "trust": {
+        "score": 0.2,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "sciencedirect.com",
+        "reasons": [
+          "Source not in trusted whitelist",
+          "Moderate content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    },
+    {
+      "title": "The Ferrers bound for spanning trees in bipartite graphs",
+      "content": "We prove Ehrenborg's conjecture that every connected bipartite graph $G$ with parts of size $m$ and $n$ has at most $\\frac{1}{mn}\\prod_{v\\in V(G)} \\operatorname{deg}(v)$ spanning trees, and that equality holds if and only if $G$ is a Ferrers graph. The proof is fully formalized in Lean 4.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17997v1.pdf",
+      "published_at": "2026-03-18T17:57:40Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Boon Suan Ho"
+      ],
+      "categories": [
+        "math.CO"
+      ],
+      "arxiv_id": "2603.17997v1",
+      "trust": {
+        "score": 0.9,
+        "relevance": 0.333,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Moderate content length",
+          "Query relevance: 0.33"
+        ]
+      }
+    },
+    {
+      "title": "A Convex Formulation of the Multi-Commodity Dynamic Traffic Assignment",
+      "content": "We consider a multi-commodity Dynamic Traffic Assignment (DTA) problem formulated as a network flow control problem on the Cell Transmission Model (CTM). The objective is to design optimal control policies using variable speed limits, ramp metering, and dynamic routing to regulate traffic evolution over time on a given limited-capacity transportation network. Even simple instances of DTA problems on the CTM are known to give rise to non-convex optimal control formulations. Nevertheless, a single-commodity DTA formulation has recently been proposed that admits a tight convex relaxation, thereby enabling tractable optimal control synthesis. The single-commodity formulation, however, is structurally restrictive, as it effectively allows only a single destination. To address this limitation, we develop a multi-commodity CTM model in which each commodity is associated with potentially distinct sets of off-ramps. By extending the convexification approach developed for the single-commodity case, we establish a tight convex relaxation of the multi-commodity DTA problem on the CTM model. This relaxation relies on concave, commodity-specific demand functions and concave aggregate supply functions for every cell, which ensure convexity of the resulting optimal control problem. Our proposed formulation requires commodity-dependent implementation of variable speed limits and dynamic routing policies.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17981v1.pdf",
+      "published_at": "2026-03-18T17:43:14Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Davide Sipione",
+        "Giacomo Como",
+        "Gustav Nilsson"
+      ],
+      "categories": [
+        "math.OC"
+      ],
+      "arxiv_id": "2603.17981v1",
+      "trust": {
+        "score": 0.75,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    },
+    {
+      "title": "TDAD: Test-Driven Agentic Development - Reducing Code Regressions in AI Coding Agents via Graph-Based Impact Analysis",
+      "content": "AI coding agents can resolve real-world software issues, yet they frequently introduce regressions, breaking tests that previously passed. Current benchmarks focus almost exclusively on resolution rate, leaving regression behavior under-studied. This paper presents TDAD (Test-Driven Agentic Development), an open-source tool and benchmark methodology that combines abstract-syntax-tree (AST) based code-test graph construction with weighted impact analysis to surface the tests most likely affected by a proposed change. Evaluated on SWE-bench Verified with two local models (Qwen3-Coder 30B on 100 instances and Qwen3.5-35B-A3B on 25 instances), TDAD's GraphRAG workflow reduced test-level regressions by 70% (6.08% to 1.82%) and improved resolution from 24% to 32% when deployed as an agent skill. A surprising finding is that TDD prompting alone increased regressions (9.94%), revealing that smaller models benefit more from contextual information (which tests to verify) than from procedural instructions (how to do TDD). An autonomous auto-improvement loop raised resolution from 12% to 60% on a 10-instance subset with 0% regression. These findings suggest that for AI agent tool design, surfacing contextual information outperforms prescribing procedural workflows. All code, data, and logs are publicly available at https://github.com/pepealonso95/TDAD.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17973v1.pdf",
+      "published_at": "2026-03-18T17:38:22Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Pepe Alonso"
+      ],
+      "categories": [
+        "cs.SE",
+        "cs.AI"
+      ],
+      "arxiv_id": "2603.17973v1",
+      "trust": {
+        "score": 1.0,
+        "relevance": 0.333,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.33"
+        ]
+      }
+    },
+    {
+      "title": "State-dependent temperature control in Langevin diffusions using numerical exploratory Hamiltonian-Jacobi-Bellman equations",
+      "content": "Choosing how much noise to add in Langevin dynamics is essential for making these algorithms effective in challenging optimization problems. One promising approach is to determine this noise by solving Hamilton-Jacobi-Bellman (HJB) equations and their exploratory variants. Though these ideas have been demonstrated to work well in one dimension, extension to high-dimensional minimization has been limited by two unresolved numerical challenges: setting reliable control bounds and stably computing the second-order information (Hessians) required by the equations. These issues and the broader impact of HJB parameters have not been systematically examined. This work provides the first such investigation. We introduce principled control bounds and develop a physics-informed neural network framework that embeds the structure of exploratory HJB equations directly into training, stabilizing computation, and enabling accurate estimation of state-dependent noise in high-dimensional problems. Numerical experiments demonstrate that the resulting method remains robust and effective well beyond low-dimensional test cases.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17934v1.pdf",
+      "published_at": "2026-03-18T17:09:04Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Taorui Wang",
+        "Xun Li",
+        "Gu Wang",
+        "Zhongqiang Zhang"
+      ],
+      "categories": [
+        "math.NA",
+        "math.OC"
+      ],
+      "arxiv_id": "2603.17934v1",
+      "trust": {
+        "score": 1.0,
+        "relevance": 0.333,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.33"
+        ]
+      }
+    },
+    {
+      "title": "Real-time Coordination of Cascaded Hydroelectric Generation under Decision-Dependent Uncertainties",
+      "content": "This paper proposes a real-time control policy for cascaded hydropower systems that incorporates decision-dependent uncertainty (DDU) to capture the coupling of streamflow uncertainties across the network. The framework jointly models exogenous forecast errors and endogenous uncertainty propagation, explicitly characterizing the dependence between upstream releases and downstream inflow variability through a heteroskedastic variance model conditioned on past errors, variance, and control actions. We formulate a joint chance-constrained optimization problem to ensure reliable system operation under uncertainty, and develop a tractable supporting hyperplane algorithm that enables explicit and adaptive risk allocation under DDU. We establish convergence of the proposed method and show that it recovers the Bonferroni approximation under steady-state conditions. A randomized case study based on Columbia River data demonstrates that the proposed framework improves both energy generation and reservoir reliability by accounting for DDU. Sensitivity analyses on drought severity and model parameters further highlight the value of adaptive risk allocation for resilient hydropower operations.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17931v1.pdf",
+      "published_at": "2026-03-18T17:05:44Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Eliza Cohn",
+        "Ning Qi",
+        "Upmanu Lall",
+        "Bolun Xu"
+      ],
+      "categories": [
+        "eess.SY"
+      ],
+      "arxiv_id": "2603.17931v1",
+      "trust": {
+        "score": 0.75,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    }
+  ]
+}

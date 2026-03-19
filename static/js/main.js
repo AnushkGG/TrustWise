@@ -173,7 +173,8 @@ async function submitQuery() {
   } finally {
     hideLoading();
     submitBtn.disabled = false;
-    submitBtn.querySelector(".btn-text").textContent = "Generate Plan & Execute";
+    submitBtn.querySelector(".btn-text").textContent =
+      "Generate Plan & Execute";
   }
 }
 
@@ -186,7 +187,17 @@ function displayResults(data) {
 
   displayPlanSummary(data.plan);
   displayExecutionSummary(data.execution);
-  displayTaskResults(data.results);
+  const preferredResults =
+    (data.trusted_data && data.trusted_data.length > 0 && data.trusted_data) ||
+    (data.structured_data &&
+      data.structured_data.length > 0 &&
+      data.structured_data) ||
+    data.results;
+  displayTaskResults(
+    preferredResults,
+    data.trust_report,
+    data.insights || null,
+  );
 }
 
 function displayPlanSummary(plan) {
@@ -196,7 +207,10 @@ function displayPlanSummary(plan) {
     if (!items) return "—";
     if (Array.isArray(items)) {
       return items
-        .map((d) => `<span class="chip" style="cursor:default;">${escapeHtml(d)}</span>`)
+        .map(
+          (d) =>
+            `<span class="chip" style="cursor:default;">${escapeHtml(d)}</span>`,
+        )
         .join(" ");
     }
     return escapeHtml(String(items));
@@ -232,6 +246,10 @@ function displayPlanSummary(plan) {
 }
 
 function displayExecutionSummary(execution) {
+  const cacheCard = execution.cache_hit
+    ? `<div class="stat-card success"><div class="stat-value">YES</div><div class="stat-label">Cache Hit</div></div>`
+    : `<div class="stat-card"><div class="stat-value">NO</div><div class="stat-label">Cache Hit</div></div>`;
+
   document.getElementById("executionSummary").innerHTML = `
     <div class="stat-card web">
       <div class="stat-value">${execution.web_tasks}</div>
@@ -249,14 +267,63 @@ function displayExecutionSummary(execution) {
       <div class="stat-value">${execution.successful}</div>
       <div class="stat-label">Successful</div>
     </div>
+    <div class="stat-card success">
+      <div class="stat-value">${execution.trusted_items ?? 0}</div>
+      <div class="stat-label">Trusted Items</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${execution.db_inserted ?? 0}</div>
+      <div class="stat-label">DB Inserted</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${execution.db_skipped ?? 0}</div>
+      <div class="stat-label">DB Skipped</div>
+    </div>
+    ${cacheCard}
   `;
 }
 
-function displayTaskResults(results) {
+function displayTaskResults(results, trustReport = null, insights = null) {
   const el = document.getElementById("taskResults");
 
   if (!results || results.length === 0) {
     el.innerHTML = '<p class="text-muted text-center">No results available</p>';
+    return;
+  }
+
+  const isStructured =
+    results[0] &&
+    Object.prototype.hasOwnProperty.call(results[0], "content_type");
+
+  if (isStructured) {
+    const trustSummary = trustReport
+      ? `<div class="task-data" style="margin-bottom:12px;"><strong>Trust Validation:</strong> ${trustReport.trusted_count} trusted / ${trustReport.validated_count} validated (dropped: ${trustReport.dropped_count})</div>`
+      : "";
+
+    const insightSummary = insights ? renderInsightsPanel(insights) : "";
+
+    el.innerHTML =
+      insightSummary +
+      trustSummary +
+      results
+        .slice(0, 8)
+        .map(
+          (item, i) => `
+          <div class="task-card" style="animation-delay:${i * 60}ms; animation: fadeSlideUp var(--dur-slow) var(--ease-out) both ${i * 60}ms;">
+            <div class="task-header">
+              <div class="task-title">${item.content_type === "research_paper" ? "📚" : "🌐"} ${escapeHtml(item.title || "Untitled")}</div>
+              <span class="task-status success">${escapeHtml(item.content_type || "item")}</span>
+            </div>
+            <div class="task-body">
+              <strong>Source:</strong> ${escapeHtml(item.source || "N/A")}<br>
+              <strong>URL:</strong> ${item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">Open ↗</a>` : "N/A"}<br>
+              ${item.trust ? `<strong>Trust Score:</strong> ${escapeHtml(String(item.trust.score))}<br>` : ""}
+              ${item.published_at ? `<strong>Published:</strong> ${escapeHtml(item.published_at)}<br>` : ""}
+              <strong>Content:</strong> ${escapeHtml((item.content || "").substring(0, 380))}${(item.content || "").length > 380 ? "…" : ""}
+            </div>
+          </div>`,
+        )
+        .join("");
     return;
   }
 
@@ -279,7 +346,7 @@ function displayTaskResults(results) {
                   <div class="mt-10">
                     <strong>Source:</strong> ${escapeHtml(d.source)}<br>
                     <strong>Content:</strong> ${escapeHtml(d.content.substring(0, 200))}…
-                  </div>`
+                  </div>`,
                 )
                 .join("")}
             </div>`;
@@ -296,7 +363,7 @@ function displayTaskResults(results) {
                     <strong>Authors:</strong> ${escapeHtml(paper.authors.join(", "))}<br>
                     <strong>Published:</strong> ${escapeHtml(paper.published)}<br>
                     <a href="${paper.pdf_url}" target="_blank" rel="noopener">View PDF ↗</a>
-                  </div>`
+                  </div>`,
                 )
                 .join("")}
             </div>`;
@@ -325,6 +392,72 @@ function displayTaskResults(results) {
     .join("");
 }
 
+function renderInsightsPanel(insights) {
+  const conciseAnswer = escapeHtml(
+    insights.concise_answer || insights.summary || "No summary available.",
+  );
+
+  const keyPoints = Array.isArray(insights.key_points)
+    ? insights.key_points.slice(0, 5)
+    : [];
+
+  const topSources = Array.isArray(insights.top_sources_detailed)
+    ? insights.top_sources_detailed.slice(0, 5)
+    : [];
+
+  const recommendedReading = Array.isArray(insights.recommended_reading)
+    ? insights.recommended_reading.slice(0, 4)
+    : [];
+
+  const keyPointsHtml = keyPoints.length
+    ? `<ul style="margin:8px 0 0 18px;">
+         ${keyPoints.map((point) => `<li style="margin-bottom:6px;">${escapeHtml(point)}</li>`).join("")}
+       </ul>`
+    : '<p class="text-muted" style="margin-top:8px;">No key points extracted yet.</p>';
+
+  const sourcesHtml = topSources.length
+    ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+         ${topSources
+           .map(
+             (item) =>
+               `<span class="chip" style="cursor:default;">${escapeHtml(item.source)} (${escapeHtml(String(item.count))})</span>`,
+           )
+           .join("")}
+       </div>`
+    : '<p class="text-muted" style="margin-top:8px;">No source breakdown available.</p>';
+
+  const readingHtml = recommendedReading.length
+    ? `<div style="margin-top:8px; display:grid; gap:8px;">
+         ${recommendedReading
+           .map((item) => {
+             const title = escapeHtml(item.title || "Untitled");
+             const source = escapeHtml(item.source || "unknown");
+             const published = item.published_at
+               ? ` • ${escapeHtml(item.published_at)}`
+               : "";
+             const link = item.url
+               ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">Open ↗</a>`
+               : "";
+             return `<div><strong>${title}</strong><br><span class="text-muted">${source}${published}</span>${link ? `<br>${link}` : ""}</div>`;
+           })
+           .join("")}
+       </div>`
+    : '<p class="text-muted" style="margin-top:8px;">No recommended reading yet.</p>';
+
+  return `
+    <div class="task-data" style="margin-bottom:12px; border-left: 3px solid var(--accent);">
+      <div><strong>Summary Answer</strong></div>
+      <p style="margin:8px 0 0 0; line-height:1.6;">${conciseAnswer}</p>
+      <div style="margin-top:12px;"><strong>Key Points</strong></div>
+      ${keyPointsHtml}
+      <div style="margin-top:12px;"><strong>Top Sources</strong></div>
+      ${sourcesHtml}
+      <div style="margin-top:12px;"><strong>Recommended Reading</strong></div>
+      ${readingHtml}
+    </div>
+  `;
+}
+
 // ─── Load Saved Plans ──────────────────────────────────
 
 async function loadPlans() {
@@ -351,16 +484,18 @@ async function loadPlans() {
                 ${escapeHtml(plan.query)}
               </span>
             </div>
-          </div>`
+          </div>`,
         )
         .join("");
 
       // Attach click handlers
-      plansList.querySelectorAll(".plan-card[data-filename]").forEach((card) => {
-        card.addEventListener("click", () => {
-          viewPlan(card.getAttribute("data-filename"));
+      plansList
+        .querySelectorAll(".plan-card[data-filename]")
+        .forEach((card) => {
+          card.addEventListener("click", () => {
+            viewPlan(card.getAttribute("data-filename"));
+          });
         });
-      });
     } else {
       plansList.innerHTML =
         '<p class="text-muted text-center" style="padding:var(--space-xl);">No saved plans yet. Submit a query to get started!</p>';
@@ -381,8 +516,12 @@ async function viewPlan(filename) {
 
     if (data.success) {
       const plan = data.plan;
-      const domains = Array.isArray(plan.domains) ? plan.domains.join(", ") : (plan.domains || "—");
-      const sources = Array.isArray(plan.sources) ? plan.sources.join(", ") : (plan.sources || "—");
+      const domains = Array.isArray(plan.domains)
+        ? plan.domains.join(", ")
+        : plan.domains || "—";
+      const sources = Array.isArray(plan.sources)
+        ? plan.sources.join(", ")
+        : plan.sources || "—";
 
       const body = `
         <div class="detail-row">

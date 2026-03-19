@@ -1,0 +1,285 @@
+{
+  "query": "graph neural networks in healthcare",
+  "validated_count": 8,
+  "trusted_count": 2,
+  "dropped_count": 6,
+  "trusted_items": [
+    {
+      "title": "Privacy Policy",
+      "content": "Privacy Center\nSocial Media\nThese cookies are set by a range of social media services that we have added to the site to enable you to share our content with your friends and networks. They are capable of tracking your browser across other sites and building up a profile of your interests. This may impact the content and messages you see on other websites you visit. If you do not allow these cookies you may not be able to use or see these sharing tools.\nEssential\nThis website uses essential cookies and services to enable core website features and provide a seamless user experience. These cookies and services are used to facilitate features such as navigation, remember user preferences, and ensure the security of the website.\nTargeted\nThese cookies may be set through our site by our advertising partners. They may be used by those companies to build a profile of your interests and show you relevant adverts on other sites. They do not store directly personal information, but are based on uniquely identifying your browser and internet device. If you do not allow these cookies, you will experience less targeted advertising.\nPerformance\nThese cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us to know which pages are the most and least popular and see how visitors move around the site. All information these cookies collect is aggregated and therefore anonymous. If you do not allow these cookies we will not know when you have visited our site, and will not be able to monitor its performance.\nFunctional\nThis website uses functional cookies and services to remember your preferences and choices, such as language preferences, font sizes, region selections, and customized layouts. They enable this website to offer enhanced and personalized functionalities.\nAudience Measurement\nWe use audience measurement cookies in order to carry out aggregated traffic measurement and generate performance statistics essential for the proper functioning of the site and the provision of its content (for example to measure performance, to detect navigation problems, to optimization technical performance or ergonomics, to estimate server power needed and to analyse content performance). The use of these cookies is strictly limited to measuring the site's audience. These cookies do not allow the tracking of navigation on other websites and the data collected is not combined or shared with third parties. You can refuse the use of this cookie by switching off the slider to the right.\nOK\nEnglishDeutschEspañolFrançaisItaliano日本語繁體中文\n# Ars Technica homepage\nGrid\ngrid settings\nNot trusting the process\n##  [Users hate it, but age-check tech is coming. Here’s how it works.](https://arstechnica.com/tech-policy/2026/03/after-discord-fiasco-age-check-tech-promises-privacy-by-running-locally-does-it-work/)\nOn-device face scans and cross-platform age keys decrease privacy risks, but trust issues abound.\nAshley Belanger –  3/18/2026 |\n##  [TCL’s German QLED ban puts pressure on TV brands to be more honest about QDs](https://arstechnica.com/gadgets/2026/03/tcls-german-qled-ban-puts-pressure-on-tv-brands-to-be-more-honest-about-qds/)\n“This is a serious warning shot.”\nScharon Harding –  4:30 PM |\n##  [Kagi Translate’s AI answers the question “What would horny Margaret Thatcher say?”](https://arstechnica.com/ai/2026/03/kagi-translates-ai-answers-the-question-what-would-horny-margaret-thatcher-say/)\nRemember when it w\n... (truncated)",
+      "source": "https://arstechnica.com",
+      "url": "https://arstechnica.com",
+      "published_at": null,
+      "content_type": "web",
+      "query": "graph neural networks in healthcare",
+      "trust": {
+        "score": 0.9,
+        "relevance": 0.25,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arstechnica.com",
+        "reasons": [
+          "Trusted domain: arstechnica.com",
+          "Sufficient content length",
+          "Query relevance: 0.25"
+        ]
+      }
+    },
+    {
+      "title": "A practical artificial intelligence framework for legal age estimation using clavicle computed tomography scans",
+      "content": "Legal age estimation plays a critical role in forensic and medico-legal contexts, where decisions must be supported by accurate, robust, and reproducible methods with explicit uncertainty quantification. While prior artificial intelligence (AI)-based approaches have primarily focused on hand radiographs or dental imaging, clavicle computed tomography (CT) scans remain underexplored despite their documented effectiveness for legal age estimation. In this work, we present an interpretable, multi-stage pipeline for legal age estimation from clavicle CT scans. The proposed framework combines (i) a feature-based connected-component method for automatic clavicle detection that requires minimal manual annotation, (ii) an Integrated Gradients-guided slice selection strategy used to construct the input data for a multi-slice convolutional neural network that estimates legal age, and (iii) conformal prediction intervals to support uncertainty-aware decisions in accordance with established international protocols. The pipeline is evaluated on 1,158 full-body post-mortem CT scans from a public forensic dataset (the New Mexico Decedent Image Database). The final model achieves state-of-the-art performance with a mean absolute error (MAE) of 1.55 $\\pm$ 0.16 years on a held-out test set, outperforming both human experts (MAE of approximately 1.90 years) and previous methods (MAEs above 1.75 years in our same dataset). Furthermore, conformal prediction enables configurable coverage levels aligned with forensic requirements. Attribution maps indicate that the model focuses on anatomically relevant regions of the medial clavicular epiphysis. The proposed method, which is currently being added as part of the Skeleton-ID software (https://skeleton-id.com/skeleton-id/), is intended as a decision-support component within multi-factorial forensic workflows.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17926v1.pdf",
+      "published_at": "2026-03-18T17:02:01Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Javier Venema",
+        "Stefano De Luca",
+        "Pablo Mesejo",
+        "Óscar Ibáñez"
+      ],
+      "categories": [
+        "cs.CV"
+      ],
+      "arxiv_id": "2603.17926v1",
+      "trust": {
+        "score": 1.0,
+        "relevance": 0.5,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.50"
+        ]
+      }
+    }
+  ],
+  "all_items": [
+    {
+      "title": "Skip to content",
+      "content": "###  [Nvidia is quietly building a multibillion-dollar behemoth to rival its chips business](https://techcrunch.com/2026/03/18/nvidia-networking-division-building-a-multibillion-dollar-behemoth-to-rival-its-chips-business/)\n* [Rebecca Szkutak](https://techcrunch.com/author/rebecca-szkutak/)\n19 hours ago\n###  [Nothing CEO Carl Pei says smartphone apps will disappear as AI agents take their place](https://techcrunch.com/2026/03/18/nothing-ceo-carl-pei-says-smartphone-apps-will-disappear-as-ai-agents-take-their-place/)\n18 hours ago\n###  [Patreon CEO calls AI companies’ fair use argument ‘bogus,’ says creators should be paid](https://techcrunch.com/2026/03/18/patreon-ceo-calls-ai-companies-fair-use-argument-bogus-says-creators-should-be-paid/)\n21 hours ago\n**Top Headlines**\n###  [FBI is buying location data to track US citizens, director confirms](https://techcrunch.com/2026/03/18/fbi-is-buying-location-data-to-track-us-citizens-kash-patel-wyden/)\n* [Zack Whittaker](https://techcrunch.com/author/zack-whittaker/)\n###  [The Gemini-powered features in Google Workspace that are worth using](https://techcrunch.com/2026/03/18/the-gemini-powered-features-in-google-workspace-that-are-worth-using/)\n* [Lauren Forristal](https://techcrunch.com/author/lauren-forristal/)\n###  [Pardoned Nikola founder Trevor Milton is trying to raise $1B for AI-powered planes](https://techcrunch.com/2026/03/18/pardoned-nikola-founder-trevor-milton-is-trying-to-raise-1b-for-ai-powered-planes/)\n###  [Rebel Audio is a new AI podcasting tool aimed at first-time creators ](https://techcrunch.com/2026/03/18/rebel-audio-is-a-new-ai-podcasting-tool-aimed-at-first-time-creators/)\n* [Lauren Forristal](https://techcrunch.com/author/lauren-forristal/)\n###  [This startup wants to make enterprise software look more like a prompt](https://techcrunch.com/2026/03/18/this-startup-wants-to-make-enterprise-software-look-more-like-a-prompt/)\n* [Tim Fernholz](https://techcrunch.com/author/tim-fernholz/)\n## Latest News\n[See More ](https://techcrunch.com/latest/)\n* [Transportation](https://techcrunch.com/category/transportation/)\n###  [Rivian sacrifices 2027 profit goal to push deeper into autonomy](https://techcrunch.com/2026/03/19/rivian-sacrifices-2027-profit-goal-to-push-deeper-into-autonomy/)\n53 seconds ago\n* ###  [K2 to launch its first high-powered satellite for space compute](https://techcrunch.com/2026/03/19/k2-to-launch-its-first-high-powered-satellite-for-space-compute/)\n* [Tim Fernholz](https://techcrunch.com/author/tim-fernholz/)\n40 minutes ago\n* ###  [Tools for founders to navigate and move past conflict](https://techcrunch.com/2026/03/19/tools-for-founders-to-navigate-and-move-past-conflict/)\n* [Isabelle Johannessen](https://techcrunch.com/author/isabelle-johannessen/)\n40 minutes ago\n* ###  [Anori, Alphabet’s new X spinout, is tackling one of the world’s most expensive bureaucratic nightmares](https://techcrunch.com/2026/03/19/alphabets-x-has-a-new-spinout-and-its-going-after-one-of-the-worlds-most-expensive-bureaucratic-nightmares/)\n* [Connie Loizos](https://techcrunch.com/author/connie-loizos/)\n40 minutes ago\n* ###  [Consumer-focused privacy company Cloaked raises $375M as it expands to enterprise](https://techcrunch.com/2026/03/19/consumer-focused-privacy-company-cloaked-raises-375m-as-it-expands-to-enterprise/)\n1 hour ago\n* [Media & Entertainment](https://techcrunch.com/category/media-entertainment/)\n###  [Tubi joins forces with popular TikTokers to create original streaming\n... (truncated)",
+      "source": "https://techcrunch.com",
+      "url": "https://techcrunch.com",
+      "published_at": null,
+      "content_type": "web",
+      "query": "graph neural networks in healthcare",
+      "trust": {
+        "score": 0.65,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "techcrunch.com",
+        "reasons": [
+          "Trusted domain: techcrunch.com",
+          "Sufficient content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    },
+    {
+      "title": "Privacy Policy",
+      "content": "Privacy Center\nSocial Media\nThese cookies are set by a range of social media services that we have added to the site to enable you to share our content with your friends and networks. They are capable of tracking your browser across other sites and building up a profile of your interests. This may impact the content and messages you see on other websites you visit. If you do not allow these cookies you may not be able to use or see these sharing tools.\nEssential\nThis website uses essential cookies and services to enable core website features and provide a seamless user experience. These cookies and services are used to facilitate features such as navigation, remember user preferences, and ensure the security of the website.\nTargeted\nThese cookies may be set through our site by our advertising partners. They may be used by those companies to build a profile of your interests and show you relevant adverts on other sites. They do not store directly personal information, but are based on uniquely identifying your browser and internet device. If you do not allow these cookies, you will experience less targeted advertising.\nPerformance\nThese cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us to know which pages are the most and least popular and see how visitors move around the site. All information these cookies collect is aggregated and therefore anonymous. If you do not allow these cookies we will not know when you have visited our site, and will not be able to monitor its performance.\nFunctional\nThis website uses functional cookies and services to remember your preferences and choices, such as language preferences, font sizes, region selections, and customized layouts. They enable this website to offer enhanced and personalized functionalities.\nAudience Measurement\nWe use audience measurement cookies in order to carry out aggregated traffic measurement and generate performance statistics essential for the proper functioning of the site and the provision of its content (for example to measure performance, to detect navigation problems, to optimization technical performance or ergonomics, to estimate server power needed and to analyse content performance). The use of these cookies is strictly limited to measuring the site's audience. These cookies do not allow the tracking of navigation on other websites and the data collected is not combined or shared with third parties. You can refuse the use of this cookie by switching off the slider to the right.\nOK\nEnglishDeutschEspañolFrançaisItaliano日本語繁體中文\n# Ars Technica homepage\nGrid\ngrid settings\nNot trusting the process\n##  [Users hate it, but age-check tech is coming. Here’s how it works.](https://arstechnica.com/tech-policy/2026/03/after-discord-fiasco-age-check-tech-promises-privacy-by-running-locally-does-it-work/)\nOn-device face scans and cross-platform age keys decrease privacy risks, but trust issues abound.\nAshley Belanger –  3/18/2026 |\n##  [TCL’s German QLED ban puts pressure on TV brands to be more honest about QDs](https://arstechnica.com/gadgets/2026/03/tcls-german-qled-ban-puts-pressure-on-tv-brands-to-be-more-honest-about-qds/)\n“This is a serious warning shot.”\nScharon Harding –  4:30 PM |\n##  [Kagi Translate’s AI answers the question “What would horny Margaret Thatcher say?”](https://arstechnica.com/ai/2026/03/kagi-translates-ai-answers-the-question-what-would-horny-margaret-thatcher-say/)\nRemember when it w\n... (truncated)",
+      "source": "https://arstechnica.com",
+      "url": "https://arstechnica.com",
+      "published_at": null,
+      "content_type": "web",
+      "query": "graph neural networks in healthcare",
+      "trust": {
+        "score": 0.9,
+        "relevance": 0.25,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arstechnica.com",
+        "reasons": [
+          "Trusted domain: arstechnica.com",
+          "Sufficient content length",
+          "Query relevance: 0.25"
+        ]
+      }
+    },
+    {
+      "title": "Your privacy, your choice",
+      "content": "## Your privacy, your choice\nWe use essential cookies to make sure the site can function. We also use optional cookies for advertising, personalisation of content, usage analysis, and social media, as well as to allow video information to be shared for both marketing, analytics and editorial purposes.\nBy accepting optional cookies, you consent to the processing of your personal data - including transfers to third parties. Some third parties are outside of the European Economic Area, with varying standards of data protection.\nManage preferences for further information and to change your choices.\n[Skip to main content](https://www.nature.com/#content)\nThank you for visiting nature.com. You are using a browser version with limited support for CSS. To obtain the best experience, we recommend you use a more up to date browser (or turn off compatibility mode in Internet Explorer). In the meantime, to ensure continued support, we are displaying the site without styles and JavaScript.\n##  [Brain’s protective barrier stays leaky for years after playing contact sports](https://www.nature.com/articles/d41586-026-00885-2)\nDamage to the blood-brain barrier is linked to immune changes and cognitive decline.\n## Featured Content\n* ###  [_Project Hail Mary_ film builds dazzling new worlds — and grounds them in science](https://www.nature.com/articles/d41586-026-00870-9)\nThe space odyssey charms with its message of unity while referencing molecular biology, neutrino physics and more.\n* Alexandra Witze\nMuse19 Mar 2026\n* ###  [Mathematician who reshaped number theory wins prestigious Abel prize](https://www.nature.com/articles/d41586-026-00819-y)\nMathematician Gerd Faltings showed that arithmetic equations have a finite number of solutions.\n* Davide Castelvecchi\nNews19 Mar 2026\n* ###  [Intestinal interoceptive dysfunction drives age-associated cognitive decline](https://www.nature.com/articles/s41586-026-10191-6)\nAge-related microbiome changes increase medium-chain fatty acid-producing bacteria, driving GPR84-mediated myeloid inflammation, impaired vagal signalling and hippocampal dysfunction; targeting this gut–brain pathway restores memory in aged mice.\n* Timothy O. Cox\n* Ashwarya S. Devason\n* Christoph A. Thaiss\nArticleOpen Access11 Mar 2026\n* ###  [Daily briefing: How labs are coping with ‘RAMmageddon’](https://www.nature.com/articles/d41586-026-00872-7)\nA global shortage of memory chips is forcing researchers to get creative. Plus, China’s plans to become the global tech leader and the AI arms race unfolding in lecture halls.\n* Flora Graham\nNature Briefing16 Mar 2026\n* Current Issue19 Mar 2026\n##  [ News & Comment ](https://www.nature.com/news)\n* ###  [UK bets big on homegrown fusion and quantum — can it lead the world?](https://www.nature.com/articles/d41586-026-00877-2)\nUK government announces multibillion-pound science investments — but what impact will this have on the global race in these fields?\n* David Adam\nNews19 Mar 2026\n* ###  [Mathematician who reshaped number theory wins prestigious Abel prize](https://www.nature.com/articles/d41586-026-00819-y)\n* Davide Castelvecchi\nNews19 Mar 2026\n* ###  [Masked mitochondria slip into cells to treat disease in mice](https://www.nature.com/articles/d41586-026-00869-2)\n* Edward Chen\nNews19 Mar 2026\n* ###  [AI set to map risks of future climate disasters](https://www.nature.com/articles/d41586-026-00835-y)\n* Soraia Raupp Musse\nWorld View18 Mar 2026\n* ###  [Static electricity is a big mystery — a jolt of fre\n... (truncated)",
+      "source": "https://www.nature.com",
+      "url": "https://www.nature.com",
+      "published_at": null,
+      "content_type": "web",
+      "query": "graph neural networks in healthcare",
+      "trust": {
+        "score": 0.65,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "nature.com",
+        "reasons": [
+          "Trusted domain: nature.com",
+          "Sufficient content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    },
+    {
+      "title": "EchoGen: Cycle-Consistent Learning for Unified Layout-Image Generation and Understanding",
+      "content": "In this work, we present EchoGen, a unified framework for layout-to-image generation and image grounding, capable of generating images with accurate layouts and high fidelity to text descriptions (e.g., spatial relationships), while grounding the image robustly at the same time. We believe that image grounding possesses strong text and layout understanding abilities, which can compensate for the corresponding limitations in layout-to-image generation. At the same time, images generated from layouts exhibit high diversity in content, thereby enhancing the robustness of image grounding. Jointly training both tasks within a unified model can promote performance improvements for each. However, we identify that this joint training paradigm encounters several optimization challenges and results in restricted performance. To address these issues, we propose progressive training strategies. First, the Parallel Multi-Task Pre-training (PMTP) stage equips the model with basic abilities for both tasks, leveraging shared tokens to accelerate training. Next, the Dual Joint Optimization (DJO) stage exploits task duality to sequentially integrate the two tasks, enabling unified optimization. Finally, the Cycle RL stage eliminates reliance on visual supervision by using consistency constraints as rewards, significantly enhancing the model's unified capabilities via the GRPO strategy. Extensive experiments demonstrate state-of-the-art results on both layout-to-image generation and image grounding benchmarks, and reveal clear synergistic gains from optimizing the two tasks together.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.18001v1.pdf",
+      "published_at": "2026-03-18T17:59:03Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Kai Zou",
+        "Hongbo Liu",
+        "Dian Zheng",
+        "Jianxiong Gao",
+        "Zhiwei Zhao",
+        "Bin Liu"
+      ],
+      "categories": [
+        "cs.CV"
+      ],
+      "arxiv_id": "2603.18001v1",
+      "trust": {
+        "score": 0.75,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    },
+    {
+      "title": "CARE: Covariance-Aware and Rank-Enhanced Decomposition for Enabling Multi-Head Latent Attention",
+      "content": "Converting pretrained attention modules such as grouped-query attention (GQA) into multi-head latent attention (MLA) can improve expressivity without increasing KV-cache cost, making it attractive for efficient inference. However, many practical conversion baselines rely on weight-only low-rank approximations (e.g., SVD-style initializations) and uniform rank allocation. They focus on minimizing the difference between weight matrices rather than on how those weights affect input activations, ignore the covariance structure of activations, and enforce uniform rank across layers, causing activation drift and degraded attention fidelity. To address these issues, we propose CARE, a Covariance-Aware, Rank-Enhanced MLA conversion pipeline under a fixed KV width. CARE introduces three key steps: (i) activation-preserving factorization, which aligns the approximation with the actual input activations rather than just the weights; (ii) adjusted-rank allocation, which spreads a fixed KV budget across layers by giving more capacity to layers that need it most; and (iii) KV-parity mapping, which reparameterizes the converted K and V to fit the MLA format while keeping the KV-cache size unchanged. Our method outperforms a uniform-rank SVD baseline on Qwen3-4B/30B-A3B-Instruct-2507 and Llama-3.1-8B/70B-Instruct, reducing one-shot perplexity by up to 215x and improving mean accuracy by up to 1.70x at matched KV budgets. With a brief post-SVD healing fine-tune, we fully recover the original model's accuracy.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17946v1.pdf",
+      "published_at": "2026-03-18T17:18:35Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Zhongzhu Zhou",
+        "Fengxiang Bie",
+        "Ziyan Chen",
+        "Zhenyu Zhang",
+        "Yibo Yang",
+        "Junxiong Wang",
+        "Ben Athiwaratkun",
+        "Xiaoxia Wu",
+        "Shuaiwen Leon Song"
+      ],
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "arxiv_id": "2603.17946v1",
+      "trust": {
+        "score": 0.75,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    },
+    {
+      "title": "A practical artificial intelligence framework for legal age estimation using clavicle computed tomography scans",
+      "content": "Legal age estimation plays a critical role in forensic and medico-legal contexts, where decisions must be supported by accurate, robust, and reproducible methods with explicit uncertainty quantification. While prior artificial intelligence (AI)-based approaches have primarily focused on hand radiographs or dental imaging, clavicle computed tomography (CT) scans remain underexplored despite their documented effectiveness for legal age estimation. In this work, we present an interpretable, multi-stage pipeline for legal age estimation from clavicle CT scans. The proposed framework combines (i) a feature-based connected-component method for automatic clavicle detection that requires minimal manual annotation, (ii) an Integrated Gradients-guided slice selection strategy used to construct the input data for a multi-slice convolutional neural network that estimates legal age, and (iii) conformal prediction intervals to support uncertainty-aware decisions in accordance with established international protocols. The pipeline is evaluated on 1,158 full-body post-mortem CT scans from a public forensic dataset (the New Mexico Decedent Image Database). The final model achieves state-of-the-art performance with a mean absolute error (MAE) of 1.55 $\\pm$ 0.16 years on a held-out test set, outperforming both human experts (MAE of approximately 1.90 years) and previous methods (MAEs above 1.75 years in our same dataset). Furthermore, conformal prediction enables configurable coverage levels aligned with forensic requirements. Attribution maps indicate that the model focuses on anatomically relevant regions of the medial clavicular epiphysis. The proposed method, which is currently being added as part of the Skeleton-ID software (https://skeleton-id.com/skeleton-id/), is intended as a decision-support component within multi-factorial forensic workflows.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17926v1.pdf",
+      "published_at": "2026-03-18T17:02:01Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Javier Venema",
+        "Stefano De Luca",
+        "Pablo Mesejo",
+        "Óscar Ibáñez"
+      ],
+      "categories": [
+        "cs.CV"
+      ],
+      "arxiv_id": "2603.17926v1",
+      "trust": {
+        "score": 1.0,
+        "relevance": 0.5,
+        "trusted": true,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.50"
+        ]
+      }
+    },
+    {
+      "title": "SpiderCam: Low-Power Snapshot Depth from Differential Defocus",
+      "content": "We introduce SpiderCam, an FPGA-based snapshot depth-from-defocus camera which produces 480x400 sparse depth maps in real-time at 32.5 FPS over a working range of 52 cm while consuming 624 mW of power in total. SpiderCam comprises a custom camera that simultaneously captures two differently focused images of the same scene, processed with a SystemVerilog implementation of depth from differential defocus (DfDD) on a low-power FPGA. To achieve state-of-the-art power consumption, we present algorithmic improvements to DfDD that overcome challenges caused by low-power sensors, and design a memory-local implementation for streaming depth computation on a device that is too small to store even a single image pair. We report the first sub-Watt total power measurement for passive FPGA-based 3D cameras in the literature.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17910v1.pdf",
+      "published_at": "2026-03-18T16:48:41Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Marcos A. Ferreira",
+        "Tianao Li",
+        "John Mamish",
+        "Josiah Hester",
+        "Yaman Sangar",
+        "Qi Guo",
+        "Emma Alexander"
+      ],
+      "categories": [
+        "cs.CV"
+      ],
+      "arxiv_id": "2603.17910v1",
+      "trust": {
+        "score": 0.75,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    },
+    {
+      "title": "In Perfect Harmony: Orchestrating Causality in Actor-Based Systems",
+      "content": "Runtime verification has gained popularity as a lightweight approach for increasing assurance in systems under scrutiny. Performing runtime checks enables dynamic monitoring and alerts for unexpected behavior, thereby improving reliability and correctness. Actor-based systems present significant challenges for runtime verification. Properties frequently span multiple actors with complex causal dependencies, while nondeterministic message interleavings can obscure execution semantics. Moreover, most existing monitoring tools are designed for single-process behavior. This paper presents ACTORCHESTRA, a runtime verification framework for Erlang that automatically tracks causality across multi-actor interactions. The framework instruments Erlang systems that comply with OTP guidelines via targeted code injection. This method establishes the orchestration infrastructure required to track causal relationships between actors without requiring manual modifications to the target system. To ease the specification of multi-actor properties, the framework provides WALTZ, a specification language that automatically compiles properties into executable Erlang monitors that integrate with the instrumented system. Three case studies demonstrate ACTORCHESTRA's effectiveness in detecting complex behavioral violations in real-world actor systems. A performance evaluation quantifies the runtime overhead of the monitoring infrastructure and analyzes the trade-offs between added safety guarantees and execution costs.",
+      "source": "arXiv",
+      "url": "http://arxiv.org/pdf/2603.17909v1.pdf",
+      "published_at": "2026-03-18T16:47:25Z",
+      "content_type": "research_paper",
+      "authors": [
+        "Vladyslav Mikytiv",
+        "Bernardo Toninho",
+        "Carla Ferreira"
+      ],
+      "categories": [
+        "cs.SE",
+        "cs.LO"
+      ],
+      "arxiv_id": "2603.17909v1",
+      "trust": {
+        "score": 0.75,
+        "relevance": 0.0,
+        "trusted": false,
+        "duplicate": false,
+        "domain": "arxiv.org",
+        "reasons": [
+          "Research source recognized (arXiv)",
+          "Sufficient content length",
+          "Query relevance: 0.00"
+        ]
+      }
+    }
+  ]
+}

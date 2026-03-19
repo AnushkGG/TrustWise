@@ -16,6 +16,10 @@ from orchestrator.orchestrator import generate_plan
 from chunker.chunker import chunk_tasks
 from scheduler.scheduler import schedule
 from agents import web_agent, research_agent
+from cleaner import normalize_results
+from trust import validate_structured_data
+from storage import get_cached_trusted_items, save_trusted_items
+from insights import generate_insights
 from utils.config import Config
 from utils.logger import setup_logger
 
@@ -66,6 +70,51 @@ def submit_query():
         # Step 1: Generate Plan
         plan = generate_plan(query)
         execution_state["current_plan"] = plan
+
+        # Step 1.5: Check local trusted DB cache first (Phase 6)
+        if Config.ENABLE_DB_CACHE:
+            cached_items = get_cached_trusted_items(
+                query=query,
+                min_items=Config.DB_CACHE_MIN_ITEMS,
+                limit=8,
+            )
+            if cached_items:
+                execution_state["is_running"] = False
+                insights = generate_insights(cached_items, query=query)
+
+                response = {
+                    'success': True,
+                    'plan': {
+                        'goal': plan.get('goal'),
+                        'domains': plan.get('domains'),
+                        'time_range': plan.get('time_range'),
+                        'sources': plan.get('sources'),
+                        'total_tasks': len(plan.get('tasks', []))
+                    },
+                    'execution': {
+                        'web_tasks': 0,
+                        'paper_tasks': 0,
+                        'total_results': 0,
+                        'successful': 0,
+                        'structured_items': len(cached_items),
+                        'trusted_items': len(cached_items),
+                        'db_inserted': 0,
+                        'db_skipped': 0,
+                        'cache_hit': True
+                    },
+                    'results': [],
+                    'structured_data': cached_items,
+                    'trusted_data': cached_items,
+                    'insights': insights,
+                    'trust_report': {
+                        'validated_count': len(cached_items),
+                        'trusted_count': len(cached_items),
+                        'dropped_count': 0
+                    }
+                }
+
+                logger.info("Web UI: Served query from trusted DB cache")
+                return jsonify(response)
         
         # Step 2: Chunk Tasks
         tasks = chunk_tasks(plan)
@@ -103,6 +152,22 @@ def submit_query():
                     "status": "failed",
                     "error": str(e)
                 })
+
+        # Step 5: Clean and structure outputs (Phase 2)
+        structured_data = normalize_results(results, query=query)
+
+        # Step 6: Apply zero-trust validation (Phase 3)
+        trust_report = validate_structured_data(structured_data, query=query)
+        trusted_data = trust_report["trusted_items"]
+
+        # Step 7: Persist trusted items (Phase 4)
+        db_stats = {"inserted": 0, "skipped": 0}
+        if Config.SAVE_TO_DB:
+            db_stats = save_trusted_items(trusted_data, query=query)
+
+        # Step 8: Generate insights from the best available data (Phase 5)
+        insight_input = trusted_data if trusted_data else structured_data
+        insights = generate_insights(insight_input, query=query)
         
         execution_state["is_running"] = False
         
@@ -120,9 +185,22 @@ def submit_query():
                 'web_tasks': len(web_tasks),
                 'paper_tasks': len(paper_tasks),
                 'total_results': len(results),
-                'successful': sum(1 for r in results if r.get('status') == 'success')
+                'successful': sum(1 for r in results if r.get('status') == 'success'),
+                'structured_items': len(structured_data),
+                'trusted_items': len(trusted_data),
+                'db_inserted': db_stats['inserted'],
+                'db_skipped': db_stats['skipped'],
+                'cache_hit': False
             },
-            'results': results
+            'results': results,
+            'structured_data': structured_data,
+            'trusted_data': trusted_data,
+            'insights': insights,
+            'trust_report': {
+                'validated_count': trust_report['validated_count'],
+                'trusted_count': trust_report['trusted_count'],
+                'dropped_count': trust_report['dropped_count']
+            }
         }
         
         logger.info(f"Web UI: Query completed successfully")
@@ -253,6 +331,10 @@ def get_status():
                 'has_api_key': has_api_key,
                 'save_plans': Config.SAVE_PLANS,
                 'save_raw_data': Config.SAVE_RAW_DATA,
+                'save_structured_data': Config.SAVE_STRUCTURED_DATA,
+                'save_trusted_data': Config.SAVE_TRUSTED_DATA,
+                'save_to_db': Config.SAVE_TO_DB,
+                'enable_db_cache': Config.ENABLE_DB_CACHE,
                 'is_running': execution_state.get('is_running', False)
             }
         })
