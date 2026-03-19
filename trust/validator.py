@@ -30,10 +30,12 @@ def validate_structured_data(items: List[Dict[str, Any]], query: str = "") -> Di
         else:
             seen_signatures.add(signature)
 
+        min_relevance = 0.28 if (scored_item.get("content_type") == "web") else 0.15
+        min_score = 0.65 if (scored_item.get("content_type") == "web") else 0.6
         scored_item["trust"]["trusted"] = (
-            scored_item["trust"]["score"] >= 0.6
+            scored_item["trust"]["score"] >= min_score
             and not scored_item["trust"]["duplicate"]
-            and scored_item["trust"]["relevance"] >= 0.15
+            and scored_item["trust"]["relevance"] >= min_relevance
         )
         validated.append(scored_item)
 
@@ -128,6 +130,10 @@ def _suspicious_penalty(content: str) -> float:
     markers = [
         "accept all cookies",
         "privacy policy",
+        "manage preferences",
+        "consent",
+        "do not store directly personal information",
+        "all information these cookies collect is aggregated",
         "subscribe now",
         "advertisement",
         "consent management",

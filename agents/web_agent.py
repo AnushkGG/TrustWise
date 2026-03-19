@@ -76,6 +76,7 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         search_terms = _extract_search_terms(prompt)
+        query_terms = _extract_query_terms(prompt)
         logger.info(f"[WebAgent] Search terms: {search_terms}")
 
         is_news_query = any(
@@ -86,17 +87,19 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
         # ── Step 1: Search the web for relevant URLs ──
         if CRAWL4AI_AVAILABLE and search_terms:
             logger.info("[WebAgent] Searching the web for relevant pages...")
-            search_urls = _search_duckduckgo(search_terms, max_results=5)
+            trusted_domains = _trusted_domain_set(_load_trusted_sources())
+            search_urls = _search_duckduckgo(search_terms, max_results=6, preferred_domains=trusted_domains)
 
             if search_urls:
                 logger.info(f"[WebAgent] Found {len(search_urls)} relevant URLs to crawl")
-                crawl_results = _run_async(_crawl_with_crawl4ai(search_urls, prompt))
+                crawl_results = _run_async(_crawl_with_crawl4ai(search_urls, prompt, query_terms))
                 result["data"].extend(crawl_results)
             else:
-                logger.warning("[WebAgent] No search results — crawling trusted sources")
+                logger.warning("[WebAgent] No search results — crawling trusted topic pages")
                 sources = _load_trusted_sources()
                 if sources:
-                    crawl_results = _run_async(_crawl_with_crawl4ai(sources[:3], prompt))
+                    fallback_urls = _expand_sources_for_query(sources, is_news_query)
+                    crawl_results = _run_async(_crawl_with_crawl4ai(fallback_urls[:4], prompt, query_terms))
                     result["data"].extend(crawl_results)
 
         # ── Step 2: Wikipedia for knowledge queries ──
@@ -118,6 +121,8 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
             for url in sources[:2]:
                 try:
                     content = _fetch_basic_http(url)
+                    if not _is_relevant_content(content, query_terms, url):
+                        continue
                     if content and len(content) > 200:
                         result["data"].append({
                             "source": url,
@@ -148,7 +153,7 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
 # Web Search — find URLs relevant to the query
 # ═══════════════════════════════════════════
 
-def _search_duckduckgo(query: str, max_results: int = 5) -> List[str]:
+def _search_duckduckgo(query: str, max_results: int = 5, preferred_domains: set | None = None) -> List[str]:
     """
     Search DuckDuckGo for relevant URLs matching the query.
 
@@ -190,12 +195,21 @@ def _search_duckduckgo(query: str, max_results: int = 5) -> List[str]:
             "zhihu.com", "baidu.com",
         ]
 
+        preferred = []
+        non_preferred = []
+
         for r in results:
             href = r.get("href", "")
             if href and href.startswith("http") and not any(d in href for d in skip_domains):
-                urls.append(href)
+                domain = _domain_from_url(href)
+                if preferred_domains and domain in preferred_domains:
+                    preferred.append(href)
+                else:
+                    non_preferred.append(href)
                 logger.info(f"[WebAgent]   → {r.get('title', '?')[:70]}")
                 logger.info(f"[WebAgent]     {href[:100]}")
+
+        urls = (preferred + non_preferred)[:max_results]
 
         logger.info(f"[WebAgent] DuckDuckGo returning {len(urls)} usable URLs")
         return urls
@@ -212,6 +226,7 @@ def _search_duckduckgo(query: str, max_results: int = 5) -> List[str]:
 async def _crawl_with_crawl4ai(
     urls: List[str],
     prompt: str,
+    query_terms: List[str],
 ) -> List[Dict[str, Any]]:
     """
     Use Crawl4AI to crawl specific URLs with a headless browser.
@@ -266,6 +281,9 @@ async def _crawl_with_crawl4ai(
                             content = content[:max_chars] + "\n\n... (truncated)"
 
                         if len(content) > 100:
+                            if not _is_relevant_content(content, query_terms, url):
+                                logger.info(f"[WebAgent][Crawl4AI] Skipping low-signal page: {url[:80]}")
+                                continue
                             # Use the final URL (after redirects)
                             final_url = getattr(result, "url", url) or url
                             collected.append({
@@ -350,8 +368,102 @@ def _extract_search_terms(prompt: str) -> str:
         "those", "such", "also", "other", "some", "many", "more",
     }
     words = prompt.lower().split()
-    terms = [w for w in words if w not in stop_words and len(w) > 2]
+    terms = [w for w in words if w not in stop_words and (len(w) > 2 or w in {"ai", "ml"})]
     return " ".join(terms[:6])
+
+
+def _extract_query_terms(prompt: str) -> List[str]:
+    words = re.findall(r"[a-zA-Z0-9]+", (prompt or "").lower())
+    stop_words = {
+        "fetch", "retrieve", "find", "get", "search", "for", "about", "articles", "papers",
+        "from", "top", "blogs", "websites", "published", "recent", "latest", "the", "and",
+        "or", "in", "on", "at", "to", "a", "an", "reputable", "online", "sources", "that",
+        "have", "been", "with", "their", "this", "these", "those", "such", "also", "other",
+        "some", "many", "more", "information", "give", "me", "updates",
+    }
+    aliases = {
+        "ai": ["artificial", "intelligence"],
+        "ml": ["machine", "learning"],
+    }
+    terms: List[str] = []
+    for w in words:
+        if w in stop_words:
+            continue
+        if len(w) > 2 or w in aliases:
+            terms.append(w)
+            terms.extend(aliases.get(w, []))
+    # Preserve order while removing duplicates.
+    return list(dict.fromkeys(terms))[:8]
+
+
+def _expand_sources_for_query(sources: List[str], is_news_query: bool) -> List[str]:
+    if not sources:
+        return []
+
+    urls: List[str] = []
+    for src in sources:
+        src = src.rstrip("/")
+        if "techcrunch.com" in src:
+            urls.append(f"{src}/category/artificial-intelligence/")
+            urls.append(f"{src}/tag/ai/")
+        elif "arstechnica.com" in src:
+            urls.append(f"{src}/information-technology/")
+            urls.append(f"{src}/science/")
+        elif "nature.com" in src:
+            urls.append(f"{src}/news")
+            urls.append(f"{src}/subjects/machine-learning")
+        elif "sciencedaily.com" in src:
+            urls.append(f"{src}/news/computers_math/artificial_intelligence/")
+        elif is_news_query:
+            urls.append(src)
+
+    return urls or sources
+
+
+def _trusted_domain_set(sources: List[str]) -> set:
+    domains = set()
+    for src in sources:
+        d = _domain_from_url(src)
+        if d:
+            domains.add(d)
+    return domains
+
+
+def _domain_from_url(url: str) -> str:
+    m = re.search(r"https?://([^/]+)", (url or "").lower())
+    if not m:
+        return ""
+    return m.group(1).replace("www.", "")
+
+
+def _is_relevant_content(content: str, query_terms: List[str], url: str) -> bool:
+    if not content or len(content) < 220:
+        return False
+
+    lowered = content.lower()
+    noisy_markers = [
+        "privacy policy",
+        "cookie",
+        "consent",
+        "manage preferences",
+        "do not store directly personal information",
+        "terms of use",
+        "sign in",
+        "subscribe now",
+    ]
+    marker_hits = sum(1 for marker in noisy_markers if marker in lowered)
+    if marker_hits >= 2:
+        return False
+
+    if query_terms:
+        overlap = sum(1 for term in query_terms if term in lowered)
+        if overlap == 0:
+            return False
+
+    if re.search(r"https?://[^\s]+/?$", url or "") and "homepage" in lowered:
+        return False
+
+    return True
 
 
 def _fetch_from_wikipedia(search_terms: str) -> str:

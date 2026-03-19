@@ -102,9 +102,15 @@ def _clean_text(text: str, max_chars: int = 3500) -> str:
         "privacy policy",
         "accept all cookies",
         "reject optional cookies",
+        "manage preferences",
+        "consent",
+        "do not store directly personal information",
+        "all information these cookies collect is aggregated",
         "skip to content",
         "subscribe",
         "advertisement",
+        "sign in",
+        "grid settings",
     )
 
     filtered = [line for line in lines if not any(marker in line.lower() for marker in junk_markers)]

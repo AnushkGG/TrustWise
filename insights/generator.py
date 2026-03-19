@@ -5,12 +5,24 @@ from typing import Any, Dict, List
 
 def _extract_query_terms(query: str) -> List[str]:
     words = re.findall(r"[a-zA-Z0-9]+", (query or "").lower())
+    aliases = {
+        "ai": ["artificial", "intelligence"],
+        "ml": ["machine", "learning"],
+        "nlp": ["language", "model", "models"],
+    }
     stopwords = {
         "the", "a", "an", "and", "or", "to", "of", "for", "in", "on", "with",
         "about", "latest", "recent", "new", "tell", "me", "what", "is", "are",
         "from", "into", "at", "by", "as", "their", "its", "be", "this", "that",
     }
-    return [w for w in words if len(w) > 2 and w not in stopwords]
+    terms: List[str] = []
+    for w in words:
+        if w in stopwords:
+            continue
+        if len(w) > 2 or w in aliases:
+            terms.append(w)
+            terms.extend(aliases.get(w, []))
+    return list(dict.fromkeys(terms))
 
 
 def _split_sentences(text: str) -> List[str]:
@@ -22,18 +34,27 @@ def _split_sentences(text: str) -> List[str]:
     parts = re.split(r"(?<=[.!?])\s+", compact)
     cleaned = []
     for sentence in parts:
-        s = sentence.strip()
+        s = _normalize_sentence(sentence)
         if 45 <= len(s) <= 240:
             cleaned.append(s)
     return cleaned
 
 
-def _rank_sentences(sentences: List[str], query_terms: List[str]) -> List[str]:
+def _normalize_sentence(sentence: str) -> str:
+    s = (sentence or "").strip()
+    s = re.sub(r"^#+\s*", "", s)
+    s = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", s)
+    s = re.sub(r"`([^`]+)`", r"\1", s)
+    s = re.sub(r"\s+", " ", s)
+    return s.strip()
+
+
+def _rank_sentences(sentences: List[str], query_terms: List[str], require_overlap: bool = True) -> List[str]:
     scored = []
     for sentence in sentences:
         lowered = sentence.lower()
         overlap = sum(1 for term in query_terms if term in lowered)
-        if query_terms and overlap == 0:
+        if require_overlap and query_terms and overlap == 0:
             continue
         digits_bonus = 1 if re.search(r"\d", sentence) else 0
         novelty_bonus = 1 if any(k in lowered for k in ["improves", "reduces", "outperforms", "study", "results"]) else 0
@@ -95,7 +116,10 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str) -> Dict[s
     candidate_sentences: List[str] = []
     for item in ranked_items[:8]:
         candidate_sentences.extend(_split_sentences(item.get("content") or ""))
-    ranked_sentences = _rank_sentences(candidate_sentences, query_terms)
+    ranked_sentences = _rank_sentences(candidate_sentences, query_terms, require_overlap=True)
+    if not ranked_sentences and candidate_sentences:
+        # Fallback for sparse/noisy content where exact term overlap is unavailable.
+        ranked_sentences = _rank_sentences(candidate_sentences, query_terms, require_overlap=False)
 
     key_points = ranked_sentences[:5]
     concise_answer = " ".join(ranked_sentences[:3]).strip()
