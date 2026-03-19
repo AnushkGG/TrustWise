@@ -20,9 +20,9 @@ import re
 from datetime import datetime
 from typing import Dict, Any, List
 from utils.config import Config
-from utils.logger import setup_logger
+import logging
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # ───────────────────────────────────────────
 # Crawl4AI availability check
@@ -108,9 +108,10 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
             wiki_content = _fetch_from_wikipedia(search_terms)
             if wiki_content and len(wiki_content) > 500:
                 result["data"].append({
-                    "source": "Wikipedia",
+                    "source": "https://en.wikipedia.org",
+                    "url": f"https://en.wikipedia.org/wiki/{search_terms.replace(' ', '_')}",
                     "content": wiki_content,
-                    "content_type": "text",
+                    "content_type": "web",
                     "fetch_time": datetime.utcnow().isoformat(),
                 })
 

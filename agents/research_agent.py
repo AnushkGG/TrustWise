@@ -1,10 +1,23 @@
 import json
+import urllib.parse
+import urllib.request
 from datetime import datetime
 from typing import Dict, Any, List
-from utils.config import Config
-from utils.logger import setup_logger
+import logging
 
-logger = setup_logger(__name__)
+try:
+    from utils.config import Config
+except ImportError:
+    import sys, os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from utils.config import Config
+
+try:
+    import feedparser
+except ImportError:
+    feedparser = None
+
+logger = logging.getLogger(__name__)
 
 def run(task: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -104,39 +117,59 @@ def _search_arxiv(query: str) -> List[Dict[str, Any]]:
     Returns:
         List of paper metadata dictionaries
     """
-    try:
-        import feedparser
-        import urllib.parse
-    except ImportError:
+    if feedparser is None:
         logger.error("feedparser package not installed. Run: pip install feedparser")
         raise ImportError("feedparser required. Install with: pip install feedparser")
-    
+
     # Construct arXiv API query
     base_url = 'http://export.arxiv.org/api/query?'
-    search_query = f'search_query=all:{urllib.parse.quote(query)}'
+    search_query_param = f'search_query=all:{urllib.parse.quote(query)}'
     max_results = f'max_results={Config.ARXIV_MAX_RESULTS}'
     sort_by = 'sortBy=submittedDate&sortOrder=descending'
-    
-    query_url = f"{base_url}{search_query}&{max_results}&{sort_by}"
-    
+
+    query_url = f"{base_url}{search_query_param}&{max_results}&{sort_by}"
+
     logger.info(f"[ResearchAgent] Querying arXiv: {query_url}")
-    
-    # Parse feed
-    feed = feedparser.parse(query_url)
-    
+
+    # Fetch with timeout to avoid indefinite hang
+    try:
+        req = urllib.request.urlopen(query_url, timeout=15)
+        raw_feed = req.read()
+    except Exception as fetch_err:
+        logger.error(f"[ResearchAgent] arXiv HTTP fetch failed: {fetch_err}")
+        raise
+
+    # Parse feed from fetched bytes
+    feed = feedparser.parse(raw_feed)
+
+    # Check for feed-level error (bozo = feedparser's malformed-feed flag)
+    if feed.get('bozo') and not feed.entries:
+        bozo_exc = feed.get('bozo_exception', 'Unknown feed error')
+        logger.error(f"[ResearchAgent] arXiv feed parse error: {bozo_exc}")
+        raise ValueError(f"arXiv feed error: {bozo_exc}")
+
     papers = []
     for entry in feed.entries:
-        paper = {
-            "title": entry.title,
-            "authors": [author.name for author in entry.authors],
-            "abstract": entry.summary,
-            "published": entry.published,
-            "arxiv_id": entry.id.split('/abs/')[-1],
-            "pdf_url": entry.id.replace('/abs/', '/pdf/') + '.pdf',
-            "categories": [tag.term for tag in entry.tags] if hasattr(entry, 'tags') else []
-        }
-        papers.append(paper)
-    
+        try:
+            # Guard authors: some entries have no authors field
+            authors = []
+            if hasattr(entry, 'authors') and entry.authors:
+                authors = [getattr(a, 'name', str(a)) for a in entry.authors]
+
+            paper = {
+                "title": getattr(entry, 'title', 'Untitled'),
+                "authors": authors,
+                "abstract": getattr(entry, 'summary', ''),
+                "published": getattr(entry, 'published', ''),
+                "arxiv_id": getattr(entry, 'id', '').split('/abs/')[-1],
+                "pdf_url": getattr(entry, 'id', '').replace('/abs/', '/pdf/') + '.pdf',
+                "categories": [tag.term for tag in entry.tags] if hasattr(entry, 'tags') else []
+            }
+            papers.append(paper)
+        except Exception as entry_err:
+            logger.warning(f"[ResearchAgent] Skipping malformed entry: {entry_err}")
+            continue
+
     return papers
 
 

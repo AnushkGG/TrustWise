@@ -4,9 +4,9 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from utils.config import Config
-from utils.logger import setup_logger
+import logging
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def normalize_results(results: List[Dict[str, Any]], query: str = "") -> List[Dict[str, Any]]:

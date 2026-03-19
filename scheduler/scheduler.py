@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Tuple
-from utils.logger import setup_logger
+import logging
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 def schedule(tasks: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """

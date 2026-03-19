@@ -5,10 +5,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
 from urllib.parse import urlparse
 
-from utils.config import Config
-from utils.logger import setup_logger
+import logging
 
-logger = setup_logger(__name__)
+from utils.config import Config
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
 
 def validate_structured_data(items: List[Dict[str, Any]], query: str = "") -> Dict[str, Any]:
@@ -71,9 +77,18 @@ def _score_item(item: Dict[str, Any], trusted_domains: Set[str], query_terms: Se
     reasons: List[str] = []
 
     domain = _get_domain(url or source)
+    # Named-source trust check (handles sources set as plain names, not URLs)
+    _TRUSTED_NAMED_SOURCES = {
+        "wikipedia": 0.50,  # Web agent sets source="Wikipedia"
+        "arxiv": 0.55,      # Research agent sets source="arXiv"
+    }
+    named_score = _TRUSTED_NAMED_SOURCES.get(source.lower())
     if item.get("content_type") == "research_paper" and source.lower() in {"arxiv", "arxiv.org"}:
         score += 0.55
         reasons.append("Research source recognized (arXiv)")
+    elif named_score is not None:
+        score += named_score
+        reasons.append(f"Trusted named source: {source}")
     elif domain in trusted_domains:
         score += 0.45
         reasons.append(f"Trusted domain: {domain}")

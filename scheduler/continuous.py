@@ -10,9 +10,9 @@ from scheduler.scheduler import schedule
 from storage import save_trusted_items
 from trust import validate_structured_data
 from utils.config import Config
-from utils.logger import setup_logger
+import logging
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def execute_query_pipeline(query: str) -> Dict[str, Any]:

@@ -4,9 +4,9 @@ import re
 from typing import Any, Dict, List
 
 from utils.config import Config
-from utils.logger import setup_logger
+import logging
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def _extract_query_terms(query: str) -> List[str]:

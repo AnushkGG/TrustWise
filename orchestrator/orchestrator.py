@@ -3,9 +3,9 @@ from datetime import datetime
 from orchestrator.llm_client import call_llm
 from orchestrator.schema import validate_plan
 from utils.config import Config
-from utils.logger import setup_logger
+import logging
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 def generate_plan(user_query: str) -> dict:
     """

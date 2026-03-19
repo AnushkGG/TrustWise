@@ -1,9 +1,9 @@
 import json
 from utils.config import Config
-from utils.logger import setup_logger
+import logging
 from orchestrator.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # Mock response for testing without API keys
 MOCK_RESPONSE = json.dumps({
