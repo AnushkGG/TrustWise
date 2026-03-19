@@ -1,4 +1,13 @@
-[
-  "trusted_domain.com",
-  "verified_news.org"
-]
+{
+  "trusted_web_sources": [
+    "https://techcrunch.com",
+    "https://arstechnica.com",
+    "https://www.nature.com",
+    "https://www.sciencedaily.com"
+  ],
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-02-17",
+    "note": "Phase 1: Basic trusted sources list. Phase 2+ will include trust scores and verification metadata."
+  }
+}
