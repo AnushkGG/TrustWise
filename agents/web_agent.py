@@ -325,14 +325,15 @@ async def _crawl_with_crawl4ai(
 def _run_async(coro):
     """Run an async coroutine from sync code (Flask context)."""
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                return pool.submit(asyncio.run, coro).result()
-        else:
-            return loop.run_until_complete(coro)
+        loop = asyncio.get_running_loop()
     except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            return pool.submit(asyncio.run, coro).result()
+    else:
         return asyncio.run(coro)
 
 
