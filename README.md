@@ -1,14 +1,16 @@
-# TrustWise - Trust-First AI System (Phase 1)
+# TrustWise — Trust-First AI System
 
 A trust-first, agent-based AI system for collecting and preparing technology-related information through controlled, auditable execution.
 
 ## Overview
 
-TrustWise follows a **planning-first architecture** where an LLM is used exclusively for orchestration, not for answering questions. The system converts natural language queries into structured JSON execution plans, then routes tasks to specialized agents that collect raw data without validation or summarization.
+TrustWise follows a **planning-first architecture** where an LLM is used exclusively for orchestration, not for answering questions end-to-end. The system converts natural language queries into structured JSON execution plans, routes tasks to specialized agents that collect raw data, then normalizes, validates, stores, and summarizes results in downstream stages.
 
-### Phase 1 Scope
+Comments in the codebase sometimes refer to “Phase 1–6” as **internal pipeline milestones** (planning through DB cache); the product is a single integrated pipeline.
 
-Phase 1 establishes the core orchestration and execution pipeline:
+### Implemented capabilities
+
+The current codebase includes:
 
 - ✅ **LLM-based Planning**: Converts user queries to structured JSON plans
 - ✅ **Task Decomposition**: Breaks plans into independent, executable chunks
@@ -84,6 +86,9 @@ User Query
 - **data/**: Output storage
   - `plans/`: Execution plans (for audit trail)
   - `raw/`: Raw agent outputs
+  - `structured/`: Normalized records (JSON)
+  - `trusted/`: Trust-validated records (JSON)
+  - `trustwise.db`: SQLite database (deduplication and query cache)
 
 ## Installation
 
@@ -91,7 +96,7 @@ User Query
 
 ```bash
 git clone <repository-url>
-cd TrustWise_Anushk
+cd TrustWise
 ```
 
 ### 2. Create Virtual Environment
@@ -139,7 +144,7 @@ LLM_MODEL=llama3
 
 ### Option 1: Web Interface (Recommended)
 
-The easiest way to use TrustWise is through the web interface:
+The recommended UI is the **TypeScript/Express** server in `web/`, which calls the Python pipeline via `api_bridge.py`. You need **Node.js 18+** (install dependencies once: `cd web && npm install`).
 
 ```bash
 # Windows
@@ -149,11 +154,11 @@ start_web.bat
 chmod +x start_web.sh
 ./start_web.sh
 
-# Or directly
+# Or directly (after: cd web && npm install)
 cd web && npm run build && npm start
 ```
 
-Then open your browser to: **http://localhost:5000**
+Then open your browser to: **http://localhost:5000** (or `http://127.0.0.1:5000`).
 
 **Features:**
 
@@ -211,21 +216,26 @@ Plan saved to: data\plans
 
 ## Configuration
 
-| Variable              | Default            | Description                         |
-| --------------------- | ------------------ | ----------------------------------- |
-| `LLM_PROVIDER`        | `gemini`           | LLM provider: `gemini` or `ollama`  |
-| `GEMINI_API_KEY`      | -                  | Google Gemini API key               |
-| `OLLAMA_BASE_URL`     | `localhost:11434`  | Local Ollama server URL             |
-| `LLM_MODEL`           | `gemini-2.0-flash` | Model to use                        |
-| `LLM_TEMPERATURE`     | `0.0`              | Temperature (0 for deterministic)   |
-| `LLM_MAX_TOKENS`      | `2000`             | Max tokens in response              |
-| `WEB_SCRAPER_TIMEOUT` | `10`               | HTTP request timeout (seconds)      |
-| `ARXIV_MAX_RESULTS`   | `5`                | Max papers per search               |
-| `SAVE_PLANS`          | `true`             | Save plans to `data/plans/`         |
-| `SAVE_RAW_DATA`       | `true`             | Save agent outputs to `data/raw/`   |
-| `LOG_LEVEL`           | `INFO`             | Logging level                       |
-| `FLASK_SECRET_KEY`    | auto-generated     | Secret key for sessions             |
-| `FLASK_DEBUG`         | `false`            | Enable debug mode                   |
+| Variable               | Default            | Description |
+| ---------------------- | ------------------ | ----------- |
+| `LLM_PROVIDER`         | `gemini`           | LLM provider: `gemini` or `ollama` |
+| `GEMINI_API_KEY`       | -                  | Google Gemini API key |
+| `OLLAMA_BASE_URL`      | `http://localhost:11434` | Local Ollama server URL |
+| `LLM_MODEL`            | `gemini-2.0-flash` | Model to use |
+| `LLM_TEMPERATURE`      | `0.0`              | Temperature (0 for deterministic output) |
+| `LLM_MAX_TOKENS`       | `2000`             | Max tokens in response |
+| `WEB_SCRAPER_TIMEOUT`  | `10`               | HTTP request timeout (seconds) |
+| `ARXIV_MAX_RESULTS`    | `5`                | Max papers per search |
+| `SAVE_PLANS`           | `true`             | Save plans to `data/plans/` |
+| `SAVE_RAW_DATA`        | `true`             | Save agent outputs to `data/raw/` |
+| `SAVE_STRUCTURED_DATA` | `true`             | Save normalized JSON to `data/structured/` |
+| `SAVE_TRUSTED_DATA`    | `true`             | Save trust reports to `data/trusted/` |
+| `SAVE_TO_DB`           | `true`             | Persist trusted items to `data/trustwise.db` |
+| `ENABLE_DB_CACHE`      | `true`             | Reuse cached trusted rows for repeated queries (skips agents when enough items exist) |
+| `DB_CACHE_MIN_ITEMS`   | `3`                | Minimum trusted items required to use DB cache |
+| `LOG_LEVEL`            | `INFO`             | Logging level |
+| `FLASK_DEBUG`          | `false`            | Used by legacy `app.py` / dev tooling |
+| `PORT` / `HOST`        | `5000` / `127.0.0.1` | Optional; read by `web/src/server.ts` |
 
 ## Output Files
 
@@ -362,14 +372,16 @@ TrustWise/
 4. **Auditability**: All plans and outputs saved for reproducibility
 5. **Zero-Trust Validation**: All collected data scored and filtered before use
 
-## Completed Phases
+## Pipeline milestones (internal)
 
-- **Phase 1**: Core orchestration, task scheduling, data collection
-- **Phase 2**: Data normalization and cleaning
-- **Phase 3**: Zero-trust validation and credibility scoring
-- **Phase 4**: SQLite database integration with deduplication
-- **Phase 5**: LLM-based summarization with citation tracking
-- **Phase 6**: DB caching for repeated queries
+Development was tracked in stages; the running system includes all of the following:
+
+- Orchestration, task scheduling, and data collection
+- Data normalization and cleaning
+- Zero-trust validation and credibility scoring
+- SQLite storage with deduplication
+- LLM-based insights with extractive fallback
+- DB-backed query cache for repeated runs
 
 ## Future Improvements
 

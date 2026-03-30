@@ -174,7 +174,7 @@ task_id_YYYYMMDD_HHMMSS.json
 **Core Dependencies:**
 
 - `google-generativeai>=0.8.0` - Google Gemini API client
-- `flask>=3.0.0` - Web server
+- `flask>=3.0.0` - Legacy Flask UI (`app.py`) only; primary web UI is Express in `web/`
 - `requests>=2.31.0` - HTTP requests
 - `beautifulsoup4>=4.12.0` - HTML parsing
 - `crawl4ai>=0.8.0` - Headless browser scraping
@@ -274,7 +274,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 ## Additional Utilities Created
 
-### 9. Enhanced Main Entry Point ✅
+### 15. Enhanced Main Entry Point ✅
 
 **File: `main.py`**
 
@@ -295,7 +295,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 ---
 
-### 10. Enhanced Scheduler ✅
+### 16. Enhanced Scheduler ✅
 
 **File: `scheduler/scheduler.py`**
 
@@ -309,7 +309,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 ---
 
-### 11. Setup Automation ✅
+### 17. Setup Automation ✅
 
 **File: `setup.py`**
 
@@ -323,7 +323,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 ---
 
-### 12. Demo Script ✅
+### 18. Demo Script ✅
 
 **File: `demo.py`**
 
@@ -337,7 +337,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 ---
 
-### 13. Quick Start Guide ✅
+### 19. Quick Start Guide ✅
 
 **File: `QUICKSTART.md`**
 
@@ -352,7 +352,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 ---
 
-### 14. Comprehensive Documentation ✅
+### 20. Comprehensive Documentation ✅
 
 **File: `README.md`**
 
@@ -371,7 +371,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 ---
 
-### 15. Basic Testing Suite ✅
+### 21. Basic Testing Suite ✅
 
 **File: `test_basic.py`**
 
@@ -393,14 +393,14 @@ task_id_YYYYMMDD_HHMMSS.json
 
 ---
 
-### 16. Configuration Files ✅
+### 22. Configuration Files ✅
 
 **`.gitignore`**
 
 - Python artifacts
 - Virtual environments
 - Environment files
-- Data directories (while preserving .gitkeep)
+- Generated data: `data/raw`, `data/plans`, `data/structured`, `data/trusted`, `data/trustwise.db` (empty dirs kept via `.gitkeep`)
 - IDE files
 
 **`config/sources.json`**
@@ -450,16 +450,23 @@ task_id_YYYYMMDD_HHMMSS.json
 ## File Structure
 
 ```
-TrustWise_Anushk/
-├── main.py                    # Enhanced main entry point
-├── demo.py                    # Demo script (NEW)
-├── setup.py                   # Setup automation (NEW)
-├── test_basic.py              # Basic tests (NEW)
-├── requirements.txt           # Dependencies (NEW)
-├── README.md                  # Comprehensive docs (UPDATED)
-├── QUICKSTART.md              # Quick start guide (NEW)
-├── .env.example               # Environment template (NEW)
-├── .gitignore                 # Git ignore (NEW)
+TrustWise/
+├── main.py                    # CLI entry point
+├── api_bridge.py              # JSON bridge for TypeScript server
+├── demo.py                    # Demo script
+├── setup.py                   # Setup automation
+├── test_basic.py              # Basic tests
+├── test_comprehensive.py      # Comprehensive tests
+├── requirements.txt           # Python dependencies
+├── README.md
+├── QUICKSTART.md
+├── .env.example
+├── .gitignore
+│
+├── web/                       # Primary web UI (Express + static assets)
+│   ├── src/server.ts
+│   ├── public/index.html
+│   └── package.json
 │
 ├── orchestrator/
 │   ├── orchestrator.py        # Plan logging added
@@ -495,12 +502,13 @@ TrustWise_Anushk/
 ├── insights/
 │   └── generator.py           # LLM + extractive insights (NEW)
 │
-├── templates/
-│   └── index.html             # Web UI template (NEW)
+├── app.py                     # Legacy Flask UI (optional)
+├── templates/                 # Legacy Flask templates
+│   └── index.html
 │
-├── static/
-│   ├── css/style.css          # Web UI styles (NEW)
-│   └── js/main.js             # Web UI JavaScript (NEW)
+├── static/                    # Served at /static by Express
+│   ├── css/style.css
+│   └── js/main.js
 │
 ├── config/
 │   └── sources.json           # Enhanced structure
@@ -530,7 +538,7 @@ TrustWise_Anushk/
 7. SQLite storage with deduplication and caching
 8. LLM-based insight generation with extractive fallback
 9. Complete audit trail (plans + raw + structured + trusted data)
-10. Web UI with REST API
+10. Web UI: TypeScript/Express (`web/src/server.ts`) with REST API via `api_bridge.py`
 
 ### ✅ Without API Key (Mock Mode)
 
@@ -568,9 +576,19 @@ python demo.py
 python main.py
 ```
 
-### Web Interface
+### Web Interface (recommended)
 
 ```bash
+cd web
+npm install
+npm run build
+npm start
+```
+
+### Legacy Flask UI (optional)
+
+```bash
+pip install flask
 python app.py
 ```
 
@@ -591,7 +609,7 @@ python app.py
 | Insights         | ✅ Complete | LLM + extractive summarization                   |
 | Retry Logic      | ✅ Complete | Exponential backoff with jitter                  |
 | Rate Limiting    | ✅ Complete | Token-bucket limiter for HTTP requests           |
-| Web UI           | ✅ Complete | Flask REST API with responsive frontend          |
+| Web UI           | ✅ Complete | Express (`web/`) + `api_bridge.py`; optional Flask `app.py` |
 | Configuration    | ✅ Complete | Environment-based with dotenv                    |
 | Documentation    | ✅ Complete | README, QUICKSTART, FRONTEND, WEB_QUICKSTART     |
 | Testing          | ✅ Complete | 39 tests (6 basic + 33 comprehensive)            |
@@ -620,7 +638,7 @@ The system is **fully implemented** with:
 - ✅ LLM-based insights with extractive fallback
 - ✅ Retry logic with exponential backoff for resilient execution
 - ✅ Rate limiting for polite web scraping
-- ✅ Web UI with REST API
+- ✅ Web UI (Express + Python bridge) with REST API
 - ✅ Audit trail and logging
 - ✅ Comprehensive test suite (39 tests)
 - ✅ Documentation and setup automation

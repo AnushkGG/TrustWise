@@ -26,9 +26,9 @@ The TrustWise Web Frontend provides a user-friendly interface for interacting wi
    - Research paper results with titles, authors, and PDF links
 
 4. **History Management**
-   - List of recently generated plans
+   - List of recently generated plans (newest first)
    - View past plan details
-   - Filter and search (planned)
+   - No in-app search or date filters (chronological list only)
 
 5. **System Status**
    - LLM provider and model information
@@ -42,7 +42,9 @@ The TrustWise Web Frontend provides a user-friendly interface for interacting wi
 **Directory:** `web/`
 
 The TypeScript Express server provides REST API endpoints. Each API call delegates
-to a Python subprocess (`api_bridge.py`) that runs the TrustWise pipeline:
+to a Python subprocess (`api_bridge.py`) that runs the TrustWise pipeline.
+
+The server applies **`express-rate-limit`**: by default **60 requests per minute per IP** (see `web/src/server.ts`). Adjust for production if needed.
 
 - `GET /` - Serve the main HTML page
 - `POST /api/submit` - Submit and execute a query
@@ -163,27 +165,56 @@ Submit a query for execution.
 }
 ```
 
-**Response:**
+**Response (success):** JSON from `api_bridge.handle_submit`. Typical shape:
 
 ```json
 {
   "success": true,
   "plan": {
     "goal": "...",
-    "domains": [...],
+    "domains": ["..."],
     "time_range": "...",
-    "sources": [...],
+    "sources": ["..."],
     "total_tasks": 4
   },
   "execution": {
     "web_tasks": 2,
     "paper_tasks": 2,
     "total_results": 4,
-    "successful": 4
+    "successful": 4,
+    "structured_items": 10,
+    "trusted_items": 6,
+    "db_inserted": 4,
+    "db_skipped": 2,
+    "cache_hit": false
   },
-  "results": [...]
+  "results": [],
+  "structured_data": [],
+  "trusted_data": [],
+  "insights": {
+    "summary": "...",
+    "key_highlights": [],
+    "confidence": 0.0,
+    "sources_breakdown": {},
+    "recommended_reading": []
+  },
+  "trust_report": {
+    "validated_count": 10,
+    "trusted_count": 6,
+    "dropped_count": 4
+  }
 }
 ```
+
+- **`results`**: Raw per-task agent outputs (same schema as `data/raw/` JSON).
+- **`structured_data`**: Normalized items from the cleaner.
+- **`trusted_data`**: Items that passed the trust validator.
+- **`insights`**: Summary and highlights from `insights/generator.py` (LLM and/or extractive fallback).
+- **`trust_report`**: Counts from validation.
+
+**Cache short-circuit:** When `ENABLE_DB_CACHE` is enabled and SQLite already has enough trusted rows for the same query (`DB_CACHE_MIN_ITEMS`), the bridge may return immediately with `"cache_hit": true`, `"web_tasks": 0`, `"paper_tasks": 0`, empty `results`, and `structured_data` / `trusted_data` / `insights` populated from the database (no live scraping run).
+
+**Errors:** `{ "success": false, "error": "..." }` (e.g. empty query).
 
 ### GET /api/plans
 
@@ -226,7 +257,7 @@ Get a specific plan.
 
 ### GET /api/status
 
-Get system status.
+Get system status (from `handle_status` in `api_bridge.py`).
 
 **Response:**
 
@@ -239,10 +270,17 @@ Get system status.
     "has_api_key": true,
     "save_plans": true,
     "save_raw_data": true,
+    "save_structured_data": true,
+    "save_trusted_data": true,
+    "save_to_db": true,
+    "enable_db_cache": true,
     "is_running": false
   }
 }
 ```
+
+- **`has_api_key`**: For Gemini, true when `GEMINI_API_KEY` is set; for Ollama, a quick `GET /api/tags` check against `OLLAMA_BASE_URL`.
+- **Persistence flags** mirror `utils/config.py` / `.env` (whether plans, raw, structured, trusted JSON and DB writes are enabled, and whether DB-backed query cache is on).
 
 ## Interface Components
 
@@ -400,6 +438,9 @@ Edit `static/css/style.css`:
    - Configured via `cors` npm package
    - Restrict origins for production use
 
+5. **HTTP rate limiting (Express)**
+   - Global `express-rate-limit` middleware on the Node server (default 60 requests/minute per IP)
+
 ### Recommended for Production
 
 1. **HTTPS**
@@ -411,43 +452,37 @@ Edit `static/css/style.css`:
    - Session management
    - API key authentication
 
-3. **Rate Limiting**
-   - Prevent abuse
-   - Use `express-rate-limit` package
+3. **Rate limiting (server)** — The Express app already uses **`express-rate-limit`** (global middleware). For public deployment, tune limits, add auth, and consider a reverse proxy (nginx, Cloudflare).
 
 4. **Input Sanitization**
    - Validate query length
    - Filter malicious content
 
-5. **CSRF Protection**
+5. **CSRF protection**
    - Use CSRF tokens for form submissions
    - Consider `csurf` or `csrf-csrf` npm packages
 
 ## Performance Optimization
 
-### Current Implementation
+### Current implementation
 
-- Synchronous request handling
-- In-memory execution state
-- No caching
+- **Request model:** Each `/api/submit` runs the Python bridge synchronously in a subprocess until the pipeline finishes (long-running requests are expected for full runs).
+- **Query cache:** When `ENABLE_DB_CACHE` is true, `api_bridge.py` may return cached trusted rows from SQLite without re-running agents (see `storage` module and `/api/submit` response `cache_hit`).
+- **Express:** Static files for `/static`; rate limiting as above.
 
-### Recommendations for Scale
+### Recommendations for scale
 
-1. **Async Processing**
-   - Use Celery for background tasks
-   - WebSocket for real-time updates
+1. **Async processing**
+   - Offload work to a job queue (e.g. Celery/RQ) and poll or use WebSockets for progress
 
-2. **Caching**
-   - Redis for session storage
-   - Cache frequent queries
+2. **Caching and storage**
+   - Optional Redis or similar for sessions or hot keys; SQLite remains the default local store
 
 3. **Database**
-   - Store plans in PostgreSQL/MongoDB
-   - Index for fast retrieval
+   - For multi-user production, consider migrating plan/history storage to a shared database with proper indexing
 
 4. **CDN**
-   - Serve static files via CDN
-   - Improve global load times
+   - Serve static assets via a CDN for global latency
 
 ## Troubleshooting
 
