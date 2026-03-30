@@ -2,6 +2,16 @@
 
 A trust-first, agent-based AI system for collecting and preparing technology-related information through controlled, auditable execution.
 
+## Website (GitHub Pages)
+
+After you enable **Pages** once (see below), the **static project site** is available at:
+
+**https://anushkgg.github.io/TrustWise/**
+
+That page introduces the project and links to this repo. It does **not** run the Python/Node pipeline (GitHub Pages is static-only). For the full web UI, run locally (`cd web && npm install && npm run build && npm start`) or deploy the [Dockerfile](Dockerfile) to Render, Fly.io, Railway, etc.
+
+**Enable Pages:** Repository **Settings** → **Pages** → **Build and deployment** → **Source:** GitHub Actions (the workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) deploys the [`docs/`](docs/) folder).
+
 ## Overview
 
 TrustWise follows a **planning-first architecture** where an LLM is used exclusively for orchestration, not for answering questions end-to-end. The system converts natural language queries into structured JSON execution plans, routes tasks to specialized agents that collect raw data, then normalizes, validates, stores, and summarizes results in downstream stages.

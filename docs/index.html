@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TrustWise — Trust-first research pipeline</title>
+    <meta
+      name="description"
+      content="Plan, collect, validate, and summarize research data with local Ollama or cloud LLMs."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --accent: #1d4ed8;
+        --border: #e2e8f0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "DM Sans", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem 1.25rem 3rem;
+      }
+      .wrap {
+        max-width: 640px;
+        width: 100%;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 0.75rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        margin: 0 0 0.5rem;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin: 0 0 1.5rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+      }
+      .card h2 {
+        font-size: 0.95rem;
+        margin: 0 0 0.5rem;
+      }
+      .card p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--text);
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      footer {
+        margin-top: 2rem;
+        font-size: 0.8rem;
+        color: var(--muted);
+        text-align: center;
+      }
+      img.ci {
+        vertical-align: middle;
+        margin-top: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <p class="badge">GitHub Pages · Project site</p>
+      <h1>TrustWise</h1>
+      <p class="lead">
+        Trust-first research pipeline: planning, web and paper agents, trust scoring, SQLite, and insights
+        (local Ollama or optional Gemini).
+      </p>
+
+      <div class="card">
+        <h2>Source &amp; CI</h2>
+        <p>
+          This static page is hosted by GitHub Pages. The full application runs Python and Node on your machine or a
+          container host — not on Pages.
+        </p>
+        <div class="actions">
+          <a class="btn btn-primary" href="https://github.com/AnushkGG/TrustWise" id="repoLink">View repository</a>
+          <a class="btn" href="https://github.com/AnushkGG/TrustWise/actions">GitHub Actions</a>
+        </div>
+        <p style="margin-top: 1rem">
+          <a href="https://github.com/AnushkGG/TrustWise/actions/workflows/ci.yml"
+            ><img
+              class="ci"
+              src="https://github.com/AnushkGG/TrustWise/actions/workflows/ci.yml/badge.svg?branch=main"
+              alt="CI status"
+          /></a>
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Run the full UI locally</h2>
+        <p>
+          Install dependencies, start Ollama (optional), then from the repo root:
+          <code style="background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.85rem"
+            >cd web && npm install && npm run build && npm start</code
+          >
+          — open <strong>http://localhost:5000</strong>.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Deploy the full stack online</h2>
+        <p>
+          Use the included <code>Dockerfile</code> on Render, Fly.io, Railway, or any container host. Set
+          <code>HOST=0.0.0.0</code> and <code>PORT</code> as required by the platform.
+        </p>
+      </div>
+
+      <footer>
+        TrustWise ·
+        <a href="https://github.com/AnushkGG/TrustWise/blob/main/README.md">Documentation</a>
+      </footer>
+    </div>
+  </body>
+</html>
