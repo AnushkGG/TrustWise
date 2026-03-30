@@ -16,9 +16,18 @@ chmod +x start_web.sh
 ./start_web.sh
 ```
 
-### Or directly with Python
+### Or directly with npm
 
 ```bash
+cd web
+npm run build
+npm start
+```
+
+### Legacy Flask mode (if preferred)
+
+```bash
+pip install flask
 python app.py
 ```
 
@@ -32,7 +41,11 @@ http://localhost:5000
 
 ## First Use
 
-1. **Check the Status Indicator** (top right)
+1. **Prerequisites**
+   - Node.js 18+ installed
+   - Python 3.10+ with `pip install -r requirements.txt` completed
+
+2. **Check the Status Indicator** (top right)
    - 🟢 Green = Real LLM API connected
    - 🟡 Yellow = Mock mode (no API key)
 
@@ -71,9 +84,11 @@ See [FRONTEND.md](FRONTEND.md) for complete API documentation.
 
 ### Server Won't Start
 
-- Make sure Flask is installed: `pip install -r requirements.txt`
+- Make sure Node.js is installed: `node --version`
+- Make sure dependencies are installed: `cd web && npm install`
+- Make sure Python dependencies are installed: `pip install -r requirements.txt`
 - Check if port 5000 is already in use
-- Try running directly: `python app.py`
+- Try building and running directly: `cd web && npm run build && npm start`
 
 ### No API Key Warning
 

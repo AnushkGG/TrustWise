@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrustWise — Trust-First AI Research System</title>
+    <meta name="description" content="TrustWise is a trust-first AI system for intelligent query planning, task scheduling, and automated research data collection." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <!-- Toast notification container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+      <!-- ═══ Header ═══ -->
+      <header class="header" id="appHeader">
+        <div class="header-content">
+          <h1>🔒 TrustWise</h1>
+          <p class="subtitle">Trust-First AI Research &amp; Execution Pipeline</p>
+        </div>
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-dot"></span>
+          <span class="status-text">Connecting…</span>
+        </div>
+      </header>
+
+      <!-- ═══ Main Content ═══ -->
+      <main class="main-content">
+        <!-- ── Query Input ── -->
+        <section class="query-section" id="querySection">
+          <div class="section-header">
+            <div>
+              <h2>Submit a Query</h2>
+              <p>Describe your research goal — TrustWise will plan, schedule, and execute for you.</p>
+            </div>
+          </div>
+
+          <form id="queryForm" class="query-form" autocomplete="off">
+            <div class="form-group">
+              <label for="queryInput">Research Query</label>
+              <textarea
+                id="queryInput"
+                name="query"
+                rows="3"
+                placeholder="e.g., Latest AI developments in healthcare and their clinical trial outcomes…"
+                required
+              ></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              <span class="btn-icon">⚡</span>
+              <span class="btn-text">Generate Plan &amp; Execute</span>
+            </button>
+          </form>
+
+          <!-- Example Queries -->
+          <div class="example-queries">
+            <p class="examples-label">Try an example</p>
+            <div class="example-chips">
+              <button class="chip" type="button" data-query="Latest AI developments in healthcare">
+                🏥 AI in Healthcare
+              </button>
+              <button class="chip" type="button" data-query="Recent research on transformer models in computer vision">
+                🧠 Transformer Models
+              </button>
+              <button class="chip" type="button" data-query="Weekly tech updates on cybersecurity">
+                🔐 Cybersecurity News
+              </button>
+              <button class="chip" type="button" data-query="Latest quantum computing breakthroughs">
+                ⚛️ Quantum Computing
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Loading Indicator ── -->
+        <div id="loadingIndicator" class="loading-section" style="display: none">
+          <div class="spinner"></div>
+          <p>Processing your query…</p>
+          <div class="loading-steps" id="loadingSteps"></div>
+        </div>
+
+        <!-- ── Results Section ── -->
+        <section id="resultsSection" class="results-section" style="display: none">
+          <div class="section-header">
+            <h2>Execution Results</h2>
+            <button class="btn btn-secondary btn-sm" id="clearResultsBtn" type="button">
+              ✕ Clear
+            </button>
+          </div>
+
+          <!-- Plan Summary -->
+          <div class="plan-summary" id="planSummary"></div>
+
+          <!-- Execution Summary -->
+          <div class="execution-summary" id="executionSummary"></div>
+
+          <!-- Task Results -->
+          <div class="task-results" id="taskResults"></div>
+        </section>
+
+        <!-- ── Saved Plans ── -->
+        <section class="saved-plans-section" id="savedPlansSection">
+          <div class="section-header">
+            <h2>Recent Plans</h2>
+            <button class="btn btn-secondary btn-sm" id="refreshPlansBtn" type="button">
+              ↻ Refresh
+            </button>
+          </div>
+          <div id="plansList" class="plans-list">
+            <p class="loading-text">Loading saved plans…</p>
+          </div>
+        </section>
+      </main>
+
+      <!-- ═══ Footer ═══ -->
+      <footer class="footer">
+        <p>
+          TrustWise — Trust-First AI Research System · Built with trust at the core ·
+          <a href="https://github.com/yourusername/trustwise" target="_blank" rel="noopener">
+            Documentation ↗
+          </a>
+        </p>
+      </footer>
+    </div>
+
+    <!-- Plan Detail Modal -->
+    <div class="modal-overlay" id="planModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Plan Details</h3>
+          <button class="modal-close" id="modalCloseBtn" type="button">✕</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

@@ -37,11 +37,12 @@ The TrustWise Web Frontend provides a user-friendly interface for interacting wi
 
 ## Architecture
 
-### Backend (Flask)
+### Backend (TypeScript / Express)
 
-**File:** `app.py`
+**Directory:** `web/`
 
-The Flask backend provides REST API endpoints for:
+The TypeScript Express server provides REST API endpoints. Each API call delegates
+to a Python subprocess (`api_bridge.py`) that runs the TrustWise pipeline:
 
 - `GET /` - Serve the main HTML page
 - `POST /api/submit` - Submit and execute a query
@@ -50,18 +51,27 @@ The Flask backend provides REST API endpoints for:
 - `GET /api/status` - Get system configuration status
 - `GET /api/raw-data` - List raw data files
 
+### Legacy Backend (Flask)
+
+**File:** `app.py` (kept for reference / backwards compatibility)
+
 ### Frontend Structure
 
 ```
-TrustWise_Anushk/
-├── app.py                    # Flask backend
-├── templates/
-│   └── index.html           # Main HTML template
+TrustWise/
+├── web/                         # TypeScript web server
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── src/
+│   │   └── server.ts           # Express server
+│   └── public/
+│       └── index.html          # Main HTML page
+├── api_bridge.py               # Python API bridge
 └── static/
     ├── css/
-    │   └── style.css        # Styles
+    │   └── style.css           # Styles
     └── js/
-        └── main.js          # JavaScript logic
+        └── main.js             # JavaScript logic
 ```
 
 ## Installation & Setup
@@ -69,10 +79,12 @@ TrustWise_Anushk/
 ### 1. Install Dependencies
 
 ```bash
+# Python dependencies (for the pipeline)
 pip install -r requirements.txt
-```
 
-This installs Flask along with all other dependencies.
+# TypeScript/Node.js dependencies (for the web server)
+cd web && npm install
+```
 
 ### 2. Configure Environment
 
@@ -87,7 +99,9 @@ GEMINI_API_KEY=your_key_here
 ### 3. Run the Web Server
 
 ```bash
-python app.py
+cd web
+npm run build
+npm start
 ```
 
 The server will start on `http://localhost:5000`
@@ -309,13 +323,21 @@ The interface is fully responsive:
 
 #### 1. Add API Endpoint (Backend)
 
-Edit `app.py`:
+Edit `web/src/server.ts`:
+
+```typescript
+app.get("/api/my-endpoint", async (_req: Request, res: Response) => {
+  const result = await callPythonBridge("my_action");
+  res.json(result);
+});
+```
+
+Or add the Python handler in `api_bridge.py`:
 
 ```python
-@app.route('/api/my-endpoint')
-def my_endpoint():
+def handle_my_action(payload: dict) -> dict:
     # Your logic here
-    return jsonify({'success': True, 'data': []})
+    return {"success": True, "data": []}
 ```
 
 #### 2. Add Frontend Function (JavaScript)
@@ -332,7 +354,7 @@ async function myFunction() {
 
 #### 3. Update HTML (if needed)
 
-Edit `templates/index.html`:
+Edit `web/public/index.html`:
 
 ```html
 <div id="myNewSection">
@@ -375,8 +397,8 @@ Edit `static/css/style.css`:
    - Using `textContent` instead of `innerHTML` for user input
 
 4. **CORS**
-   - Default Flask CORS settings
-   - Add `flask-cors` for production if needed
+   - Configured via `cors` npm package
+   - Restrict origins for production use
 
 ### Recommended for Production
 
@@ -391,15 +413,15 @@ Edit `static/css/style.css`:
 
 3. **Rate Limiting**
    - Prevent abuse
-   - Use `flask-limiter`
+   - Use `express-rate-limit` package
 
 4. **Input Sanitization**
    - Validate query length
    - Filter malicious content
 
 5. **CSRF Protection**
-   - Use Flask-WTF for forms
-   - CSRF tokens
+   - Use CSRF tokens for form submissions
+   - Consider `csurf` or `csrf-csrf` npm packages
 
 ## Performance Optimization
 
@@ -453,9 +475,10 @@ lsof -ti:5000 | xargs kill
 
 **Solution:**
 
-- Check if Flask server is running
+- Check if the TypeScript server is running
 - Verify URL is `http://localhost:5000`
 - Check browser console for errors
+- Verify the Python bridge is working: `echo '{"action":"status"}' | python api_bridge.py`
 
 #### 3. Results Not Displaying
 
@@ -475,7 +498,7 @@ lsof -ti:5000 | xargs kill
 
 - Clear browser cache (Ctrl+Shift+R)
 - Check `static/css/style.css` exists
-- Verify Flask is serving static files correctly
+- Verify the Express server is serving static files correctly
 
 ## Future Enhancements
 
@@ -568,4 +591,4 @@ For issues or questions:
 
 ---
 
-**Note:** This frontend is part of Phase 1 implementation. Features like trust validation, credibility scoring, and advanced summarization will be added in future phases.
+**Note:** This frontend uses a TypeScript/Express web server that delegates to the Python pipeline via `api_bridge.py`.

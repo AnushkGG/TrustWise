@@ -7,6 +7,7 @@ Provides a user-friendly UI for submitting queries and viewing results.
 
 import json
 import os
+import secrets
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_from_directory
@@ -28,6 +29,7 @@ from utils.retry import execute_with_retry
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
 logger = setup_logger(__name__)
 
 # Store active execution state
@@ -220,7 +222,7 @@ def submit_query():
         execution_state["is_running"] = False
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'An internal error occurred while processing the query.'
         }), 500
 
 
@@ -261,7 +263,7 @@ def list_plans():
         logger.error(f"Failed to list plans: {e}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Failed to list plans.'
         }), 500
 
 
@@ -284,7 +286,17 @@ def get_plan(filename):
                 'error': 'Invalid filename'
             }), 400
         
-        plan_file = Config.PLANS_DIR / filename
+        plan_file = (Config.PLANS_DIR / filename).resolve()
+        
+        # Verify the resolved path is still within PLANS_DIR
+        plans_dir = Config.PLANS_DIR.resolve()
+        try:
+            plan_file.relative_to(plans_dir)
+        except ValueError:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid filename'
+            }), 400
         
         if not plan_file.exists():
             return jsonify({
@@ -304,7 +316,7 @@ def get_plan(filename):
         logger.error(f"Failed to get plan {filename}: {e}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Failed to retrieve plan.'
         }), 500
 
 
@@ -350,7 +362,7 @@ def get_status():
         logger.error(f"Failed to get status: {e}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Failed to retrieve system status.'
         }), 500
 
 
@@ -388,7 +400,7 @@ def list_raw_data():
         logger.error(f"Failed to list raw data: {e}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Failed to list raw data.'
         }), 500
 
 
@@ -423,4 +435,5 @@ if __name__ == '__main__':
     print("=" * 60)
     print()
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+    app.run(debug=debug_mode, host='127.0.0.1', port=5000)
