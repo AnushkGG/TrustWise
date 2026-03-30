@@ -111,6 +111,8 @@ cd TrustWise
 
 ### 2. Create Virtual Environment
 
+Use **Python 3.11** if possible (matches CI). On Windows, **Python 3.14** may fail to install `lxml` from source; use 3.10-3.12 or install libxml2 build prerequisites.
+
 ```bash
 python -m venv venv
 venv\Scripts\activate  # Windows
@@ -144,19 +146,32 @@ Use a model that follows JSON instructions well for plan generation.
 
 **Optional — Google Gemini (cloud):**
 
+Without a key, planning does not call Gemini; a query-derived mock plan is used when no local LLM is available. Set a key only when you choose Gemini as the planner.
+
 ```env
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=your_actual_api_key_here
 LLM_MODEL=gemini-2.0-flash
 ```
 
-**Note:** If Ollama is not running while `LLM_PROVIDER=ollama`, planning falls back to a built-in mock plan so the rest of the pipeline can still be tested. For Gemini without a key, the same mock is used.
+**Combined mode — Gemini + Ollama in parallel:**
+
+```env
+LLM_PROVIDER=both
+GEMINI_API_KEY=your_actual_api_key_here
+GEMINI_MODEL=gemini-2.0-flash   # optional per-provider override
+OLLAMA_MODEL=llama3.2            # optional per-provider override
+```
+
+When `LLM_PROVIDER=both`, TrustWise calls both Gemini and Ollama concurrently and merges their plans and insight summaries. Every task and key-point in the output carries an `origin` field (`"gemini"`, `"ollama"`, or `"both"` for near-duplicate items suggested by both providers) so users can see where each item came from. If one provider fails, the other's result is used alone with a logged warning.
+
+**Note:** If Ollama is not running while `LLM_PROVIDER=ollama`, planning falls back to a **query-derived mock plan** (field `plan_source: mock`) so the rest of the pipeline can still be tested. For Gemini without a key, the same mock is used.
 
 ## Usage
 
 ### Option 1: Web Interface (Recommended)
 
-The recommended UI is the **TypeScript/Express** server in `web/`, which calls the Python pipeline via `api_bridge.py`. You need **Node.js 18+** (install dependencies once: `cd web && npm install`).
+The recommended UI is the **TypeScript/Express** server in `web/`, which calls the Python pipeline via `api_bridge.py`. The server runs `python api_bridge.py`; set `PYTHON_EXE` or `TRUSTWISE_PYTHON` to your venv interpreter if `python` on PATH is wrong. You need **Node.js 18+** (install dependencies once: `cd web && npm install`).
 
 ```bash
 # Windows
@@ -230,10 +245,12 @@ Plan saved to: data\plans
 
 | Variable               | Default            | Description |
 | ---------------------- | ------------------ | ----------- |
-| `LLM_PROVIDER`         | `ollama`           | LLM provider: `ollama` (local) or `gemini` (cloud) |
-| `GEMINI_API_KEY`       | -                  | Google Gemini API key (when using Gemini) |
+| `LLM_PROVIDER`         | `ollama`           | LLM provider: `ollama` (local), `gemini` (cloud), or `both` (parallel merge) |
+| `GEMINI_API_KEY`       | -                  | Optional: Google Gemini API key (required when `LLM_PROVIDER` is `gemini` or `both`) |
 | `OLLAMA_BASE_URL`      | `http://localhost:11434` | Local Ollama server URL |
-| `LLM_MODEL`            | `llama3.2`         | Model tag (`ollama pull` first) or Gemini model id |
+| `LLM_MODEL`            | `llama3.2`         | Shared model tag (used unless per-provider override is set) |
+| `GEMINI_MODEL`         | -                  | Per-provider model override for Gemini (falls back to `LLM_MODEL`) |
+| `OLLAMA_MODEL`         | -                  | Per-provider model override for Ollama (falls back to `LLM_MODEL`) |
 | `LLM_TEMPERATURE`      | `0.0`              | Temperature (0 for deterministic output) |
 | `LLM_MAX_TOKENS`       | `2000`             | Max tokens in response |
 | `WEB_SCRAPER_TIMEOUT`  | `10`               | HTTP request timeout (seconds) |
@@ -344,7 +361,7 @@ TrustWise/
 ├── agents/                   # Execution agents
 │   ├── __init__.py
 │   ├── web_agent.py          # Web scraping (Crawl4AI/DuckDuckGo/Wikipedia)
-│   └── research_agent.py     # arXiv papers
+│   └── research_agent.py     # arXiv, OpenAlex, Semantic Scholar
 │
 ├── cleaner/                  # Data normalization
 │   ├── __init__.py

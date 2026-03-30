@@ -22,11 +22,13 @@ class Config:
     DB_PATH = DATA_DIR / "trustwise.db"
     CONFIG_DIR = BASE_DIR / "config"
     
-    # LLM Settings — Gemini (cloud) or Ollama (local); default is local Ollama
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")  # gemini or ollama
+    # LLM Settings — Gemini (cloud), Ollama (local), or both; default is local Ollama
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")  # gemini, ollama, or both
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     LLM_MODEL: str = os.getenv("LLM_MODEL", "llama3.2")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "")  # per-provider override (falls back to LLM_MODEL)
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "")   # per-provider override (falls back to LLM_MODEL)
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.0"))
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
     
@@ -59,12 +61,22 @@ class Config:
         cls.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     
     @classmethod
+    def get_gemini_model(cls) -> str:
+        """Resolved model name for Gemini (per-provider override or shared default)."""
+        return cls.GEMINI_MODEL or cls.LLM_MODEL
+
+    @classmethod
+    def get_ollama_model(cls) -> str:
+        """Resolved model name for Ollama (per-provider override or shared default)."""
+        return cls.OLLAMA_MODEL or cls.LLM_MODEL
+
+    @classmethod
     def validate(cls):
         """Validate required configuration."""
-        if cls.LLM_PROVIDER == "gemini" and not cls.GEMINI_API_KEY:
-            raise ValueError("GEMINI_API_KEY is required when LLM_PROVIDER is 'gemini'")
-        if cls.LLM_PROVIDER not in ["gemini", "ollama"]:
-            raise ValueError(f"Invalid LLM_PROVIDER: {cls.LLM_PROVIDER}. Must be 'gemini' or 'ollama'")
+        if cls.LLM_PROVIDER in ("gemini", "both") and not cls.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY is required when LLM_PROVIDER is 'gemini' or 'both'")
+        if cls.LLM_PROVIDER not in ("gemini", "ollama", "both"):
+            raise ValueError(f"Invalid LLM_PROVIDER: {cls.LLM_PROVIDER}. Must be 'gemini', 'ollama', or 'both'")
 
 # Initialize directories on import
 Config.ensure_directories()

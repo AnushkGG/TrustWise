@@ -70,6 +70,16 @@ http://localhost:5000
    - Scroll down to "Recent Plans" section
    - Click any plan to view its details
 
+## Data sources (what the agents use)
+
+TrustWise does **not** use Google Custom Search. Collection works as follows:
+
+| Layer | Sources |
+|-------|---------|
+| **Web agent** | [Crawl4AI](https://github.com/unclecode/crawl4ai) (headless browser scraping), [DuckDuckGo](https://duckduckgo.com/) search for URLs, Wikipedia, plain HTTP fallback |
+| **Research agent** | [arXiv](https://arxiv.org/) API, [OpenAlex](https://openalex.org/) API, [Semantic Scholar](https://www.semanticscholar.org/) API — all **keyless** (optional `OPENALEX_MAILTO` in `.env` for OpenAlex polite use) |
+| **LLM planning** | **Ollama** (default, local) or **Google Gemini** (optional cloud). Set `GEMINI_API_KEY` in `.env` only if `LLM_PROVIDER=gemini`. Without a key (or if Ollama is down), planning uses a **query-derived mock plan** so the rest of the pipeline still runs. |
+
 ## API Endpoints
 
 If you're building automation or integrations:
@@ -93,9 +103,10 @@ See [FRONTEND.md](FRONTEND.md) for complete API documentation.
 
 ### No API Key Warning
 
-- This is normal! The system works in mock mode
-- To use real LLM: Add API key to `.env` file
-- Restart the server after adding the key
+- This is normal when **`GEMINI_API_KEY`** is not set or you use **Ollama** without it running: planning falls back to a **query-derived mock plan** (`plan_source: mock`) so you can still test the pipeline.
+- **Optional — real cloud LLM:** To use **Google Gemini** for planning, set `LLM_PROVIDER=gemini` and add `GEMINI_API_KEY` to `.env`.
+- **Optional — local LLM:** Run [Ollama](https://ollama.com/) and set `LLM_PROVIDER=ollama` (no Gemini key required).
+- Restart the server after changing `.env`.
 
 ### Results Not Showing
 

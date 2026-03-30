@@ -1,7 +1,9 @@
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from difflib import SequenceMatcher
 import json
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from utils.config import Config
 from utils.logger import setup_logger
@@ -114,7 +116,8 @@ def _parse_json_response(raw: str) -> Dict[str, Any]:
         return {}
 
 
-def _call_llm_for_summary(query: str, context: str) -> Dict[str, Any]:
+def _summary_prompt(query: str, context: str) -> Tuple[str, str]:
+    """Return (system_prompt, user_prompt) pair for summary generation."""
     system_prompt = (
         "You are a precise research summarizer. "
         "Write concise, factual summaries from provided sources only. "
@@ -131,55 +134,187 @@ def _call_llm_for_summary(query: str, context: str) -> Dict[str, Any]:
         f"Query: {query}\n\n"
         f"Sources:\n{context}"
     )
+    return system_prompt, user_prompt
 
+
+def _ollama_summary(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+    """Call Ollama for an insight summary."""
+    import requests
+
+    model_name = Config.get_ollama_model()
+    payload = {
+        "model": model_name,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "stream": False,
+        "format": "json",
+        "options": {"temperature": 0.1, "num_predict": 500},
+    }
+    response = requests.post(
+        f"{Config.OLLAMA_BASE_URL}/api/chat",
+        json=payload,
+        timeout=90,
+    )
+    response.raise_for_status()
+    content = response.json().get("message", {}).get("content", "")
+    return _parse_json_response(content)
+
+
+def _gemini_summary(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+    """Call Gemini for an insight summary."""
+    import google.generativeai as genai
+
+    genai.configure(api_key=Config.GEMINI_API_KEY)
+    model_name = Config.get_gemini_model()
+    model = genai.GenerativeModel(
+        model_name=model_name,
+        generation_config=genai.GenerationConfig(
+            temperature=0.1,
+            max_output_tokens=500,
+            response_mime_type="application/json",
+        ),
+        system_instruction=system_prompt,
+    )
+    response = model.generate_content(user_prompt)
+    content = response.text or ""
+    return _parse_json_response(content)
+
+
+# ---------------------------------------------------------------------------
+# Merge helpers for insight summaries
+# ---------------------------------------------------------------------------
+
+def _point_similarity(a: str, b: str) -> float:
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+
+
+def _merge_summaries(
+    gemini_result: Dict[str, Any],
+    ollama_result: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Merge two LLM summaries with source attribution on every field."""
+    g_answer = str(gemini_result.get("concise_answer") or "").strip()
+    o_answer = str(ollama_result.get("concise_answer") or "").strip()
+
+    if len(g_answer) >= len(o_answer) and g_answer:
+        concise_answer = g_answer
+        concise_answer_origin = "gemini"
+    elif o_answer:
+        concise_answer = o_answer
+        concise_answer_origin = "ollama"
+    else:
+        concise_answer = ""
+        concise_answer_origin = ""
+
+    g_points = gemini_result.get("key_points") or []
+    o_points = ollama_result.get("key_points") or []
+    if not isinstance(g_points, list):
+        g_points = []
+    if not isinstance(o_points, list):
+        o_points = []
+    g_points = [str(p).strip() for p in g_points if str(p).strip()]
+    o_points = [str(p).strip() for p in o_points if str(p).strip()]
+
+    tagged_g = [{"text": p, "origin": "gemini"} for p in g_points]
+    tagged_o = [{"text": p, "origin": "ollama"} for p in o_points]
+
+    # Balanced interleave
+    interleaved: List[Dict[str, str]] = []
+    it_g, it_o = iter(tagged_g), iter(tagged_o)
+    done_g = done_o = False
+    sentinel = object()
+    while not (done_g and done_o):
+        if not done_g:
+            val = next(it_g, sentinel)
+            if val is sentinel:
+                done_g = True
+            else:
+                interleaved.append(val)  # type: ignore[arg-type]
+        if not done_o:
+            val = next(it_o, sentinel)
+            if val is sentinel:
+                done_o = True
+            else:
+                interleaved.append(val)  # type: ignore[arg-type]
+
+    # Deduplicate near-identical points
+    kept: List[Dict[str, str]] = []
+    for item in interleaved:
+        dup = False
+        for existing in kept:
+            if _point_similarity(item["text"], existing["text"]) >= 0.75:
+                existing["origin"] = "both"
+                dup = True
+                break
+        if not dup:
+            kept.append(item)
+
+    return {
+        "concise_answer": concise_answer,
+        "concise_answer_origin": concise_answer_origin,
+        "key_points": kept[:5],
+    }
+
+
+def _call_both_for_summary(query: str, context: str) -> Dict[str, Any]:
+    """Call Gemini and Ollama in parallel for summary, merge results."""
+    sys_p, usr_p = _summary_prompt(query, context)
+
+    results: Dict[str, Dict[str, Any]] = {}
+    errors: Dict[str, str] = {}
+
+    def _run_gemini() -> Tuple[str, Dict[str, Any]]:
+        return "gemini", _gemini_summary(sys_p, usr_p)
+
+    def _run_ollama() -> Tuple[str, Dict[str, Any]]:
+        return "ollama", _ollama_summary(sys_p, usr_p)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = {pool.submit(fn): fn for fn in (_run_gemini, _run_ollama)}
+        for future in as_completed(futures):
+            try:
+                provider, data = future.result()
+                results[provider] = data
+            except Exception as exc:
+                fn = futures[future]
+                provider = "gemini" if fn is _run_gemini else "ollama"
+                errors[provider] = str(exc)
+                logger.warning("[Insights] %s summary failed in 'both' mode: %s", provider, exc)
+
+    gemini_res = results.get("gemini") or {}
+    ollama_res = results.get("ollama") or {}
+
+    if gemini_res and ollama_res:
+        return _merge_summaries(gemini_res, ollama_res)
+
+    if gemini_res:
+        return gemini_res
+    if ollama_res:
+        return ollama_res
+    return {}
+
+
+def _call_llm_for_summary(query: str, context: str) -> Dict[str, Any]:
+    """Route to the correct summary provider(s)."""
     provider = Config.LLM_PROVIDER
+
+    if provider == "both":
+        return _call_both_for_summary(query, context)
+
+    sys_p, usr_p = _summary_prompt(query, context)
 
     if provider == "ollama":
         try:
-            import requests
-
-            payload = {
-                "model": Config.LLM_MODEL,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                "stream": False,
-                "format": "json",
-                "options": {
-                    "temperature": 0.1,
-                    "num_predict": 500,
-                },
-            }
-            response = requests.post(
-                f"{Config.OLLAMA_BASE_URL}/api/chat",
-                json=payload,
-                timeout=90,
-            )
-            response.raise_for_status()
-            content = response.json().get("message", {}).get("content", "")
-            return _parse_json_response(content)
+            return _ollama_summary(sys_p, usr_p)
         except Exception as exc:
             logger.warning("[Insights] Ollama summary failed: %s", exc)
             return {}
 
     if provider == "gemini" and Config.GEMINI_API_KEY:
         try:
-            import google.generativeai as genai
-
-            genai.configure(api_key=Config.GEMINI_API_KEY)
-            model = genai.GenerativeModel(
-                model_name=Config.LLM_MODEL,
-                generation_config=genai.GenerationConfig(
-                    temperature=0.1,
-                    max_output_tokens=500,
-                    response_mime_type="application/json",
-                ),
-                system_instruction=system_prompt,
-            )
-            response = model.generate_content(user_prompt)
-            content = response.text or ""
-            return _parse_json_response(content)
+            return _gemini_summary(sys_p, usr_p)
         except Exception as exc:
             logger.warning("[Insights] Gemini summary failed: %s", exc)
             return {}
@@ -240,15 +375,29 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str) -> Dict[s
     key_points = ranked_sentences[:5]
     concise_answer = " ".join(ranked_sentences[:3]).strip()
 
-    # Prefer LLM-generated brief summary when model is available.
     summary_method = "extractive"
+    concise_answer_origin = ""
     context = _build_summary_context(ranked_items)
     if context:
         llm_json = _call_llm_for_summary(query=query, context=context)
         llm_answer = _normalize_sentence(str(llm_json.get("concise_answer") or ""))
+        concise_answer_origin = llm_json.get("concise_answer_origin", "")
         llm_points = llm_json.get("key_points") or []
+
         if isinstance(llm_points, list):
-            llm_points = [_normalize_sentence(str(p)) for p in llm_points if str(p).strip()]
+            # In "both" mode points are dicts {"text": ..., "origin": ...};
+            # in single-provider mode they are plain strings.
+            normalized: list = []
+            for p in llm_points:
+                if isinstance(p, dict):
+                    txt = _normalize_sentence(str(p.get("text") or ""))
+                    if txt:
+                        normalized.append({"text": txt, "origin": p.get("origin", "")})
+                else:
+                    txt = _normalize_sentence(str(p))
+                    if txt:
+                        normalized.append(txt)
+            llm_points = normalized
         else:
             llm_points = []
 
@@ -292,7 +441,7 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str) -> Dict[s
         f"with average trust score {avg_score:.2f}."
     )
 
-    return {
+    result = {
         "summary": summary,
         "concise_answer": concise_answer,
         "key_points": key_points,
@@ -304,3 +453,6 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str) -> Dict[s
         "content_type_breakdown": dict(content_types),
         "confidence": round(avg_score, 3),
     }
+    if concise_answer_origin:
+        result["concise_answer_origin"] = concise_answer_origin
+    return result
