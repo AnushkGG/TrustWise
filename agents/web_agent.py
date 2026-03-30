@@ -21,6 +21,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 from utils.config import Config
 from utils.logger import setup_logger
+from utils.rate_limiter import web_limiter
 
 logger = setup_logger(__name__)
 
@@ -482,6 +483,7 @@ def _fetch_from_wikipedia(search_terms: str) -> str:
             "limit": 1,
             "format": "json",
         }
+        web_limiter.acquire()
         response = requests.get(url, params=search_params, timeout=10)
         response.raise_for_status()
         search_results = response.json()
@@ -501,6 +503,7 @@ def _fetch_from_wikipedia(search_terms: str) -> str:
             "exintro": False,
             "format": "json",
         }
+        web_limiter.acquire()
         response = requests.get(url, params=content_params, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -547,6 +550,7 @@ def _fetch_basic_http(url: str) -> str:
             "AppleWebKit/537.36"
         )
     }
+    web_limiter.acquire()
     response = requests.get(url, headers=headers, timeout=Config.WEB_SCRAPER_TIMEOUT)
     response.raise_for_status()
 

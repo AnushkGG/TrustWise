@@ -130,8 +130,8 @@ def test_mock_llm():
     from utils.config import Config
     
     # Temporarily ensure no API key (to force mock)
-    original_key = Config.OPENAI_API_KEY
-    Config.OPENAI_API_KEY = None
+    original_key = Config.GEMINI_API_KEY
+    Config.GEMINI_API_KEY = None
     
     try:
         response = call_llm("test query")
@@ -147,7 +147,7 @@ def test_mock_llm():
         print(f"   ✗ Mock LLM failed: {e}")
         result = False
     finally:
-        Config.OPENAI_API_KEY = original_key
+        Config.GEMINI_API_KEY = original_key
     
     return result
 

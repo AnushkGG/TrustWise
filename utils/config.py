@@ -22,12 +22,11 @@ class Config:
     DB_PATH = DATA_DIR / "trustwise.db"
     CONFIG_DIR = BASE_DIR / "config"
     
-    # LLM Settings
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "openai")  # openai, anthropic, or ollama
-    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
-    ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
+    # LLM Settings — only Gemini (cloud) and Ollama (local) are supported
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "gemini")  # gemini or ollama
+    GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini-2.0-flash")
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.0"))
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
     
@@ -57,12 +56,10 @@ class Config:
     @classmethod
     def validate(cls):
         """Validate required configuration."""
-        if cls.LLM_PROVIDER == "openai" and not cls.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY is required when LLM_PROVIDER is 'openai'")
-        if cls.LLM_PROVIDER == "anthropic" and not cls.ANTHROPIC_API_KEY:
-            raise ValueError("ANTHROPIC_API_KEY is required when LLM_PROVIDER is 'anthropic'")
-        if cls.LLM_PROVIDER not in ["openai", "anthropic", "ollama"]:
-            raise ValueError(f"Invalid LLM_PROVIDER: {cls.LLM_PROVIDER}. Must be 'openai', 'anthropic', or 'ollama'")
+        if cls.LLM_PROVIDER == "gemini" and not cls.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY is required when LLM_PROVIDER is 'gemini'")
+        if cls.LLM_PROVIDER not in ["gemini", "ollama"]:
+            raise ValueError(f"Invalid LLM_PROVIDER: {cls.LLM_PROVIDER}. Must be 'gemini' or 'ollama'")
 
 # Initialize directories on import
 Config.ensure_directories()

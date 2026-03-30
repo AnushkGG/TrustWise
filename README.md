@@ -38,7 +38,7 @@ Raw Data Storage (local files)
 
 - **orchestrator/**: LLM-based planning layer
   - `orchestrator.py`: Core planning logic with plan logging
-  - `llm_client.py`: OpenAI/Anthropic API integration
+  - `llm_client.py`: Gemini/Ollama LLM integration
   - `prompts.py`: Structured prompts with JSON schema
   - `schema.py`: Plan validation
 
@@ -98,9 +98,17 @@ copy .env.example .env  # Windows
 Edit `.env` and add your API key:
 
 ```env
-LLM_PROVIDER=openai
-OPENAI_API_KEY=your_actual_api_key_here
-LLM_MODEL=gpt-4
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_actual_api_key_here
+LLM_MODEL=gemini-2.0-flash
+```
+
+Or use a local Ollama model (no API key needed):
+
+```env
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+LLM_MODEL=llama3
 ```
 
 **Note**: The system works with mock responses if no API key is provided (for testing).
@@ -181,19 +189,19 @@ Plan saved to: data\plans
 
 ## Configuration
 
-| Variable              | Default  | Description                           |
-| --------------------- | -------- | ------------------------------------- |
-| `LLM_PROVIDER`        | `openai` | LLM provider: `openai` or `anthropic` |
-| `OPENAI_API_KEY`      | -        | OpenAI API key                        |
-| `ANTHROPIC_API_KEY`   | -        | Anthropic API key                     |
-| `LLM_MODEL`           | `gpt-4`  | Model to use                          |
-| `LLM_TEMPERATURE`     | `0.0`    | Temperature (0 for deterministic)     |
-| `LLM_MAX_TOKENS`      | `2000`   | Max tokens in response                |
-| `WEB_SCRAPER_TIMEOUT` | `10`     | HTTP request timeout (seconds)        |
-| `ARXIV_MAX_RESULTS`   | `5`      | Max papers per search                 |
-| `SAVE_PLANS`          | `true`   | Save plans to `data/plans/`           |
-| `SAVE_RAW_DATA`       | `true`   | Save agent outputs to `data/raw/`     |
-| `LOG_LEVEL`           | `INFO`   | Logging level                         |
+| Variable              | Default            | Description                         |
+| --------------------- | ------------------ | ----------------------------------- |
+| `LLM_PROVIDER`        | `gemini`           | LLM provider: `gemini` or `ollama`  |
+| `GEMINI_API_KEY`      | -                  | Google Gemini API key               |
+| `OLLAMA_BASE_URL`     | `localhost:11434`  | Local Ollama server URL             |
+| `LLM_MODEL`           | `gemini-2.0-flash` | Model to use                        |
+| `LLM_TEMPERATURE`     | `0.0`              | Temperature (0 for deterministic)   |
+| `LLM_MAX_TOKENS`      | `2000`             | Max tokens in response              |
+| `WEB_SCRAPER_TIMEOUT` | `10`               | HTTP request timeout (seconds)      |
+| `ARXIV_MAX_RESULTS`   | `5`                | Max papers per search               |
+| `SAVE_PLANS`          | `true`             | Save plans to `data/plans/`         |
+| `SAVE_RAW_DATA`       | `true`             | Save agent outputs to `data/raw/`   |
+| `LOG_LEVEL`           | `INFO`             | Logging level                       |
 
 ## Output Files
 
@@ -211,8 +219,8 @@ Saved to `data/plans/plan_YYYYMMDD_HHMMSS.json`:
   "_metadata": {
     "query": "...",
     "created_at": "...",
-    "llm_provider": "openai",
-    "llm_model": "gpt-4"
+    "llm_provider": "gemini",
+    "llm_model": "gemini-2.0-flash"
   }
 }
 ```
