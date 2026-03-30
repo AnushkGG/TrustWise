@@ -8,6 +8,7 @@
 
 import express, { Request, Response } from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import path from "path";
 import { execFile } from "child_process";
 
@@ -84,6 +85,15 @@ function isSafeFilename(filename: string): boolean {
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Rate limiting — prevent abuse
+const limiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60,             // 60 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 
 // Serve static CSS / JS assets
 app.use("/static", express.static(path.join(ROOT_DIR, "static")));
