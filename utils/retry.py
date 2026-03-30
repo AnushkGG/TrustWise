@@ -44,7 +44,7 @@ def retry_with_backoff(
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             last_exception = None
-            for attempt in range(1, max_retries + 2):  # +2 because attempt 1 is the initial call
+            for attempt in range(1, max_retries + 2):  # 1 initial call + max_retries retries
                 try:
                     return func(*args, **kwargs)
                 except retryable_exceptions as exc:
