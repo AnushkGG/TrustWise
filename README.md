@@ -18,7 +18,7 @@ Phase 1 establishes the core orchestration and execution pipeline:
 - ✅ **Trust Validation**: Zero-trust scoring and credibility checks
 - ✅ **Database Storage**: SQLite with deduplication and caching
 - ✅ **Insight Generation**: LLM-based summarization with extractive fallback
-- ✅ **Web UI**: Flask-based interface with REST API
+- ✅ **Web UI**: TypeScript/Express web interface with REST API
 
 ## Architecture
 
@@ -150,7 +150,7 @@ chmod +x start_web.sh
 ./start_web.sh
 
 # Or directly
-python app.py
+cd web && npm run build && npm start
 ```
 
 Then open your browser to: **http://localhost:5000**
@@ -224,8 +224,8 @@ Plan saved to: data\plans
 | `SAVE_PLANS`          | `true`             | Save plans to `data/plans/`         |
 | `SAVE_RAW_DATA`       | `true`             | Save agent outputs to `data/raw/`   |
 | `LOG_LEVEL`           | `INFO`             | Logging level                       |
-| `FLASK_SECRET_KEY`    | auto-generated     | Secret key for Flask sessions       |
-| `FLASK_DEBUG`         | `false`            | Enable Flask debug mode             |
+| `FLASK_SECRET_KEY`    | auto-generated     | Secret key for sessions             |
+| `FLASK_DEBUG`         | `false`            | Enable debug mode                   |
 
 ## Output Files
 
@@ -270,7 +270,8 @@ Saved to `data/raw/task_xxx_YYYYMMDD_HHMMSS.json`:
 TrustWise/
 │
 ├── main.py                    # CLI entry point
-├── app.py                     # Web interface (Flask)
+├── app.py                     # Legacy web interface (Flask, kept for reference)
+├── api_bridge.py              # Python API bridge for TypeScript server
 ├── demo.py                    # Demo script
 ├── continuous_update.py       # Periodic update runner
 ├── setup.py                   # Setup automation
@@ -281,8 +282,16 @@ TrustWise/
 ├── requirements.txt           # Python dependencies
 ├── .env.example              # Environment template
 │
-├── templates/                 # HTML templates
-│   └── index.html            # Main web interface
+├── web/                       # TypeScript web server
+│   ├── package.json           # Node.js dependencies
+│   ├── tsconfig.json          # TypeScript configuration
+│   ├── src/
+│   │   └── server.ts          # Express server
+│   └── public/
+│       └── index.html         # Main web interface
+│
+├── templates/                 # Legacy HTML templates (Flask)
+│   └── index.html            # Main web interface (Jinja2)
 │
 ├── static/                    # Static web assets
 │   ├── css/
