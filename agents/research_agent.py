@@ -1,6 +1,12 @@
 import json
 from datetime import datetime
 from typing import Dict, Any, List
+
+from agents.research_sources import (
+    dedupe_papers,
+    fetch_openalex,
+    fetch_semantic_scholar,
+)
 from utils.config import Config
 from utils.logger import setup_logger
 
@@ -43,12 +49,19 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
         search_query = _extract_search_query(prompt)
         logger.info(f"[ResearchAgent] Search query: {search_query}")
         
-        # Search arXiv
-        papers = _search_arxiv(search_query)
-        
+        # arXiv + OpenAlex + Semantic Scholar (keyless), merge and dedupe
+        papers_arxiv = _search_arxiv(search_query)
+        papers_oa = fetch_openalex(search_query, Config.RESEARCH_OPENALEX_MAX)
+        papers_s2 = fetch_semantic_scholar(search_query, Config.RESEARCH_SEMANTIC_SCHOLAR_MAX)
+        merged = list(papers_arxiv) + papers_oa + papers_s2
+        papers = dedupe_papers(merged)[: Config.RESEARCH_TOTAL_MAX]
+
         if papers:
             result["data"] = papers
-            logger.info(f"[ResearchAgent] Found {len(papers)} papers")
+            logger.info(
+                f"[ResearchAgent] Found {len(papers)} papers "
+                f"(arxiv={len(papers_arxiv)} openalex={len(papers_oa)} s2={len(papers_s2)} after dedupe)"
+            )
         else:
             result["status"] = "partial"
             result["message"] = "No papers found"
@@ -126,6 +139,7 @@ def _search_arxiv(query: str) -> List[Dict[str, Any]]:
     
     papers = []
     for entry in feed.entries:
+        abs_url = entry.id
         paper = {
             "title": entry.title,
             "authors": [author.name for author in entry.authors],
@@ -133,7 +147,10 @@ def _search_arxiv(query: str) -> List[Dict[str, Any]]:
             "published": entry.published,
             "arxiv_id": entry.id.split('/abs/')[-1],
             "pdf_url": entry.id.replace('/abs/', '/pdf/') + '.pdf',
-            "categories": [tag.term for tag in entry.tags] if hasattr(entry, 'tags') else []
+            "url": abs_url,
+            "categories": [tag.term for tag in entry.tags] if hasattr(entry, 'tags') else [],
+            "source": "arXiv",
+            "doi": "",
         }
         papers.append(paper)
     

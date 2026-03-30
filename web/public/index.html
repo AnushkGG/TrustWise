@@ -3,136 +3,130 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TrustWise — Trust-First AI Research System</title>
-    <meta name="description" content="TrustWise is a trust-first AI system for intelligent query planning, task scheduling, and automated research data collection." />
+    <title>TrustWise — Research Execution Platform</title>
+    <meta
+      name="description"
+      content="Plan, collect, validate, and summarize research data with a transparent execution pipeline."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/static/css/style.css" />
   </head>
   <body>
-    <!-- Toast notification container -->
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="container">
-      <!-- ═══ Header ═══ -->
       <header class="header" id="appHeader">
         <div class="header-content">
-          <h1>🔒 TrustWise</h1>
-          <p class="subtitle">Trust-First AI Research &amp; Execution Pipeline</p>
+          <div class="brand-mark" aria-hidden="true">TW</div>
+          <div>
+            <h1>TrustWise</h1>
+            <p class="subtitle">Research planning, collection, and validation</p>
+          </div>
         </div>
-        <div class="status-indicator" id="statusIndicator">
+        <div class="status-indicator" id="statusIndicator" title="LLM backend status">
           <span class="status-dot"></span>
           <span class="status-text">Connecting…</span>
         </div>
       </header>
 
-      <!-- ═══ Main Content ═══ -->
       <main class="main-content">
-        <!-- ── Query Input ── -->
         <section class="query-section" id="querySection">
           <div class="section-header">
             <div>
-              <h2>Submit a Query</h2>
-              <p>Describe your research goal — TrustWise will plan, schedule, and execute for you.</p>
+              <h2>Query</h2>
+              <p class="section-lead">Describe your research goal. The pipeline runs planning, agents, structuring, trust scoring, storage, and insights.</p>
             </div>
           </div>
 
           <form id="queryForm" class="query-form" autocomplete="off">
             <div class="form-group">
-              <label for="queryInput">Research Query</label>
+              <label for="queryInput">Research query</label>
               <textarea
                 id="queryInput"
                 name="query"
                 rows="3"
-                placeholder="e.g., Latest AI developments in healthcare and their clinical trial outcomes…"
+                placeholder="e.g., Latest AI developments in healthcare and clinical trial outcomes…"
                 required
               ></textarea>
             </div>
 
             <button type="submit" class="btn btn-primary" id="submitBtn">
-              <span class="btn-icon">⚡</span>
-              <span class="btn-text">Generate Plan &amp; Execute</span>
+              <span class="btn-text">Run pipeline</span>
             </button>
           </form>
 
-          <!-- Example Queries -->
           <div class="example-queries">
-            <p class="examples-label">Try an example</p>
+            <p class="examples-label">Examples</p>
             <div class="example-chips">
-              <button class="chip" type="button" data-query="Latest AI developments in healthcare">
-                🏥 AI in Healthcare
-              </button>
-              <button class="chip" type="button" data-query="Recent research on transformer models in computer vision">
-                🧠 Transformer Models
-              </button>
-              <button class="chip" type="button" data-query="Weekly tech updates on cybersecurity">
-                🔐 Cybersecurity News
-              </button>
-              <button class="chip" type="button" data-query="Latest quantum computing breakthroughs">
-                ⚛️ Quantum Computing
-              </button>
+              <button class="chip" type="button" data-query="Latest AI developments in healthcare">AI in healthcare</button>
+              <button class="chip" type="button" data-query="Recent research on transformer models in computer vision">Transformer models</button>
+              <button class="chip" type="button" data-query="Weekly tech updates on cybersecurity">Cybersecurity</button>
+              <button class="chip" type="button" data-query="Latest quantum computing breakthroughs">Quantum computing</button>
             </div>
           </div>
         </section>
 
-        <!-- ── Loading Indicator ── -->
         <div id="loadingIndicator" class="loading-section" style="display: none">
-          <div class="spinner"></div>
-          <p>Processing your query…</p>
-          <div class="loading-steps" id="loadingSteps"></div>
+          <div class="loading-head">
+            <div class="spinner" aria-hidden="true"></div>
+            <div>
+              <p class="loading-title">Running pipeline</p>
+              <p class="loading-sub">Single request executes the full stack (local Ollama or cloud Gemini).</p>
+            </div>
+          </div>
+          <ol class="pipeline-steps" id="pipelineSteps" aria-live="polite"></ol>
         </div>
 
-        <!-- ── Results Section ── -->
         <section id="resultsSection" class="results-section" style="display: none">
-          <div class="section-header">
-            <h2>Execution Results</h2>
-            <button class="btn btn-secondary btn-sm" id="clearResultsBtn" type="button">
-              ✕ Clear
-            </button>
+          <div class="section-header results-header">
+            <h2>Results</h2>
+            <button class="btn btn-secondary btn-sm" id="clearResultsBtn" type="button">Clear</button>
           </div>
 
-          <!-- Plan Summary -->
           <div class="plan-summary" id="planSummary"></div>
-
-          <!-- Execution Summary -->
           <div class="execution-summary" id="executionSummary"></div>
 
-          <!-- Task Results -->
-          <div class="task-results" id="taskResults"></div>
+          <div id="insightsMount" class="panel insights-panel"></div>
+          <div id="trustMount" class="panel trust-panel"></div>
+
+          <h3 class="panel-title">Trusted items</h3>
+          <div class="task-results" id="taskResultsTrusted"></div>
+
+          <h3 class="panel-title">Structured records (pre-trust)</h3>
+          <p class="panel-hint">All normalized rows before trust filtering.</p>
+          <div class="task-results" id="taskResultsStructured"></div>
+
+          <h3 class="panel-title">Raw agent outputs</h3>
+          <p class="panel-hint">Per-task responses from web and research agents.</p>
+          <div class="task-results" id="taskResultsRaw"></div>
         </section>
 
-        <!-- ── Saved Plans ── -->
         <section class="saved-plans-section" id="savedPlansSection">
           <div class="section-header">
-            <h2>Recent Plans</h2>
-            <button class="btn btn-secondary btn-sm" id="refreshPlansBtn" type="button">
-              ↻ Refresh
-            </button>
+            <h2>Recent plans</h2>
+            <button class="btn btn-secondary btn-sm" id="refreshPlansBtn" type="button">Refresh</button>
           </div>
           <div id="plansList" class="plans-list">
-            <p class="loading-text">Loading saved plans…</p>
+            <p class="loading-text">Loading…</p>
           </div>
         </section>
       </main>
 
-      <!-- ═══ Footer ═══ -->
       <footer class="footer">
-        <p>
-          TrustWise — Trust-First AI Research System · Built with trust at the core ·
-          <a href="https://github.com/yourusername/trustwise" target="_blank" rel="noopener">
-            Documentation ↗
-          </a>
-        </p>
+        <p>TrustWise — auditable research pipeline · Default LLM: local Ollama</p>
       </footer>
     </div>
 
-    <!-- Plan Detail Modal -->
     <div class="modal-overlay" id="planModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
-          <h3 id="modalTitle">Plan Details</h3>
-          <button class="modal-close" id="modalCloseBtn" type="button">✕</button>
+          <h3 id="modalTitle">Plan details</h3>
+          <button class="modal-close" id="modalCloseBtn" type="button" aria-label="Close">×</button>
         </div>
         <div class="modal-body" id="modalBody"></div>
       </div>

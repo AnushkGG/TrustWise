@@ -71,9 +71,14 @@ def _score_item(item: Dict[str, Any], trusted_domains: Set[str], query_terms: Se
     reasons: List[str] = []
 
     domain = _get_domain(url or source)
-    if item.get("content_type") == "research_paper" and source.lower() in {"arxiv", "arxiv.org"}:
-        score += 0.55
-        reasons.append("Research source recognized (arXiv)")
+    if item.get("content_type") == "research_paper":
+        sl = source.lower()
+        if "arxiv" in sl or sl in {"arxiv", "arxiv.org"}:
+            score += 0.55
+            reasons.append("Research source recognized (arXiv)")
+        elif "openalex" in sl or "semantic" in sl:
+            score += 0.52
+            reasons.append("Research source recognized (OpenAlex / Semantic Scholar)")
     elif domain in trusted_domains:
         score += 0.45
         reasons.append(f"Trusted domain: {domain}")

@@ -178,6 +178,7 @@ def _test_cleaner_normalize_research_results():
                     "authors": ["Alice", "Bob"],
                     "categories": ["cs.AI"],
                     "arxiv_id": "2401.00001",
+                    "source": "arXiv",
                 }
             ],
         }
@@ -534,9 +535,11 @@ def _test_pipeline_mock_end_to_end():
     from scheduler.scheduler import schedule
     from utils.config import Config
 
-    # Force mock mode
+    # Force mock mode (no live Ollama / Gemini)
     original_key = Config.GEMINI_API_KEY
+    original_provider = Config.LLM_PROVIDER
     Config.GEMINI_API_KEY = None
+    Config.LLM_PROVIDER = "gemini"
 
     try:
         plan = generate_plan("AI in healthcare")
@@ -556,6 +559,7 @@ def _test_pipeline_mock_end_to_end():
             assert t["agent"] == "research_agent"
     finally:
         Config.GEMINI_API_KEY = original_key
+        Config.LLM_PROVIDER = original_provider
 
 
 def _test_cleaner_trust_pipeline():
@@ -578,6 +582,7 @@ def _test_cleaner_trust_pipeline():
                     "authors": ["Dr. Smith"],
                     "categories": ["cs.CV"],
                     "arxiv_id": "2401.99999",
+                    "source": "arXiv",
                 }
             ],
         }

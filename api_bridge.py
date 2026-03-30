@@ -189,6 +189,9 @@ def handle_submit(payload: dict) -> dict:
 
 def handle_status(_payload: dict) -> dict:
     """Return system status."""
+    ollama_reachable = False
+    gemini_configured = bool(Config.GEMINI_API_KEY)
+    # Back-compat: has_api_key means "LLM backend usable" (Gemini key present, or Ollama up)
     has_api_key = False
     if Config.LLM_PROVIDER == "gemini" and Config.GEMINI_API_KEY:
         has_api_key = True
@@ -196,8 +199,10 @@ def handle_status(_payload: dict) -> dict:
         try:
             import requests
             resp = requests.get(f"{Config.OLLAMA_BASE_URL}/api/tags", timeout=2)
-            has_api_key = resp.status_code == 200
+            ollama_reachable = resp.status_code == 200
+            has_api_key = ollama_reachable
         except Exception:
+            ollama_reachable = False
             has_api_key = False
 
     return {
@@ -206,6 +211,8 @@ def handle_status(_payload: dict) -> dict:
             "llm_provider": Config.LLM_PROVIDER,
             "llm_model": Config.LLM_MODEL,
             "has_api_key": has_api_key,
+            "ollama_reachable": ollama_reachable,
+            "gemini_configured": gemini_configured,
             "save_plans": Config.SAVE_PLANS,
             "save_raw_data": Config.SAVE_RAW_DATA,
             "save_structured_data": Config.SAVE_STRUCTURED_DATA,

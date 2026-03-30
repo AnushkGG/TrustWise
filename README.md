@@ -60,7 +60,7 @@ User Query
 
 - **agents/**: Execution layer (no reasoning, just data collection)
   - `web_agent.py`: Web scraping with Crawl4AI + DuckDuckGo + Wikipedia
-  - `research_agent.py`: arXiv paper retrieval
+  - `research_agent.py`: arXiv plus keyless OpenAlex and Semantic Scholar search
 
 - **cleaner/**: Data normalization
   - `cleaner.py`: Converts mixed agent outputs to uniform schema
@@ -122,7 +122,17 @@ copy .env.example .env  # Windows
 # cp .env.example .env  # Linux/Mac
 ```
 
-Edit `.env` and add your API key:
+**Recommended (local, no cloud API key):** Install [Ollama](https://ollama.com), run `ollama serve`, pull a model, then use:
+
+```env
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+LLM_MODEL=llama3.2
+```
+
+Use a model that follows JSON instructions well for plan generation.
+
+**Optional — Google Gemini (cloud):**
 
 ```env
 LLM_PROVIDER=gemini
@@ -130,15 +140,7 @@ GEMINI_API_KEY=your_actual_api_key_here
 LLM_MODEL=gemini-2.0-flash
 ```
 
-Or use a local Ollama model (no API key needed):
-
-```env
-LLM_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434
-LLM_MODEL=llama3
-```
-
-**Note**: The system works with mock responses if no API key is provided (for testing).
+**Note:** If Ollama is not running while `LLM_PROVIDER=ollama`, planning falls back to a built-in mock plan so the rest of the pipeline can still be tested. For Gemini without a key, the same mock is used.
 
 ## Usage
 
@@ -218,14 +220,18 @@ Plan saved to: data\plans
 
 | Variable               | Default            | Description |
 | ---------------------- | ------------------ | ----------- |
-| `LLM_PROVIDER`         | `gemini`           | LLM provider: `gemini` or `ollama` |
-| `GEMINI_API_KEY`       | -                  | Google Gemini API key |
+| `LLM_PROVIDER`         | `ollama`           | LLM provider: `ollama` (local) or `gemini` (cloud) |
+| `GEMINI_API_KEY`       | -                  | Google Gemini API key (when using Gemini) |
 | `OLLAMA_BASE_URL`      | `http://localhost:11434` | Local Ollama server URL |
-| `LLM_MODEL`            | `gemini-2.0-flash` | Model to use |
+| `LLM_MODEL`            | `llama3.2`         | Model tag (`ollama pull` first) or Gemini model id |
 | `LLM_TEMPERATURE`      | `0.0`              | Temperature (0 for deterministic output) |
 | `LLM_MAX_TOKENS`       | `2000`             | Max tokens in response |
 | `WEB_SCRAPER_TIMEOUT`  | `10`               | HTTP request timeout (seconds) |
-| `ARXIV_MAX_RESULTS`    | `5`                | Max papers per search |
+| `ARXIV_MAX_RESULTS`    | `5`                | Max results from arXiv API |
+| `RESEARCH_OPENALEX_MAX` | `5`             | Max works from OpenAlex (keyless) |
+| `RESEARCH_SEMANTIC_SCHOLAR_MAX` | `5`    | Max papers from Semantic Scholar (keyless) |
+| `RESEARCH_TOTAL_MAX`   | `15`               | Cap on merged, deduplicated papers per task |
+| `OPENALEX_MAILTO`      | `mailto:dev@localhost` | Contact URL for OpenAlex polite `User-Agent` |
 | `SAVE_PLANS`           | `true`             | Save plans to `data/plans/` |
 | `SAVE_RAW_DATA`        | `true`             | Save agent outputs to `data/raw/` |
 | `SAVE_STRUCTURED_DATA` | `true`             | Save normalized JSON to `data/structured/` |
