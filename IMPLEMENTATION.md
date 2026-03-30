@@ -34,9 +34,9 @@ This document summarizes the TrustWise implementation across all completed phase
 
 **Features:**
 
-- Google Gemini API integration with JSON mode
+- Google Gemini API integration with JSON mode (optional: `GEMINI_API_KEY` only needed when `LLM_PROVIDER=gemini`; if unset, mock/query-derived plans are used)
 - Local Ollama API integration
-- Automatic fallback to mock responses when API keys missing
+- Automatic fallback to mock responses when API keys are missing or Ollama is unreachable
 - Comprehensive error handling
 - Proper logging at each step
 - Type safety with proper None checks
@@ -45,6 +45,7 @@ This document summarizes the TrustWise implementation across all completed phase
 
 - Google Gemini (cloud)
 - Ollama (local models)
+- **Both** (parallel merge) — calls Gemini + Ollama concurrently, merges plans and insight summaries with per-item source attribution (`origin` field)
 - Mock mode (for testing without API costs)
 
 ---
@@ -69,6 +70,7 @@ This document summarizes the TrustWise implementation across all completed phase
 
 **Features:**
 
+- **Crawl4AI** for headless Chromium crawling when available; **DuckDuckGo** search for discovery URLs; Wikipedia and plain HTTP fallbacks
 - HTTP request handling with requests library
 - HTML parsing with BeautifulSoup4
 - Content extraction and cleanup
@@ -94,6 +96,7 @@ This document summarizes the TrustWise implementation across all completed phase
 **Features:**
 
 - arXiv API integration via feedparser
+- OpenAlex and Semantic Scholar search (keyless HTTP APIs; optional `OPENALEX_MAILTO` for polite pool)
 - Keyword extraction from prompts
 - Paper metadata collection (title, authors, abstract, URL)
 - Configurable max results
@@ -532,7 +535,7 @@ TrustWise/
 1. Real LLM-based plan generation
 2. Adaptive task creation based on query
 3. Web scraping from trusted sources (Crawl4AI + DuckDuckGo + Wikipedia)
-4. Research paper retrieval from arXiv
+4. Research paper retrieval from arXiv, OpenAlex, and Semantic Scholar
 5. Data normalization and cleaning
 6. Zero-trust validation and credibility scoring
 7. SQLite storage with deduplication and caching
@@ -552,13 +555,13 @@ TrustWise/
 
 ## Testing the Implementation
 
-### Basic Tests (6 tests)
+### Basic Tests (9 tests)
 
 ```bash
 python test_basic.py
 ```
 
-### Comprehensive Tests (33 tests)
+### Comprehensive Tests (38 tests)
 
 ```bash
 python test_comprehensive.py
@@ -598,21 +601,21 @@ python app.py
 
 | Component        | Status      | Notes                                            |
 | ---------------- | ----------- | ------------------------------------------------ |
-| Orchestrator     | ✅ Complete | LLM integration (Gemini/Ollama), plan logging |
+| Orchestrator     | ✅ Complete | LLM integration (Gemini/Ollama/both), plan logging |
 | Chunker          | ✅ Complete | Simple passthrough (sufficient for current scope) |
 | Scheduler        | ✅ Complete | Enhanced with logging and type normalization      |
 | Web Agent        | ✅ Complete | Crawl4AI + DuckDuckGo + Wikipedia + HTTP fallback |
-| Research Agent   | ✅ Complete | arXiv integration                                |
+| Research Agent   | ✅ Complete | arXiv + OpenAlex + Semantic Scholar (keyless APIs) |
 | Data Cleaner     | ✅ Complete | Normalization and junk removal                   |
 | Trust Validator  | ✅ Complete | Zero-trust scoring, duplicate detection          |
 | Database Storage | ✅ Complete | SQLite with deduplication and query caching      |
-| Insights         | ✅ Complete | LLM + extractive summarization                   |
+| Insights         | ✅ Complete | LLM + extractive summarization; merged mode with attribution |
 | Retry Logic      | ✅ Complete | Exponential backoff with jitter                  |
 | Rate Limiting    | ✅ Complete | Token-bucket limiter for HTTP requests           |
 | Web UI           | ✅ Complete | Express (`web/`) + `api_bridge.py`; optional Flask `app.py` |
 | Configuration    | ✅ Complete | Environment-based with dotenv                    |
 | Documentation    | ✅ Complete | README, QUICKSTART, FRONTEND, WEB_QUICKSTART     |
-| Testing          | ✅ Complete | 39 tests (6 basic + 33 comprehensive)            |
+| Testing          | ✅ Complete | 47 tests (9 basic + 38 comprehensive)            |
 | Setup Tools      | ✅ Complete | Automated setup                                  |
 
 ---
@@ -631,7 +634,7 @@ python app.py
 The system is **fully implemented** with:
 
 - ✅ All core components working end-to-end
-- ✅ Real API integration (Gemini/Ollama)
+- ✅ Real API integration (Gemini/Ollama/both parallel merge)
 - ✅ Complete data collection pipeline
 - ✅ Zero-trust validation and credibility scoring
 - ✅ SQLite storage with deduplication and caching
@@ -640,7 +643,7 @@ The system is **fully implemented** with:
 - ✅ Rate limiting for polite web scraping
 - ✅ Web UI (Express + Python bridge) with REST API
 - ✅ Audit trail and logging
-- ✅ Comprehensive test suite (39 tests)
+- ✅ Comprehensive test suite (47 tests)
 - ✅ Documentation and setup automation
 
 The system is ready for use and demonstrates the complete Phase 1 architecture: from natural language query to structured plan to executed data collection with full auditability.

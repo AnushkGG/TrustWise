@@ -9,6 +9,8 @@ Get TrustWise up and running in 5 minutes!
 - Gemini API key or local Ollama server (optional — CLI falls back to mock LLM responses when Gemini is configured without a key)
 - For the **web UI** ([WEB_QUICKSTART.md](WEB_QUICKSTART.md)): Node.js 18+ and `cd web && npm install`
 
+**Data collection:** web results use **Crawl4AI**, **DuckDuckGo**, Wikipedia, and HTTP fallback. Research results use **arXiv**, **OpenAlex**, and **Semantic Scholar** (no API keys). **Gemini** (`GEMINI_API_KEY`) is optional and only needed for cloud planning when `LLM_PROVIDER=gemini`.
+
 ## Quick Setup
 
 ### Option 1: Automated Setup (Recommended)

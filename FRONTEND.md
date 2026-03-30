@@ -22,8 +22,8 @@ The TrustWise Web Frontend provides a user-friendly interface for interacting wi
    - Plan summary with domains, time range, and sources
    - Execution statistics (web tasks, research tasks, success rate)
    - Detailed task results with data preview
-   - Web scraping results with source URLs
-   - Research paper results with titles, authors, and PDF links
+   - Web scraping results with source URLs (from **Crawl4AI** + **DuckDuckGo**-discovered URLs, plus Wikipedia / HTTP fallback)
+   - Research paper results with titles, authors, and PDF links (from **arXiv**, **OpenAlex**, **Semantic Scholar**)
 
 4. **History Management**
    - List of recently generated plans (newest first)
@@ -43,6 +43,8 @@ The TrustWise Web Frontend provides a user-friendly interface for interacting wi
 
 The TypeScript Express server provides REST API endpoints. Each API call delegates
 to a Python subprocess (`api_bridge.py`) that runs the TrustWise pipeline.
+
+**Data collection (backend):** the **web agent** uses Crawl4AI (headless browser), DuckDuckGo search, Wikipedia, and HTTP fallback. The **research agent** uses arXiv, OpenAlex, and Semantic Scholar (keyless). **LLM planning** uses Ollama and/or Google Gemini; the **Gemini API key is optional** — if missing (or the provider is unavailable), the pipeline uses query-derived mock plans.
 
 The server applies **`express-rate-limit`**: by default **60 requests per minute per IP** (see `web/src/server.ts`). Adjust for production if needed.
 
@@ -90,12 +92,17 @@ cd web && npm install
 
 ### 2. Configure Environment
 
-Make sure your `.env` file is properly configured:
+Make sure your `.env` file exists (copy from `.env.example`). **Gemini is optional:** you only need `GEMINI_API_KEY` when `LLM_PROVIDER=gemini`. For local Ollama, use `LLM_PROVIDER=ollama` and no cloud key.
 
 ```env
-LLM_PROVIDER=gemini
-GEMINI_API_KEY=your_key_here
-# ... other settings
+# Example: local Ollama (no Gemini key)
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+LLM_MODEL=llama3.2
+
+# Optional — Google Gemini for planning (set LLM_PROVIDER=gemini)
+# GEMINI_API_KEY=your_key_here
+# LLM_MODEL=gemini-2.0-flash
 ```
 
 ### 3. Run the Web Server

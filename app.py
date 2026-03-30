@@ -329,25 +329,39 @@ def get_status():
         JSON with system configuration and status
     """
     try:
-        # Check if LLM provider is configured and ready
-        has_api_key = False
-        if Config.LLM_PROVIDER == "gemini" and Config.GEMINI_API_KEY:
-            has_api_key = True
+        gemini_configured = bool(Config.GEMINI_API_KEY)
+        ollama_reachable = False
+        try:
+            import requests
+            resp = requests.get(f"{Config.OLLAMA_BASE_URL}/api/tags", timeout=2)
+            ollama_reachable = resp.status_code == 200
+        except Exception:
+            pass
+
+        if Config.LLM_PROVIDER == "both":
+            has_api_key = gemini_configured or ollama_reachable
+        elif Config.LLM_PROVIDER == "gemini":
+            has_api_key = gemini_configured
         elif Config.LLM_PROVIDER == "ollama":
-            # Ollama doesn't need an API key — check if the server is reachable
-            try:
-                import requests
-                resp = requests.get(f"{Config.OLLAMA_BASE_URL}/api/tags", timeout=2)
-                has_api_key = resp.status_code == 200
-            except Exception:
-                has_api_key = False
-        
+            has_api_key = ollama_reachable
+        else:
+            has_api_key = False
+
+        providers_available = []
+        if gemini_configured:
+            providers_available.append("gemini")
+        if ollama_reachable:
+            providers_available.append("ollama")
+
         return jsonify({
             'success': True,
             'status': {
                 'llm_provider': Config.LLM_PROVIDER,
                 'llm_model': Config.LLM_MODEL,
                 'has_api_key': has_api_key,
+                'ollama_reachable': ollama_reachable,
+                'gemini_configured': gemini_configured,
+                'providers_available': providers_available,
                 'save_plans': Config.SAVE_PLANS,
                 'save_raw_data': Config.SAVE_RAW_DATA,
                 'save_structured_data': Config.SAVE_STRUCTURED_DATA,

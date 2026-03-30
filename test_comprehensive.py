@@ -525,6 +525,121 @@ def _test_rate_limiter_invalid_args():
 
 
 # ---------------------------------------------------------------------------
+# Merge Logic Tests (LLM_PROVIDER=both)
+# ---------------------------------------------------------------------------
+
+def _test_merge_plans_balanced_interleave():
+    from orchestrator.llm_client import _merge_plans
+
+    g = {
+        "goal": "Explore quantum computing applications",
+        "domains": ["quantum", "computing"],
+        "time_range": "2025",
+        "sources": ["web"],
+        "tasks": [
+            {"task_id": "g1", "source_type": "web", "agent": "web_agent",
+             "prompt": "Find quantum computing news"},
+        ],
+    }
+    o = {
+        "goal": "Quantum",
+        "domains": ["Quantum", "Physics"],
+        "time_range": "latest",
+        "sources": ["research_papers"],
+        "tasks": [
+            {"task_id": "o1", "source_type": "research_papers", "agent": "research_agent",
+             "prompt": "Search quantum physics papers"},
+        ],
+    }
+    merged = _merge_plans(g, o)
+    assert merged["plan_source"] == "merged"
+    assert set(merged["providers"]) == {"gemini", "ollama"}
+    assert merged["time_range"] == "2025"
+    assert "research_papers" in merged["sources"]
+    domain_lower = {d.lower() for d in merged["domains"]}
+    assert "physics" in domain_lower
+    for t in merged["tasks"]:
+        assert "origin" in t
+
+
+def _test_merge_plans_dedup_marks_both():
+    from orchestrator.llm_client import _merge_plans
+
+    g = {
+        "goal": "Test", "domains": [], "time_range": "latest",
+        "sources": ["web"],
+        "tasks": [
+            {"task_id": "g1", "source_type": "web", "agent": "web_agent",
+             "prompt": "Find the latest news on artificial intelligence"},
+        ],
+    }
+    o = {
+        "goal": "Test", "domains": [], "time_range": "latest",
+        "sources": ["web"],
+        "tasks": [
+            {"task_id": "o1", "source_type": "web", "agent": "web_agent",
+             "prompt": "Find the latest news on artificial intelligence research"},
+        ],
+    }
+    merged = _merge_plans(g, o)
+    both_tasks = [t for t in merged["tasks"] if t.get("origin") == "both"]
+    assert len(both_tasks) >= 1, "Near-duplicate prompts should merge to origin='both'"
+
+
+def _test_merge_plans_cap_at_eight():
+    from orchestrator.llm_client import _merge_plans
+
+    g = {
+        "goal": "Test", "domains": [], "time_range": "latest",
+        "sources": ["web"],
+        "tasks": [
+            {"task_id": f"g{i}", "source_type": "web", "agent": "web_agent",
+             "prompt": f"Gemini unique task {i}"}
+            for i in range(6)
+        ],
+    }
+    o = {
+        "goal": "Test", "domains": [], "time_range": "latest",
+        "sources": ["web"],
+        "tasks": [
+            {"task_id": f"o{i}", "source_type": "web", "agent": "web_agent",
+             "prompt": f"Ollama unique task {i}"}
+            for i in range(6)
+        ],
+    }
+    merged = _merge_plans(g, o)
+    assert len(merged["tasks"]) <= 8
+
+
+def _test_merge_summaries_attribution():
+    from insights.generator import _merge_summaries
+
+    g = {
+        "concise_answer": "AI is transforming healthcare with significant measurable improvements.",
+        "key_points": ["Diagnostic accuracy improved by 35%.", "Cost savings are substantial."],
+    }
+    o = {
+        "concise_answer": "Healthcare AI grows.",
+        "key_points": ["Regulatory hurdles exist.", "Diagnostic accuracy improved by 35 percent."],
+    }
+    merged = _merge_summaries(g, o)
+    assert merged["concise_answer_origin"] == "gemini"
+    for kp in merged["key_points"]:
+        assert isinstance(kp, dict)
+        assert kp["origin"] in ("gemini", "ollama", "both")
+    both_points = [kp for kp in merged["key_points"] if kp["origin"] == "both"]
+    assert len(both_points) >= 1
+
+
+def _test_merge_summaries_empty_input():
+    from insights.generator import _merge_summaries
+
+    merged = _merge_summaries({}, {"concise_answer": "Only ollama", "key_points": ["Point A"]})
+    assert merged["concise_answer"] == "Only ollama"
+    assert merged["concise_answer_origin"] == "ollama"
+
+
+# ---------------------------------------------------------------------------
 # Integration Tests
 # ---------------------------------------------------------------------------
 
@@ -545,6 +660,8 @@ def _test_pipeline_mock_end_to_end():
         plan = generate_plan("AI in healthcare")
         assert "goal" in plan
         assert "tasks" in plan
+        assert plan.get("plan_source") == "mock"
+        assert "healthcare" in plan["goal"].lower()
 
         tasks = chunk_tasks(plan)
         assert len(tasks) > 0
@@ -672,6 +789,16 @@ def main():
                 ("Basic token consumption", _test_rate_limiter_basic),
                 ("Blocks when tokens exhausted", _test_rate_limiter_blocks_when_exhausted),
                 ("Rejects invalid arguments", _test_rate_limiter_invalid_args),
+            ],
+        ),
+        (
+            "Merge Logic (both mode)",
+            [
+                ("Plan merge balanced interleave", _test_merge_plans_balanced_interleave),
+                ("Plan merge dedup marks origin=both", _test_merge_plans_dedup_marks_both),
+                ("Plan merge caps at 8 tasks", _test_merge_plans_cap_at_eight),
+                ("Summary merge with attribution", _test_merge_summaries_attribution),
+                ("Summary merge handles empty input", _test_merge_summaries_empty_input),
             ],
         ),
         (

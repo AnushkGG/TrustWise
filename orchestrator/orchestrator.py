@@ -33,13 +33,17 @@ def generate_plan(user_query: str) -> dict:
     # Validate plan structure
     validate_plan(plan)
     
-    # Add metadata
-    plan["_metadata"] = {
+    metadata = {
         "query": user_query,
         "created_at": datetime.utcnow().isoformat(),
         "llm_provider": Config.LLM_PROVIDER,
-        "llm_model": Config.LLM_MODEL
+        "llm_model": Config.LLM_MODEL,
     }
+    if Config.LLM_PROVIDER == "both":
+        metadata["gemini_model"] = Config.get_gemini_model()
+        metadata["ollama_model"] = Config.get_ollama_model()
+        metadata["providers"] = plan.get("providers", ["gemini", "ollama"])
+    plan["_metadata"] = metadata
     
     # Save plan if configured
     if Config.SAVE_PLANS:

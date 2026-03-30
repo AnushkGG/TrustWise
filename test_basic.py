@@ -157,8 +157,9 @@ def test_mock_llm():
         response = call_llm("test query")
         plan = json.loads(response)
 
-        if "goal" in plan and "tasks" in plan:
-            print("   ✓ Mock LLM returns valid JSON")
+        if "goal" in plan and "tasks" in plan and plan.get("plan_source") == "mock":
+            assert "test query" in plan.get("goal", "").lower()
+            print("   ✓ Mock LLM returns valid JSON [query-aware mock]")
             result = True
         else:
             print("   ✗ Mock LLM JSON missing required fields")
@@ -171,6 +172,125 @@ def test_mock_llm():
         Config.LLM_PROVIDER = original_provider
     
     return result
+
+
+def test_merge_plans():
+    """Test _merge_plans produces balanced, attributed output."""
+    print("\nTesting plan merge logic...")
+    from orchestrator.llm_client import _merge_plans
+
+    gemini_plan = {
+        "goal": "Understand AI in healthcare",
+        "domains": ["AI", "Healthcare"],
+        "time_range": "2024",
+        "sources": ["web"],
+        "tasks": [
+            {"task_id": "g1", "source_type": "web", "agent": "web_agent",
+             "prompt": "Find recent AI healthcare news articles"},
+            {"task_id": "g2", "source_type": "research_papers", "agent": "research_agent",
+             "prompt": "Search papers on AI diagnostics"},
+        ],
+    }
+    ollama_plan = {
+        "goal": "AI healthcare overview",
+        "domains": ["ai", "Medicine"],
+        "time_range": "latest",
+        "sources": ["web", "research_papers"],
+        "tasks": [
+            {"task_id": "o1", "source_type": "web", "agent": "web_agent",
+             "prompt": "Find recent AI healthcare news articles and reports"},
+            {"task_id": "o2", "source_type": "research_papers", "agent": "research_agent",
+             "prompt": "Look up machine learning medical papers"},
+        ],
+    }
+
+    merged = _merge_plans(gemini_plan, ollama_plan)
+
+    try:
+        assert merged["plan_source"] == "merged"
+        assert set(merged["providers"]) == {"gemini", "ollama"}
+
+        # Domains union (case-insensitive dedup)
+        domain_lower = [d.lower() for d in merged["domains"]]
+        assert "ai" in domain_lower
+        assert "healthcare" in domain_lower
+        assert "medicine" in domain_lower
+
+        # Time range: prefer specific over "latest"
+        assert merged["time_range"] == "2024"
+
+        # Sources union
+        assert "web" in merged["sources"]
+        assert "research_papers" in merged["sources"]
+
+        # Every task has origin
+        for t in merged["tasks"]:
+            assert t.get("origin") in ("gemini", "ollama", "both"), f"Missing origin on {t}"
+
+        # Near-duplicate prompt dedup should mark at least one task as "both"
+        both_count = sum(1 for t in merged["tasks"] if t["origin"] == "both")
+        assert both_count >= 1, "Expected at least one deduplicated task with origin='both'"
+
+        assert len(merged["tasks"]) <= 8
+
+        print("   ✓ Plan merge: attribution, dedup, balanced interleave OK")
+        return True
+    except AssertionError as e:
+        print(f"   ✗ Plan merge assertion failed: {e}")
+        return False
+    except Exception as e:
+        print(f"   ✗ Plan merge failed: {e}")
+        return False
+
+
+def test_merge_summaries():
+    """Test _merge_summaries produces attributed key-points."""
+    print("\nTesting summary merge logic...")
+    from insights.generator import _merge_summaries
+
+    gemini_res = {
+        "concise_answer": "AI significantly improves healthcare outcomes across multiple domains.",
+        "key_points": [
+            "AI improves diagnostic accuracy by 35%.",
+            "Deep learning models outperform traditional methods.",
+            "Cost reduction is a key benefit.",
+        ],
+    }
+    ollama_res = {
+        "concise_answer": "Healthcare AI is growing fast.",
+        "key_points": [
+            "AI improves diagnostic accuracy by 35 percent.",
+            "Regulatory challenges remain significant.",
+        ],
+    }
+
+    merged = _merge_summaries(gemini_res, ollama_res)
+
+    try:
+        # Longer answer wins
+        assert "significantly" in merged["concise_answer"]
+        assert merged["concise_answer_origin"] == "gemini"
+
+        # Key points are dicts with text + origin
+        for kp in merged["key_points"]:
+            assert isinstance(kp, dict), f"Expected dict, got {type(kp)}"
+            assert "text" in kp and "origin" in kp
+            assert kp["origin"] in ("gemini", "ollama", "both")
+
+        # Near-duplicate "35%" points should be merged to "both"
+        both_points = [kp for kp in merged["key_points"] if kp["origin"] == "both"]
+        assert len(both_points) >= 1, "Expected at least one 'both' origin point from dedup"
+
+        assert len(merged["key_points"]) <= 5
+
+        print("   ✓ Summary merge: attribution, dedup, cap OK")
+        return True
+    except AssertionError as e:
+        print(f"   ✗ Summary merge failed: {e}")
+        return False
+    except Exception as e:
+        print(f"   ✗ Summary merge error: {e}")
+        return False
 
 def main():
     """Run all tests."""
@@ -185,7 +305,9 @@ def main():
         test_chunker,
         test_scheduler,
         test_research_dedupe,
-        test_mock_llm
+        test_mock_llm,
+        test_merge_plans,
+        test_merge_summaries,
     ]
     
     results = []

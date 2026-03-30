@@ -20,6 +20,10 @@ const PORT = parseInt(process.env.PORT || "5000", 10);
 const HOST = process.env.HOST || "127.0.0.1";
 const DEBUG = (process.env.FLASK_DEBUG || "false").toLowerCase() === "true";
 
+/** Python executable for `api_bridge.py` (venv or py launcher). Overrides default `python` on PATH. */
+const PYTHON_EXE =
+  process.env.PYTHON_EXE || process.env.TRUSTWISE_PYTHON || "python";
+
 /** Absolute path to the repository root (one level above `web/`). */
 const ROOT_DIR = path.resolve(__dirname, "..", "..");
 
@@ -48,7 +52,7 @@ function callPythonBridge(
     const input = JSON.stringify({ action, ...payload });
 
     execFile(
-      "python",
+      PYTHON_EXE,
       [BRIDGE_SCRIPT],
       { cwd: ROOT_DIR, maxBuffer: 10 * 1024 * 1024, timeout: 300_000 },
       (error, stdout, stderr) => {
