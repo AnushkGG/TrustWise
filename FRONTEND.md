@@ -79,8 +79,8 @@ This installs Flask along with all other dependencies.
 Make sure your `.env` file is properly configured:
 
 ```env
-LLM_PROVIDER=openai
-OPENAI_API_KEY=your_key_here
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_key_here
 # ... other settings
 ```
 
@@ -220,8 +220,8 @@ Get system status.
 {
   "success": true,
   "status": {
-    "llm_provider": "openai",
-    "llm_model": "gpt-4",
+    "llm_provider": "gemini",
+    "llm_model": "gemini-2.0-flash",
     "has_api_key": true,
     "save_plans": true,
     "save_raw_data": true,
