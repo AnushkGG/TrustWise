@@ -15,8 +15,10 @@ Phase 1 establishes the core orchestration and execution pipeline:
 - ✅ **Agent Routing**: Schedules tasks to appropriate specialized agents
 - ✅ **Data Collection**: Web scraping and research paper retrieval
 - ✅ **Auditability**: Saves plans and raw data for reproducibility
-
-**Not in Phase 1**: Trust validation, credibility scoring, LLM-based summarization, database storage
+- ✅ **Trust Validation**: Zero-trust scoring and credibility checks
+- ✅ **Database Storage**: SQLite with deduplication and caching
+- ✅ **Insight Generation**: LLM-based summarization with extractive fallback
+- ✅ **Web UI**: TypeScript/Express web interface with REST API
 
 ## Architecture
 
@@ -31,7 +33,13 @@ User Query
     ↓
 [Agents] → Execute tasks and collect raw data
     ↓
-Raw Data Storage (local files)
+[Cleaner] → Normalizes data into uniform schema
+    ↓
+[Trust Validator] → Zero-trust scoring and filtering
+    ↓
+[Storage] → SQLite persistence with deduplication
+    ↓
+[Insights] → LLM/extractive summarization
 ```
 
 ### Components
@@ -49,12 +57,26 @@ Raw Data Storage (local files)
   - `scheduler.py`: Routes tasks to appropriate agents
 
 - **agents/**: Execution layer (no reasoning, just data collection)
-  - `web_agent.py`: Web scraping with BeautifulSoup
+  - `web_agent.py`: Web scraping with Crawl4AI + DuckDuckGo + Wikipedia
   - `research_agent.py`: arXiv paper retrieval
+
+- **cleaner/**: Data normalization
+  - `cleaner.py`: Converts mixed agent outputs to uniform schema
+
+- **trust/**: Zero-trust validation
+  - `validator.py`: Credibility scoring, duplicate detection
+
+- **storage/**: Persistence layer
+  - `db.py`: SQLite storage with deduplication and caching
+
+- **insights/**: Analysis
+  - `generator.py`: LLM and extractive insight generation
 
 - **utils/**: Shared utilities
   - `config.py`: Configuration management
   - `logger.py`: Logging setup
+  - `retry.py`: Retry with exponential backoff
+  - `rate_limiter.py`: Token-bucket rate limiter
 
 - **config/**: Configuration files
   - `sources.json`: Trusted web sources
@@ -128,7 +150,7 @@ chmod +x start_web.sh
 ./start_web.sh
 
 # Or directly
-python app.py
+cd web && npm run build && npm start
 ```
 
 Then open your browser to: **http://localhost:5000**
@@ -202,6 +224,8 @@ Plan saved to: data\plans
 | `SAVE_PLANS`          | `true`             | Save plans to `data/plans/`         |
 | `SAVE_RAW_DATA`       | `true`             | Save agent outputs to `data/raw/`   |
 | `LOG_LEVEL`           | `INFO`             | Logging level                       |
+| `FLASK_SECRET_KEY`    | auto-generated     | Secret key for sessions             |
+| `FLASK_DEBUG`         | `false`            | Enable debug mode                   |
 
 ## Output Files
 
@@ -243,21 +267,31 @@ Saved to `data/raw/task_xxx_YYYYMMDD_HHMMSS.json`:
 ## Project Structure
 
 ```
-TrustWise_Anushk/
+TrustWise/
 │
 ├── main.py                    # CLI entry point
-├── app.py                     # Web interface (Flask)
+├── app.py                     # Legacy web interface (Flask, kept for reference)
+├── api_bridge.py              # Python API bridge for TypeScript server
 ├── demo.py                    # Demo script
+├── continuous_update.py       # Periodic update runner
 ├── setup.py                   # Setup automation
 ├── test_basic.py              # Basic tests
+├── test_comprehensive.py      # Comprehensive tests
 ├── start_web.bat              # Windows web launcher
 ├── start_web.sh               # Linux/Mac web launcher
 ├── requirements.txt           # Python dependencies
 ├── .env.example              # Environment template
-├── .gitignore                # Git ignore rules
 │
-├── templates/                 # HTML templates
-│   └── index.html            # Main web interface
+├── web/                       # TypeScript web server
+│   ├── package.json           # Node.js dependencies
+│   ├── tsconfig.json          # TypeScript configuration
+│   ├── src/
+│   │   └── server.ts          # Express server
+│   └── public/
+│       └── index.html         # Main web interface
+│
+├── templates/                 # Legacy HTML templates (Flask)
+│   └── index.html            # Main web interface (Jinja2)
 │
 ├── static/                    # Static web assets
 │   ├── css/
@@ -278,26 +312,46 @@ TrustWise_Anushk/
 │
 ├── scheduler/                # Task routing
 │   ├── __init__.py
-│   └── scheduler.py
+│   ├── scheduler.py          # Routes tasks to agents
+│   └── continuous.py         # Periodic update logic
 │
 ├── agents/                   # Execution agents
 │   ├── __init__.py
-│   ├── web_agent.py          # Web scraping
+│   ├── web_agent.py          # Web scraping (Crawl4AI/DuckDuckGo/Wikipedia)
 │   └── research_agent.py     # arXiv papers
+│
+├── cleaner/                  # Data normalization
+│   ├── __init__.py
+│   └── cleaner.py
+│
+├── trust/                    # Zero-trust validation
+│   ├── __init__.py
+│   └── validator.py
+│
+├── storage/                  # Database persistence
+│   ├── __init__.py
+│   └── db.py
+│
+├── insights/                 # Insight generation
+│   ├── __init__.py
+│   └── generator.py
 │
 ├── utils/                    # Utilities
 │   ├── __init__.py
 │   ├── config.py             # Configuration management
-│   └── logger.py             # Logging setup
+│   ├── logger.py             # Logging setup
+│   ├── retry.py              # Retry with exponential backoff
+│   └── rate_limiter.py       # Token-bucket rate limiter
 │
 ├── config/                   # Config files
 │   └── sources.json          # Trusted sources
 │
 └── data/                     # Output directory
     ├── plans/                # Execution plans
-    │   └── .gitkeep
-    └── raw/                  # Raw agent outputs
-        └── .gitkeep
+    ├── raw/                  # Raw agent outputs
+    ├── structured/           # Normalized outputs
+    ├── trusted/              # Validated outputs
+    └── trustwise.db          # SQLite database
 ```
 
 ## Key Design Principles
@@ -306,13 +360,23 @@ TrustWise_Anushk/
 2. **Structured Contracts**: All plans are JSON with strict validation
 3. **Agent Simplicity**: Agents collect data, don't reason or validate
 4. **Auditability**: All plans and outputs saved for reproducibility
-5. **No Trust Validation**: Phase 1 focuses on execution flow, not verification
+5. **Zero-Trust Validation**: All collected data scored and filtered before use
 
-## Future Phases
+## Completed Phases
 
-- **Phase 2**: Trust validation, credibility scoring, source verification
-- **Phase 3**: LLM-based summarization with citation tracking
-- **Phase 4**: Database integration, user feedback loops
+- **Phase 1**: Core orchestration, task scheduling, data collection
+- **Phase 2**: Data normalization and cleaning
+- **Phase 3**: Zero-trust validation and credibility scoring
+- **Phase 4**: SQLite database integration with deduplication
+- **Phase 5**: LLM-based summarization with citation tracking
+- **Phase 6**: DB caching for repeated queries
+
+## Future Improvements
+
+- WebSocket-based real-time progress updates
+- User authentication and profiles
+- PDF/CSV export
+- Advanced task decomposition in Chunker
 
 ## Development
 

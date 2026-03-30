@@ -48,3 +48,7 @@ data/plans/*
 # OS
 .DS_Store
 Thumbs.db
+
+# Node.js / TypeScript
+node_modules/
+web/dist/
