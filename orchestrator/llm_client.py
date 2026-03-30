@@ -59,7 +59,15 @@ def call_llm(user_query: str) -> str:
         if Config.LLM_PROVIDER == "gemini":
             return _call_gemini(user_prompt)
         elif Config.LLM_PROVIDER == "ollama":
-            return _call_ollama(user_prompt)
+            try:
+                import requests as req_lib
+                return _call_ollama(user_prompt)
+            except (req_lib.exceptions.ConnectionError, req_lib.exceptions.Timeout) as e:
+                logger.warning(
+                    "Ollama unavailable (%s). Using mock plan for pipeline continuity.",
+                    e,
+                )
+                return MOCK_RESPONSE
         else:
             raise ValueError(f"Unsupported LLM provider: {Config.LLM_PROVIDER}")
     except Exception as e:

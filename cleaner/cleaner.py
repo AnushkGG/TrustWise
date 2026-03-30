@@ -59,18 +59,20 @@ def _normalize_web_item(item: Dict[str, Any], query: str) -> Dict[str, Any]:
 def _normalize_research_item(item: Dict[str, Any]) -> Dict[str, Any]:
     title = item.get("title", "Untitled paper")
     abstract = _clean_text(item.get("abstract", ""))
-    url = item.get("pdf_url", "")
+    url = (item.get("pdf_url") or item.get("url") or "").strip()
+    src = item.get("source") or "Research"
 
     return {
         "title": title,
         "content": abstract,
-        "source": "arXiv",
+        "source": src,
         "url": url,
         "published_at": item.get("published"),
         "content_type": "research_paper",
         "authors": item.get("authors", []),
         "categories": item.get("categories", []),
         "arxiv_id": item.get("arxiv_id", ""),
+        "doi": item.get("doi", ""),
     }
 
 

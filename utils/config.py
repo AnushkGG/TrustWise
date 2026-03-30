@@ -22,17 +22,22 @@ class Config:
     DB_PATH = DATA_DIR / "trustwise.db"
     CONFIG_DIR = BASE_DIR / "config"
     
-    # LLM Settings — only Gemini (cloud) and Ollama (local) are supported
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "gemini")  # gemini or ollama
+    # LLM Settings — Gemini (cloud) or Ollama (local); default is local Ollama
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")  # gemini or ollama
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini-2.0-flash")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "llama3.2")
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.0"))
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
     
     # Agent Settings
     WEB_SCRAPER_TIMEOUT: int = int(os.getenv("WEB_SCRAPER_TIMEOUT", "10"))
     ARXIV_MAX_RESULTS: int = int(os.getenv("ARXIV_MAX_RESULTS", "5"))
+    RESEARCH_OPENALEX_MAX: int = int(os.getenv("RESEARCH_OPENALEX_MAX", "5"))
+    RESEARCH_SEMANTIC_SCHOLAR_MAX: int = int(os.getenv("RESEARCH_SEMANTIC_SCHOLAR_MAX", "5"))
+    RESEARCH_TOTAL_MAX: int = int(os.getenv("RESEARCH_TOTAL_MAX", "15"))
+    # OpenAlex polite-pool: include a contact in User-Agent (set your email for production)
+    OPENALEX_MAILTO: str = os.getenv("OPENALEX_MAILTO", "mailto:dev@localhost")
     
     # System Settings
     SAVE_PLANS: bool = os.getenv("SAVE_PLANS", "true").lower() == "true"
