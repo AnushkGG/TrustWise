@@ -20,6 +20,7 @@ chmod +x start_web.sh
 
 ```bash
 cd web
+npm install
 npm run build
 npm start
 ```

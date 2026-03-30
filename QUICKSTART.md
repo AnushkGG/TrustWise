@@ -6,7 +6,8 @@ Get TrustWise up and running in 5 minutes!
 
 - Python 3.8 or higher
 - pip (Python package manager)
-- Gemini API key or local Ollama server (optional — system works without using mock responses)
+- Gemini API key or local Ollama server (optional — CLI falls back to mock LLM responses when Gemini is configured without a key)
+- For the **web UI** ([WEB_QUICKSTART.md](WEB_QUICKSTART.md)): Node.js 18+ and `cd web && npm install`
 
 ## Quick Setup
 
@@ -64,7 +65,8 @@ The system will:
 2. ✅ Break it into tasks
 3. ✅ Route tasks to agents
 4. ✅ Collect data from web and research sources
-5. ✅ Save everything for audit trail
+5. ✅ Structure, validate, optionally cache/store in SQLite, and generate insights
+6. ✅ Save plans and raw outputs for an audit trail
 
 ## Running Without API Key
 
@@ -160,6 +162,16 @@ After running, check these folders:
    - Web scraping results
    - Research paper metadata
 
+3. **`data/structured/`** - Normalized records (when enabled)
+
+4. **`data/trusted/`** - Trust-validated records (when enabled)
+
+5. **`data/trustwise.db`** - SQLite database (deduplication and query cache)
+
+## Web UI (optional)
+
+See [WEB_QUICKSTART.md](WEB_QUICKSTART.md): run `start_web.bat` / `start_web.sh` or `cd web && npm run build && npm start`, then open `http://localhost:5000`.
+
 ## Configuration
 
 Edit `.env` to customize:
@@ -182,9 +194,14 @@ LLM_MODEL=gemini-2.0-flash
 # How many papers to fetch
 ARXIV_MAX_RESULTS=5
 
-# Save outputs?
+# Persistence
 SAVE_PLANS=true
 SAVE_RAW_DATA=true
+SAVE_STRUCTURED_DATA=true
+SAVE_TRUSTED_DATA=true
+SAVE_TO_DB=true
+ENABLE_DB_CACHE=true
+DB_CACHE_MIN_ITEMS=3
 ```
 
 ## Troubleshooting
@@ -206,13 +223,13 @@ pip install -r requirements.txt
 
 ### "No data collected from any source"
 
-**Solution**: This is normal in Phase 1 when:
+**Solution**: This is normal when:
 
 - Websites block scraping
 - Network issues
 - Rate limiting
 
-The system will continue and mark tasks as "partial" status.
+The system will continue and may mark tasks as `"partial"` or `"failed"` depending on the agent.
 
 ### "JSONDecodeError"
 

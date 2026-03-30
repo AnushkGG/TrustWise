@@ -36,11 +36,16 @@ ENV/
 *.swo
 *~
 
-# Data
+# Data (generated outputs — keep dirs with .gitkeep only)
 data/raw/*
 data/plans/*
+data/structured/*
+data/trusted/*
+data/trustwise.db
 !data/raw/.gitkeep
 !data/plans/.gitkeep
+!data/structured/.gitkeep
+!data/trusted/.gitkeep
 
 # Logs
 *.log
