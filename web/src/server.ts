@@ -3,15 +3,13 @@
  *
  * Replaces the Flask-based web interface.  Serves the static frontend and
  * provides REST API endpoints that delegate to the Python backend pipeline
- * via a thin JSON-over-subprocess bridge (`python_bridge.py`).
+ * via a thin JSON-over-subprocess bridge (`api_bridge.py`).
  */
 
 import express, { Request, Response } from "express";
 import cors from "cors";
 import path from "path";
-import fs from "fs";
 import { execFile } from "child_process";
-import crypto from "crypto";
 
 // ---------------------------------------------------------------------------
 // Configuration
