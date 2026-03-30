@@ -6,7 +6,7 @@ Get TrustWise up and running in 5 minutes!
 
 - Python 3.8 or higher
 - pip (Python package manager)
-- OpenAI API key (optional - system works without one using mock responses)
+- Gemini API key or local Ollama server (optional — system works without using mock responses)
 
 ## Quick Setup
 
@@ -18,7 +18,7 @@ python setup.py
 
 # 2. Edit .env and add your API key (optional)
 # Open .env in any text editor and replace:
-# OPENAI_API_KEY=your_openai_api_key_here
+# GEMINI_API_KEY=your_gemini_api_key_here
 
 # 3. Run the system
 python main.py
@@ -165,14 +165,19 @@ After running, check these folders:
 Edit `.env` to customize:
 
 ```env
-# Use OpenAI or Anthropic
-LLM_PROVIDER=openai
+# Use Gemini (cloud) or Ollama (local)
+LLM_PROVIDER=gemini
 
-# Your API key
-OPENAI_API_KEY=sk-...
+# Your Gemini API key
+GEMINI_API_KEY=your_key_here
+
+# Or use Ollama (local):
+# LLM_PROVIDER=ollama
+# OLLAMA_BASE_URL=http://localhost:11434
+# LLM_MODEL=llama3
 
 # Model selection
-LLM_MODEL=gpt-4
+LLM_MODEL=gemini-2.0-flash
 
 # How many papers to fetch
 ARXIV_MAX_RESULTS=5
@@ -184,14 +189,14 @@ SAVE_RAW_DATA=true
 
 ## Troubleshooting
 
-### "OPENAI_API_KEY is required"
+### "GEMINI_API_KEY is required"
 
 **Solution**: This is just a warning. The system will use mock responses. To use real LLM:
 
-1. Get an API key from https://platform.openai.com/api-keys
-2. Add it to `.env`: `OPENAI_API_KEY=sk-your-actual-key`
+1. Get an API key from https://aistudio.google.com/apikey
+2. Add it to `.env`: `GEMINI_API_KEY=your-actual-key`
 
-### "Import Error: openai/anthropic not installed"
+### "Import Error: google-generativeai not installed"
 
 **Solution**: Install dependencies:
 
@@ -232,18 +237,14 @@ Check your `.env` settings.
 - Check file contents in `data/` folders to understand outputs
 - Review logs for detailed execution information
 
-## Phase 1 Limitations
+## Capabilities
 
-Remember, Phase 1 is focused on execution flow:
-
-- ✅ Planning and orchestration
+- ✅ Planning and orchestration (Gemini / Ollama)
 - ✅ Task routing
 - ✅ Data collection
-- ❌ No trust validation
-- ❌ No summarization
-- ❌ No credibility scoring
-
-These features come in later phases.
+- ✅ Trust validation and credibility scoring
+- ✅ SQLite storage with caching
+- ✅ Insight generation
 
 ---
 

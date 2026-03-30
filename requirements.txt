@@ -1,6 +1,5 @@
-# Core LLM Providers
-openai>=1.0.0
-anthropic>=0.18.0
+# LLM Providers
+google-generativeai>=0.8.0
 
 # Web Framework
 flask>=3.0.0

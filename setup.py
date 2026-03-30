@@ -69,7 +69,7 @@ def setup_env_file():
         import shutil
         shutil.copy(env_example, env_file)
         print("   ✓ .env file created")
-        print("\n   ⚠️  IMPORTANT: Edit .env and add your OpenAI API key")
+        print("\n   ⚠️  IMPORTANT: Edit .env and add your Gemini API key")
     else:
         print("   ❌ .env.example not found")
 
@@ -101,7 +101,7 @@ def main():
     print("✅ Setup Complete!")
     print("=" * 60)
     print("\nNext steps:")
-    print("1. Edit .env and add your OpenAI API key")
+    print("1. Edit .env and add your Gemini API key (or configure Ollama)")
     print("2. Run the system: python main.py")
     print("\nFor mock testing without API key, just run: python main.py")
     print()

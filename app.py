@@ -319,9 +319,7 @@ def get_status():
     try:
         # Check if LLM provider is configured and ready
         has_api_key = False
-        if Config.LLM_PROVIDER == "openai" and Config.OPENAI_API_KEY:
-            has_api_key = True
-        elif Config.LLM_PROVIDER == "anthropic" and Config.ANTHROPIC_API_KEY:
+        if Config.LLM_PROVIDER == "gemini" and Config.GEMINI_API_KEY:
             has_api_key = True
         elif Config.LLM_PROVIDER == "ollama":
             # Ollama doesn't need an API key — check if the server is reachable

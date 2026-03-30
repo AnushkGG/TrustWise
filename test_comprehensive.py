@@ -535,8 +535,8 @@ def _test_pipeline_mock_end_to_end():
     from utils.config import Config
 
     # Force mock mode
-    original_key = Config.OPENAI_API_KEY
-    Config.OPENAI_API_KEY = None
+    original_key = Config.GEMINI_API_KEY
+    Config.GEMINI_API_KEY = None
 
     try:
         plan = generate_plan("AI in healthcare")
@@ -555,7 +555,7 @@ def _test_pipeline_mock_end_to_end():
         for t in paper_tasks:
             assert t["agent"] == "research_agent"
     finally:
-        Config.OPENAI_API_KEY = original_key
+        Config.GEMINI_API_KEY = original_key
 
 
 def _test_cleaner_trust_pipeline():

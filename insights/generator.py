@@ -163,49 +163,25 @@ def _call_llm_for_summary(query: str, context: str) -> Dict[str, Any]:
             logger.warning("[Insights] Ollama summary failed: %s", exc)
             return {}
 
-    if provider == "openai" and Config.OPENAI_API_KEY:
+    if provider == "gemini" and Config.GEMINI_API_KEY:
         try:
-            from openai import OpenAI
+            import google.generativeai as genai
 
-            client = OpenAI(api_key=Config.OPENAI_API_KEY)
-            response = client.chat.completions.create(
-                model=Config.LLM_MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=0.1,
-                max_tokens=500,
-                response_format={"type": "json_object"},
+            genai.configure(api_key=Config.GEMINI_API_KEY)
+            model = genai.GenerativeModel(
+                model_name=Config.LLM_MODEL,
+                generation_config=genai.GenerationConfig(
+                    temperature=0.1,
+                    max_output_tokens=500,
+                    response_mime_type="application/json",
+                ),
+                system_instruction=system_prompt,
             )
-            content = response.choices[0].message.content or ""
+            response = model.generate_content(user_prompt)
+            content = response.text or ""
             return _parse_json_response(content)
         except Exception as exc:
-            logger.warning("[Insights] OpenAI summary failed: %s", exc)
-            return {}
-
-    if provider == "anthropic" and Config.ANTHROPIC_API_KEY:
-        try:
-            from anthropic import Anthropic
-
-            client = Anthropic(api_key=Config.ANTHROPIC_API_KEY)
-            response = client.messages.create(
-                model=Config.LLM_MODEL,
-                max_tokens=500,
-                temperature=0.1,
-                messages=[
-                    {"role": "user", "content": f"{system_prompt}\n\n{user_prompt}"},
-                ],
-            )
-            parts = []
-            for block in (response.content or []):
-                text_part = getattr(block, "text", "")
-                if text_part:
-                    parts.append(text_part)
-            content = "\n".join(parts)
-            return _parse_json_response(content)
-        except Exception as exc:
-            logger.warning("[Insights] Anthropic summary failed: %s", exc)
+            logger.warning("[Insights] Gemini summary failed: %s", exc)
             return {}
 
     return {}

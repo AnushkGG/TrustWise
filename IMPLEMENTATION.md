@@ -23,7 +23,7 @@ This document summarizes the TrustWise implementation across all completed phase
 - Environment variable support via `python-dotenv`
 - Automatic directory creation
 - Configuration validation
-- Support for both OpenAI and Anthropic APIs
+- Support for Gemini and Ollama LLM providers
 - Configurable timeout, logging, and storage settings
 
 ---
@@ -34,8 +34,8 @@ This document summarizes the TrustWise implementation across all completed phase
 
 **Features:**
 
-- Real OpenAI API integration with JSON mode
-- Real Anthropic API integration
+- Google Gemini API integration with JSON mode
+- Local Ollama API integration
 - Automatic fallback to mock responses when API keys missing
 - Comprehensive error handling
 - Proper logging at each step
@@ -43,8 +43,8 @@ This document summarizes the TrustWise implementation across all completed phase
 
 **Supported Modes:**
 
-- OpenAI GPT-4/GPT-3.5
-- Anthropic Claude
+- Google Gemini (cloud)
+- Ollama (local models)
 - Mock mode (for testing without API costs)
 
 ---
@@ -159,8 +159,8 @@ task_id_YYYYMMDD_HHMMSS.json
   "_metadata": {
     "query": "original user query",
     "created_at": "ISO-8601",
-    "llm_provider": "openai",
-    "llm_model": "gpt-4"
+    "llm_provider": "gemini",
+    "llm_model": "gemini-2.0-flash"
   }
 }
 ```
@@ -173,8 +173,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 **Core Dependencies:**
 
-- `openai>=1.0.0` - OpenAI API client
-- `anthropic>=0.18.0` - Anthropic API client
+- `google-generativeai>=0.8.0` - Google Gemini API client
 - `flask>=3.0.0` - Web server
 - `requests>=2.31.0` - HTTP requests
 - `beautifulsoup4>=4.12.0` - HTML parsing
@@ -236,7 +235,7 @@ task_id_YYYYMMDD_HHMMSS.json
 
 **Features:**
 
-- LLM-based summarization (OpenAI, Anthropic, Ollama)
+- LLM-based summarization (Gemini, Ollama with fallback)
 - Extractive fallback (sentence ranking by relevance)
 - Key point extraction and highlights
 - Source breakdown analytics
@@ -581,7 +580,7 @@ python app.py
 
 | Component        | Status      | Notes                                            |
 | ---------------- | ----------- | ------------------------------------------------ |
-| Orchestrator     | ✅ Complete | LLM integration (OpenAI/Anthropic/Ollama), plan logging |
+| Orchestrator     | ✅ Complete | LLM integration (Gemini/Ollama), plan logging |
 | Chunker          | ✅ Complete | Simple passthrough (sufficient for current scope) |
 | Scheduler        | ✅ Complete | Enhanced with logging and type normalization      |
 | Web Agent        | ✅ Complete | Crawl4AI + DuckDuckGo + Wikipedia + HTTP fallback |
@@ -614,7 +613,7 @@ python app.py
 The system is **fully implemented** with:
 
 - ✅ All core components working end-to-end
-- ✅ Real API integration (OpenAI/Anthropic/Ollama)
+- ✅ Real API integration (Gemini/Ollama)
 - ✅ Complete data collection pipeline
 - ✅ Zero-trust validation and credibility scoring
 - ✅ SQLite storage with deduplication and caching
