@@ -289,7 +289,10 @@ def get_plan(filename):
         plan_file = (Config.PLANS_DIR / filename).resolve()
         
         # Verify the resolved path is still within PLANS_DIR
-        if not str(plan_file).startswith(str(Config.PLANS_DIR.resolve())):
+        plans_dir = Config.PLANS_DIR.resolve()
+        try:
+            plan_file.relative_to(plans_dir)
+        except ValueError:
             return jsonify({
                 'success': False,
                 'error': 'Invalid filename'
