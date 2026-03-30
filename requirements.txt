@@ -10,6 +10,9 @@ duckduckgo_search>=8.0.0
 # Research Paper APIs
 feedparser>=6.0.10
 
+# Web Server (legacy Flask interface)
+flask>=3.0.0
+
 # Environment Management
 python-dotenv>=1.0.0
 
