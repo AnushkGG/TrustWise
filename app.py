@@ -22,6 +22,7 @@ from storage import get_cached_trusted_items, save_trusted_items
 from insights import generate_insights
 from utils.config import Config
 from utils.logger import setup_logger
+from utils.retry import execute_with_retry
 
 # Load environment variables
 load_dotenv()
@@ -125,10 +126,14 @@ def submit_query():
         # Step 4: Execute Tasks
         results = []
         
-        # Execute web tasks
+        # Execute web tasks (with retry on transient failures)
         for task in web_tasks:
             try:
-                result = web_agent.run(task)
+                result = execute_with_retry(
+                    web_agent.run, task,
+                    max_retries=2, base_delay=1.0,
+                    retryable_exceptions=(ConnectionError, TimeoutError, OSError),
+                )
                 results.append(result)
                 execution_state["current_results"].append(result)
             except Exception as e:
@@ -139,10 +144,14 @@ def submit_query():
                     "error": str(e)
                 })
         
-        # Execute research tasks
+        # Execute research tasks (with retry on transient failures)
         for task in paper_tasks:
             try:
-                result = research_agent.run(task)
+                result = execute_with_retry(
+                    research_agent.run, task,
+                    max_retries=2, base_delay=1.0,
+                    retryable_exceptions=(ConnectionError, TimeoutError, OSError),
+                )
                 results.append(result)
                 execution_state["current_results"].append(result)
             except Exception as e:
