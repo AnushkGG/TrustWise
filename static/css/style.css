@@ -679,6 +679,85 @@ textarea:focus {
   text-align: right;
 }
 
+/* Citations */
+.citation-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 800;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 4px;
+  text-decoration: none;
+  margin: 0 2px;
+  vertical-align: super;
+  transition: all 0.2s var(--ease);
+}
+
+.citation-link:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.task-card {
+  scroll-margin-top: 100px;
+}
+
+/* Consensus Badge */
+.consensus-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  background: rgba(217, 119, 6, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-left: 6px;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+/* Confidence Meter */
+.confidence-meter-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem;
+  background: var(--glass-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+}
+.confidence-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.confidence-meter {
+  flex: 1;
+  height: 8px;
+  background: var(--glass-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.confidence-fill {
+  height: 100%;
+  transition: width 1s var(--ease);
+}
+.confidence-value {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text);
+  width: 40px;
+  text-align: right;
+}
+
 .text-muted {
   color: var(--text-muted);
   font-size: 0.9rem;
