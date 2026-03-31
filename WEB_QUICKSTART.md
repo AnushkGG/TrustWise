@@ -6,14 +6,15 @@
 
 ```bash
 # Double-click or run in terminal:
-start_web.bat
+scripts/start_web.bat
 ```
 
 ### Linux/Mac
 
 ```bash
-chmod +x start_web.sh
-./start_web.sh
+# Double-click or run in terminal:
+chmod +x scripts/start_web.sh
+./scripts/start_web.sh
 ```
 
 ### Or directly with npm
@@ -29,7 +30,7 @@ npm start
 
 ```bash
 pip install flask
-python app.py
+python legacy/app.py
 ```
 
 ## Access the Interface

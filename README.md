@@ -177,11 +177,11 @@ The recommended UI is the **TypeScript/Express** server in `web/`, which calls t
 
 ```bash
 # Windows
-start_web.bat
+scripts/start_web.bat
 
 # Linux/Mac
-chmod +x start_web.sh
-./start_web.sh
+chmod +x scripts/start_web.sh
+./scripts/start_web.sh
 
 # Or directly (after: cd web && npm install)
 cd web && npm run build && npm start
@@ -198,6 +198,14 @@ Then open your browser to: **http://localhost:5000** (or `http://127.0.0.1:5000`
 - 🔍 Detailed task results
 
 See [FRONTEND.md](FRONTEND.md) for complete documentation.
+
+### Demo Mode
+
+Run the demo script to see multiple queries automatically:
+
+```bash
+python scripts/demo.py
+```
 
 ### Option 2: Command Line Interface
 
@@ -315,17 +323,24 @@ Saved to `data/raw/task_xxx_YYYYMMDD_HHMMSS.json`:
 TrustWise/
 │
 ├── main.py                    # CLI entry point
-├── app.py                     # Legacy web interface (Flask, kept for reference)
 ├── api_bridge.py              # Python API bridge for TypeScript server
-├── demo.py                    # Demo script
-├── continuous_update.py       # Periodic update runner
-├── setup.py                   # Setup automation
 ├── test_basic.py              # Basic tests
 ├── test_comprehensive.py      # Comprehensive tests
-├── start_web.bat              # Windows web launcher
-├── start_web.sh               # Linux/Mac web launcher
 ├── requirements.txt           # Python dependencies
 ├── .env.example              # Environment template
+│
+├── scripts/                   # Automation and helper scripts
+│   ├── setup.py               # Setup automation
+│   ├── demo.py                # Demo script
+│   ├── continuous_update.py   # Periodic update runner
+│   ├── start_web.bat          # Windows web launcher
+│   ├── start_web.sh           # Linux/Mac web launcher
+│   ├── run_implementation_tests.py # CI parity verification
+│   └── run_local_varied_inputs.py  # Input variation testing
+│
+├── legacy/                    # Legacy Flask implementation (kept for reference)
+│   ├── app.py                 # Legacy web interface
+│   └── templates/             # Legacy HTML templates
 │
 ├── web/                       # TypeScript web server
 │   ├── package.json           # Node.js dependencies

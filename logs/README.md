@@ -1,8 +1,8 @@
 # Logs directory
 
-## `local-test/` (gitignored)
+## `local-test/` (gitignored, semi-permanent)
 
-Ad-hoc full local test output from [implementationtest.md](../implementationtest.md)–style runs: per-phase `*.log`, HTTP captures `*.json` / `*.txt`, optional `server.pid`, and [local-test/summary.md](local-test/summary.md).
+Ad-hoc full local test output from [implementationtest.md](../implementationtest.md)–style runs: per-phase `*.log`, HTTP captures `*.json` / `*.txt`, and optional `server.pid`. These files are typically removed during repository cleanup to maintain a fresh state.
 
 This folder is listed in [.gitignore](../.gitignore) so large or machine-specific artifacts are not committed.
 

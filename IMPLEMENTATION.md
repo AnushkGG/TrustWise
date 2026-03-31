@@ -456,8 +456,6 @@ task_id_YYYYMMDD_HHMMSS.json
 TrustWise/
 ├── main.py                    # CLI entry point
 ├── api_bridge.py              # JSON bridge for TypeScript server
-├── demo.py                    # Demo script
-├── setup.py                   # Setup automation
 ├── test_basic.py              # Basic tests
 ├── test_comprehensive.py      # Comprehensive tests
 ├── requirements.txt           # Python dependencies
@@ -465,6 +463,19 @@ TrustWise/
 ├── QUICKSTART.md
 ├── .env.example
 ├── .gitignore
+│
+├── scripts/                   # Automation and helper scripts
+│   ├── setup.py               # Setup automation
+│   ├── demo.py                # Demo script
+│   ├── continuous_update.py   # Periodic update runner
+│   ├── start_web.bat          # Windows web launcher
+│   ├── start_web.sh           # Linux/Mac web launcher
+│   ├── run_implementation_tests.py # CI parity verification
+│   └── run_local_varied_inputs.py  # Input variation testing
+│
+├── legacy/                    # Legacy Flask implementation (kept for reference)
+│   ├── app.py                 # Legacy web interface
+│   └── templates/             # Legacy HTML templates
 │
 ├── web/                       # Primary web UI (Express + static assets)
 │   ├── src/server.ts
@@ -593,20 +604,21 @@ python demo.py
 python main.py
 ```
 
-### Web Interface (recommended)
+### Web Interface
+
+### Windows
 
 ```bash
-cd web
-npm install
-npm run build
-npm start
+# Double-click or run in terminal:
+scripts/start_web.bat
 ```
 
-### Legacy Flask UI (optional)
+### Linux/Mac
 
 ```bash
-pip install flask
-python app.py
+# Double-click or run in terminal:
+chmod +x scripts/start_web.sh
+./scripts/start_web.sh
 ```
 
 ---

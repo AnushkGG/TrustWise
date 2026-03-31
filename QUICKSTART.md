@@ -19,7 +19,7 @@ For a full-stack verification checklist (CI parity, API smoke, optional UI), see
 
 ```bash
 # 1. Run setup script
-python setup.py
+python scripts/setup.py
 
 # 2. Edit .env and add your API key (optional)
 # Open .env in any text editor and replace:
@@ -114,7 +114,7 @@ Try these queries to see different aspects of the system:
 Run the demo script to see multiple queries automatically:
 
 ```bash
-python demo.py
+python scripts/demo.py
 ```
 
 This runs 4 example queries and shows you the complete flow without manual input.
@@ -174,7 +174,7 @@ After running, check these folders:
 
 ## Web UI (optional)
 
-See [WEB_QUICKSTART.md](WEB_QUICKSTART.md): run `start_web.bat` / `start_web.sh` or `cd web && npm run build && npm start`, then open `http://localhost:5000`.
+See [WEB_QUICKSTART.md](WEB_QUICKSTART.md): run `scripts/start_web.bat` / `scripts/start_web.bat` or `cd web && npm run build && npm start`, then open `http://localhost:5000`.
 
 ## Configuration
 
