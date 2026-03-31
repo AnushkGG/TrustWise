@@ -1,272 +1,47 @@
-# TrustWise Quick Start Guide
-
-Get TrustWise up and running in 5 minutes!
+# TrustWise Quick Start (CLI)
 
 ## Prerequisites
 
-- **Python:** **3.11** matches CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)); **3.10–3.12** are fine locally. On Windows, **3.14** may fail building `lxml` from source—use 3.10–3.12 or install XML build prerequisites (see [README.md](README.md)).
-- pip (Python package manager)
-- Gemini API key or local Ollama server (optional — CLI falls back to mock LLM responses when Gemini is configured without a key)
-- For the **web UI** ([WEB_QUICKSTART.md](WEB_QUICKSTART.md)): Node.js 18+ and `cd web && npm install`
+- Python 3.10-3.12 recommended (CI uses 3.11).
+- `pip` installed.
+- Optional: Ollama running locally and model pulled.
+- Optional: Gemini API key when using `LLM_PROVIDER=gemini`.
 
-For a full-stack verification checklist (CI parity, API smoke, optional UI), see [implementationtest.md](implementationtest.md). Quick automated parity: `python scripts/run_implementation_tests.py` after `pip install -r requirements.txt` (use `--ci` to skip HTTP, same as GitHub Actions).
-
-**Data collection:** web results use **Crawl4AI**, **DuckDuckGo**, Wikipedia, and HTTP fallback. Research results use **arXiv**, **OpenAlex**, and **Semantic Scholar** (no API keys). **Gemini** (`GEMINI_API_KEY`) is optional and only needed for cloud planning when `LLM_PROVIDER=gemini`.
-
-## Quick Setup
-
-### Option 1: Automated Setup (Recommended)
+## Setup
 
 ```bash
-# 1. Run setup script
-python scripts/setup.py
-
-# 2. Edit .env and add your API key (optional)
-# Open .env in any text editor and replace:
-# GEMINI_API_KEY=your_gemini_api_key_here
-
-# 3. Run the system
-python main.py
-```
-
-### Option 2: Manual Setup
-
-```bash
-# 1. Install dependencies
 pip install -r requirements.txt
-
-# 2. Create .env file
 copy .env.example .env  # Windows
-# cp .env.example .env  # Linux/Mac
+python -c "from utils.config import Config; Config.validate(); print('OK')"
+```
 
-# 3. Edit .env and add your API key
+## Run
 
-# 4. Run the system
+```bash
 python main.py
 ```
 
-## First Run
+## What Happens
 
-When you run `python main.py`, you'll see:
+1. Plan generation
+2. Task scheduling
+3. Web/research collection
+4. Structured normalization
+5. Trust filtering
+6. Storage and insights
 
-```
-============================================================
-TrustWise - Trust-First AI System (Phase 1)
-============================================================
-
-Enter your query:
-```
-
-Try entering:
-
-```
-Latest AI developments in healthcare
-```
-
-The system will:
-
-1. ✅ Generate a structured execution plan
-2. ✅ Break it into tasks
-3. ✅ Route tasks to agents
-4. ✅ Collect data from web and research sources
-5. ✅ Structure, validate, optionally cache/store in SQLite, and generate insights
-6. ✅ Save plans and raw outputs for an audit trail
-
-## Running Without API Key
-
-The system works without API keys by using mock LLM responses. This is perfect for:
-
-- Testing the architecture
-- Understanding the flow
-- Development without API costs
-
-Just run `python main.py` and it will automatically use mock responses.
-
-## Example Queries
-
-Try these queries to see different aspects of the system:
-
-1. **Web + Research Papers**:
-
-   ```
-   What are the latest developments in quantum computing?
-   ```
-
-2. **Healthcare Focus**:
-
-   ```
-   Find recent AI diagnostic tools and research papers
-   ```
-
-3. **Weekly Updates**:
-
-   ```
-   Weekly tech news on cybersecurity and AI
-   ```
-
-4. **Specific Domain**:
-   ```
-   Latest transformer model research in computer vision
-   ```
-
-## Demo Mode
-
-Run the demo script to see multiple queries automatically:
+## Useful Commands
 
 ```bash
 python scripts/demo.py
-```
-
-This runs 4 example queries and shows you the complete flow without manual input.
-
-## Understanding the Output
-
-### Console Output
-
-```
-🔄 Generating execution plan...
-
-============================================================
-📋 GENERATED PLAN
-============================================================
-Goal: Track latest AI developments in healthcare
-Domains: artificial_intelligence, healthcare
-Time Range: latest
-Sources: web, research_papers
-Tasks: 4
-============================================================
-
-📊 Scheduled 2 web tasks and 2 research tasks
-
-🌐 Executing Web Tasks...
-   ✓ task_web_1: success
-   ✓ task_web_2: success
-
-📚 Executing Research Tasks...
-   ✓ task_paper_1: success
-   ✓ task_paper_2: success
-
-============================================================
-✅ EXECUTION COMPLETE
-============================================================
-Tasks completed: 4/4
-Raw data saved to: data\raw
-Plan saved to: data\plans
-```
-
-### Generated Files
-
-After running, check these folders:
-
-1. **`data/plans/`** - Execution plans (JSON)
-   - Auditable record of what was requested
-   - Reproducible execution plans
-
-2. **`data/raw/`** - Raw agent outputs (JSON)
-   - Web scraping results
-   - Research paper metadata
-
-3. **`data/structured/`** - Normalized records (when enabled)
-
-4. **`data/trusted/`** - Trust-validated records (when enabled)
-
-5. **`data/trustwise.db`** - SQLite database (deduplication and query cache)
-
-## Web UI (optional)
-
-See [WEB_QUICKSTART.md](WEB_QUICKSTART.md): run `scripts/start_web.bat` / `scripts/start_web.bat` or `cd web && npm run build && npm start`, then open `http://localhost:5000`.
-
-## Configuration
-
-Edit `.env` to customize:
-
-```env
-# Use Gemini (cloud) or Ollama (local)
-LLM_PROVIDER=gemini
-
-# Your Gemini API key
-GEMINI_API_KEY=your_key_here
-
-# Or use Ollama (local):
-# LLM_PROVIDER=ollama
-# OLLAMA_BASE_URL=http://localhost:11434
-# LLM_MODEL=llama3
-
-# Model selection
-LLM_MODEL=gemini-2.0-flash
-
-# How many papers to fetch
-ARXIV_MAX_RESULTS=5
-
-# Persistence
-SAVE_PLANS=true
-SAVE_RAW_DATA=true
-SAVE_STRUCTURED_DATA=true
-SAVE_TRUSTED_DATA=true
-SAVE_TO_DB=true
-ENABLE_DB_CACHE=true
-DB_CACHE_MIN_ITEMS=3
+python scripts/run_implementation_tests.py
 ```
 
 ## Troubleshooting
 
-### "GEMINI_API_KEY is required"
+- If `lxml` fails to install on Windows, use Python 3.11.
+- If provider is unavailable, mock plan mode is used automatically.
+- If no data is collected from web tasks, verify network/reachability and retry.
 
-**Solution**: This is just a warning. The system will use mock responses. To use real LLM:
+See [README.md](README.md) for architecture and [implementationtest.md](implementationtest.md) for full verification.
 
-1. Get an API key from https://aistudio.google.com/apikey
-2. Add it to `.env`: `GEMINI_API_KEY=your-actual-key`
-
-### "Import Error: google-generativeai not installed"
-
-**Solution**: Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-### "No data collected from any source"
-
-**Solution**: This is normal when:
-
-- Websites block scraping
-- Network issues
-- Rate limiting
-
-The system will continue and may mark tasks as `"partial"` or `"failed"` depending on the agent.
-
-### "JSONDecodeError"
-
-**Solution**: The LLM returned invalid JSON. This can happen with:
-
-- Temperature > 0 (set to 0 for deterministic output)
-- Model doesn't support JSON mode
-- API issues
-
-Check your `.env` settings.
-
-## Next Steps
-
-1. **Explore the output files** in `data/plans/` and `data/raw/`
-2. **Try different queries** to see how the system adapts
-3. **Add your own trusted sources** in `config/sources.json`
-4. **Check the logs** to understand the flow
-
-## Getting Help
-
-- Read the full [README.md](README.md) for architecture details
-- Check file contents in `data/` folders to understand outputs
-- Review logs for detailed execution information
-
-## Capabilities
-
-- ✅ Planning and orchestration (Gemini / Ollama)
-- ✅ Task routing
-- ✅ Data collection
-- ✅ Trust validation and credibility scoring
-- ✅ SQLite storage with caching
-- ✅ Insight generation
-
----
-
-**You're ready to go! Run `python main.py` and enter a query.**
