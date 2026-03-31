@@ -24,8 +24,9 @@ Generated: 2026-03-31
 ## Mitigations
 
 - Use `PYTHON_EXE`/`TRUSTWISE_PYTHON` for deterministic bridge interpreter.
-- Surface provider status in UI before submit.
-- Keep mock plan fallback documented and expected.
+- Surface provider status in UI before submit (`GET /api/status`: `llm_provider`, `gemini_configured`, `ollama_reachable`).
+- Keep mock plan fallback documented (`ALLOW_MOCK_FALLBACK`); clarify that Gemini requires `GEMINI_API_KEY` when `LLM_PROVIDER` is `gemini` or `both`.
+- Inspect `execution` and `keyed_research_providers` on successful submits to confirm optional keyed adapters when keys exist.
 - Keep trust validation and DB cache enabled for stable repeated runs.
 
 ## Go/No-Go Checklist

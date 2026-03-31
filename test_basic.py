@@ -150,8 +150,10 @@ def test_mock_llm():
     # Temporarily ensure no API key (to force mock)
     original_key = Config.GEMINI_API_KEY
     original_provider = Config.LLM_PROVIDER
+    original_allow_mock = Config.ALLOW_MOCK_FALLBACK
     Config.GEMINI_API_KEY = None
     Config.LLM_PROVIDER = "gemini"  # force mock path without calling Ollama
+    Config.ALLOW_MOCK_FALLBACK = True
 
     try:
         response = call_llm("test query")
@@ -170,6 +172,7 @@ def test_mock_llm():
     finally:
         Config.GEMINI_API_KEY = original_key
         Config.LLM_PROVIDER = original_provider
+        Config.ALLOW_MOCK_FALLBACK = original_allow_mock
     
     return result
 

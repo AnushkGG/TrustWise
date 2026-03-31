@@ -72,6 +72,14 @@ def mock_plan_json(user_query: str) -> str:
     return json.dumps(build_mock_plan(user_query), ensure_ascii=False)
 
 
+def _maybe_mock_or_raise(user_query: str, reason: str) -> str:
+    """Return mock plan only when explicitly allowed; otherwise raise."""
+    if Config.ALLOW_MOCK_FALLBACK:
+        logger.warning("%s Using mock plan because ALLOW_MOCK_FALLBACK=true.", reason)
+        return mock_plan_json(user_query)
+    raise RuntimeError(f"{reason} Set ALLOW_MOCK_FALLBACK=true to enable synthetic fallback.")
+
+
 def call_llm(user_query: str) -> str:
     """
     Calls the configured LLM to generate a structured execution plan.
@@ -86,8 +94,7 @@ def call_llm(user_query: str) -> str:
     """
 
     if Config.LLM_PROVIDER in ("gemini", "both") and not Config.GEMINI_API_KEY:
-        logger.warning("GEMINI_API_KEY not set. Using mock plan derived from user query.")
-        return mock_plan_json(user_query)
+        return _maybe_mock_or_raise(user_query, "GEMINI_API_KEY not set.")
 
     if Config.LLM_PROVIDER == "both":
         return _call_both(user_query)
@@ -101,12 +108,20 @@ def call_llm(user_query: str) -> str:
             try:
                 import requests as req_lib
                 return _call_ollama(user_prompt)
+            except req_lib.exceptions.HTTPError as e:
+                # Wrong process on OLLAMA_BASE_URL (e.g. 404 on /api/chat and /api/generate) or stale Ollama build.
+                if (
+                    Config.ALLOW_MOCK_FALLBACK
+                    and e.response is not None
+                    and e.response.status_code == 404
+                ):
+                    return _maybe_mock_or_raise(
+                        user_query,
+                        "Ollama returned HTTP 404 (service missing or misconfigured).",
+                    )
+                raise
             except (req_lib.exceptions.ConnectionError, req_lib.exceptions.Timeout) as e:
-                logger.warning(
-                    "Ollama unavailable (%s). Using mock plan for pipeline continuity.",
-                    e,
-                )
-                return mock_plan_json(user_query)
+                return _maybe_mock_or_raise(user_query, f"Ollama unavailable ({e}).")
         else:
             raise ValueError(f"Unsupported LLM provider: {Config.LLM_PROVIDER}")
     except Exception as e:
@@ -114,8 +129,7 @@ def call_llm(user_query: str) -> str:
 
         if "401" in error_str or "invalid" in error_str.lower() or "authentication" in error_str.lower():
             logger.error("Authentication failed: %s", e)
-            logger.warning("Invalid API key detected. Falling back to mock mode.")
-            return mock_plan_json(user_query)
+            return _maybe_mock_or_raise(user_query, "Invalid API key detected.")
 
         logger.error("LLM call failed: %s", e)
         raise
@@ -131,7 +145,7 @@ def _call_gemini(user_prompt: str, model_override: Optional[str] = None) -> str:
 
     genai.configure(api_key=Config.GEMINI_API_KEY)
 
-    model_name = model_override or Config.LLM_MODEL
+    model_name = model_override or Config.get_gemini_model()
     logger.info("Calling Gemini %s...", model_name)
 
     model = genai.GenerativeModel(
@@ -155,7 +169,7 @@ def _call_gemini(user_prompt: str, model_override: Optional[str] = None) -> str:
 
 
 def _call_ollama(user_prompt: str, model_override: Optional[str] = None) -> str:
-    """Call local Ollama API."""
+    """Call local Ollama API with /api/chat -> /api/generate fallback."""
     try:
         import requests
     except ImportError:
@@ -165,9 +179,10 @@ def _call_ollama(user_prompt: str, model_override: Optional[str] = None) -> str:
     model_name = model_override or Config.LLM_MODEL
     logger.info("Calling Ollama %s at %s...", model_name, Config.OLLAMA_BASE_URL)
 
-    url = f"{Config.OLLAMA_BASE_URL}/api/chat"
+    chat_url = f"{Config.OLLAMA_BASE_URL}/api/chat"
+    gen_url = f"{Config.OLLAMA_BASE_URL}/api/generate"
 
-    payload = {
+    chat_payload = {
         "model": model_name,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -180,20 +195,51 @@ def _call_ollama(user_prompt: str, model_override: Optional[str] = None) -> str:
             "num_predict": Config.LLM_MAX_TOKENS,
         },
     }
+    gen_payload = {
+        "model": model_name,
+        "prompt": f"{SYSTEM_PROMPT}\n\n{user_prompt}",
+        "stream": False,
+        "format": "json",
+        "options": {
+            "temperature": Config.LLM_TEMPERATURE,
+            "num_predict": Config.LLM_MAX_TOKENS,
+        },
+    }
+
+    def _extract_chat_content(result: dict) -> str:
+        return result.get("message", {}).get("content", "")
+
+    def _extract_generate_content(result: dict) -> str:
+        return result.get("response", "")
 
     try:
-        response = requests.post(url, json=payload, timeout=120)
+        logger.info("Ollama endpoint attempt: /api/chat")
+        response = requests.post(chat_url, json=chat_payload, timeout=120)
         response.raise_for_status()
 
         result = response.json()
-        content = result.get("message", {}).get("content", "")
+        content = _extract_chat_content(result)
 
         if not content:
-            raise ValueError("Ollama returned empty response")
+            raise ValueError("Ollama /api/chat returned empty response")
 
-        logger.info("Ollama response received")
+        logger.info("Ollama response received from /api/chat")
         return content
 
+    except requests.exceptions.HTTPError as e:
+        status_code = e.response.status_code if e.response is not None else None
+        # Older/newer Ollama builds may not expose /api/chat consistently.
+        if status_code == 404:
+            logger.warning("Ollama /api/chat returned 404, falling back to /api/generate")
+            response = requests.post(gen_url, json=gen_payload, timeout=120)
+            response.raise_for_status()
+            result = response.json()
+            content = _extract_generate_content(result)
+            if not content:
+                raise ValueError("Ollama /api/generate returned empty response")
+            logger.info("Ollama response received from /api/generate fallback")
+            return content
+        raise
     except requests.exceptions.ConnectionError:
         logger.error("Failed to connect to Ollama at %s", Config.OLLAMA_BASE_URL)
         logger.error("Make sure Ollama is running: ollama serve")
@@ -387,5 +433,7 @@ def _call_both(user_query: str) -> str:
         except (json.JSONDecodeError, ValueError):
             return ollama_raw
 
-    logger.error("Both providers failed in 'both' mode. Falling back to mock plan.")
-    return mock_plan_json(user_query)
+    if Config.ALLOW_MOCK_FALLBACK:
+        logger.error("Both providers failed in 'both' mode. Returning mock plan.")
+        return mock_plan_json(user_query)
+    raise RuntimeError("Both providers failed in 'both' mode and ALLOW_MOCK_FALLBACK=false.")

@@ -55,6 +55,30 @@ from utils.retry import execute_with_retry
 logger = setup_logger(__name__)
 
 
+def _keyed_research_snapshot(source_stats: dict) -> dict:
+    """Per-keyed-provider config flags + last-run counts (from aggregated research_source_stats)."""
+    key_cfg = {
+        "tavily": "TAVILY_API_KEY",
+        "exa": "EXA_API_KEY",
+        "firecrawl": "FIRECRAWL_API_KEY",
+        "jina_reader": "JINA_API_KEY",
+        "deepseek": "DEEPSEEK_API_KEY",
+        "scopus": "SCOPUS_API_KEY",
+    }
+    out: dict = {}
+    for sid, cfg in key_cfg.items():
+        st = source_stats.get(sid) or {}
+        ok_val = st.get("ok")
+        ok_ok = (ok_val > 0) if isinstance(ok_val, (int, float)) else bool(ok_val)
+        out[sid] = {
+            "configured": bool(getattr(Config, cfg, None)),
+            "items_last_run": int(st.get("count", 0)),
+            "ok_last_run": ok_ok,
+        }
+    out["jina_search_allow_keyless"] = Config.JINA_SEARCH_ALLOW_KEYLESS
+    return out
+
+
 # ── Action handlers ──────────────────────────────────────
 
 def handle_submit(payload: dict) -> dict:
@@ -94,6 +118,13 @@ def handle_submit(payload: dict) -> dict:
                     "db_inserted": 0,
                     "db_skipped": 0,
                     "cache_hit": True,
+                    "research_raw_count": 0,
+                    "research_unique_count": 0,
+                    "research_returned_count": 0,
+                    "research_unique_ratio": 0,
+                    "enabled_research_sources": [],
+                    "research_source_stats": {},
+                    "keyed_research_providers": _keyed_research_snapshot({}),
                 },
                 "results": [],
                 "structured_data": cached_items,
@@ -143,6 +174,29 @@ def handle_submit(payload: dict) -> dict:
                 {"task_id": task.get("task_id"), "status": "failed", "error": str(e)}
             )
 
+    # Aggregate source-level metrics from research agents.
+    source_stats: dict = {}
+    enabled_sources: set = set()
+    raw_count = 0
+    unique_count = 0
+    returned_count = 0
+    for r in results:
+        sm = r.get("source_metrics") if isinstance(r, dict) else None
+        if not isinstance(sm, dict):
+            continue
+        raw_count += int(sm.get("raw_count", 0))
+        unique_count += int(sm.get("unique_count", 0))
+        returned_count += int(sm.get("returned_count", 0))
+        for src in sm.get("enabled_sources", []) or []:
+            enabled_sources.add(src)
+        for source_id, stat in (sm.get("source_stats") or {}).items():
+            item = source_stats.setdefault(source_id, {"count": 0, "ok": 0, "fail": 0})
+            item["count"] += int(stat.get("count", 0))
+            if stat.get("ok"):
+                item["ok"] += 1
+            else:
+                item["fail"] += 1
+
     # Step 5-8: Clean, Trust, Store, Insights
     structured_data = normalize_results(results, query=query)
     trust_report = validate_structured_data(structured_data, query=query)
@@ -174,6 +228,13 @@ def handle_submit(payload: dict) -> dict:
             "db_inserted": db_stats["inserted"],
             "db_skipped": db_stats["skipped"],
             "cache_hit": False,
+            "research_raw_count": raw_count,
+            "research_unique_count": unique_count,
+            "research_returned_count": returned_count,
+            "research_unique_ratio": round(unique_count / max(raw_count, 1), 4),
+            "enabled_research_sources": sorted(list(enabled_sources)),
+            "research_source_stats": source_stats,
+            "keyed_research_providers": _keyed_research_snapshot(source_stats),
         },
         "results": results,
         "structured_data": structured_data,

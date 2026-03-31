@@ -11,7 +11,7 @@
       var pipelineTimer = null;
       var PIPELINE_STEPS = [
         { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
-        { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
+        { id: "agents", label: "Agents", detail: "Web + multi-source research adapters" },
         { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
         { id: "trust", label: "Trust", detail: "Validation and scoring" },
         { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
@@ -25,7 +25,9 @@
         setupModalHandler();
         setupClearHandler();
         setupRefreshHandler();
+        setupExportHandlers();
       });
+      var currentResults = null;
       function showToast(message, type = "info") {
         const container = document.getElementById("toastContainer");
         if (!container) return;
@@ -68,7 +70,7 @@
               statusText.textContent = `Gemini \xB7 ${model}`;
               statusDot.className = "status-dot status-dot--ok";
             } else {
-              statusText.textContent = "Gemini API key not set \u2014 using mock plan";
+              statusText.textContent = "Gemini API key not set";
               statusDot.className = "status-dot status-dot--warn";
             }
             return;
@@ -129,6 +131,33 @@
           showToast("Plans refreshed", "success");
         });
       }
+      function setupExportHandlers() {
+        document.getElementById("exportCsvBtn").addEventListener("click", () => {
+          if (!currentResults || !currentResults.trusted_data) return;
+          exportToCsv(currentResults.trusted_data, "trustwise-results.csv");
+        });
+        document.getElementById("exportPdfBtn").addEventListener("click", () => {
+          window.print();
+        });
+      }
+      function exportToCsv(data, filename) {
+        if (!data.length) return;
+        const headers = Object.keys(data[0]).join(",");
+        const rows = data.map(
+          (obj) => Object.values(obj).map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")
+        );
+        const csvContent = [headers, ...rows].join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("CSV exported", "success");
+      }
       async function submitQuery() {
         const queryInput = document.getElementById("queryInput");
         const query = queryInput.value.trim();
@@ -148,6 +177,7 @@
           });
           const data = await response.json();
           if (data.success) {
+            currentResults = data;
             displayResults(data);
             loadPlans();
             showToast("Pipeline completed.", "success");
@@ -220,6 +250,8 @@
       }
       function displayExecutionSummary(execution) {
         const cacheCard = execution.cache_hit ? `<div class="stat-card stat-card--highlight"><div class="stat-value">Yes</div><div class="stat-label">Cache hit</div></div>` : `<div class="stat-card"><div class="stat-value">No</div><div class="stat-label">Cache hit</div></div>`;
+        const enabledSources = Array.isArray(execution.enabled_research_sources) ? execution.enabled_research_sources : [];
+        const enabledSourcesHtml = enabledSources.length ? `<div class="chip-row">${enabledSources.map((s) => `<span class="chip">${escapeHtml(String(s))}</span>`).join("")}</div>` : '<span class="text-muted">\u2014</span>';
         document.getElementById("executionSummary").innerHTML = `
     <h3>Execution metrics</h3>
     <div class="stat-grid">
@@ -231,8 +263,12 @@
       <div class="stat-card"><div class="stat-value">${execution.trusted_items ?? 0}</div><div class="stat-label">Trusted</div></div>
       <div class="stat-card"><div class="stat-value">${execution.db_inserted ?? 0}</div><div class="stat-label">DB inserted</div></div>
       <div class="stat-card"><div class="stat-value">${execution.db_skipped ?? 0}</div><div class="stat-label">DB skipped</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_raw_count ?? 0}</div><div class="stat-label">Research raw</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_unique_count ?? 0}</div><div class="stat-label">Research unique</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_unique_ratio ?? 0}</div><div class="stat-label">Unique ratio</div></div>
       ${cacheCard}
     </div>
+    <div class="insights-block"><strong>Enabled research sources</strong>${enabledSourcesHtml}</div>
   `;
       }
       function renderTrustPanelHtml(trustReport, execution) {

@@ -19,20 +19,53 @@ Request:
 { "query": "Latest AI developments in healthcare" }
 ```
 
-Response:
+Response (shape; see [`api_bridge.py`](api_bridge.py) for the full payload):
 
 ```json
 {
   "success": true,
-  "plan": {},
-  "execution": {},
+  "plan": {
+    "goal": "",
+    "domains": [],
+    "time_range": "",
+    "sources": [],
+    "total_tasks": 0
+  },
+  "execution": {
+    "web_tasks": 0,
+    "paper_tasks": 0,
+    "total_results": 0,
+    "successful": 0,
+    "structured_items": 0,
+    "trusted_items": 0,
+    "db_inserted": 0,
+    "db_skipped": 0,
+    "cache_hit": false,
+    "research_raw_count": 0,
+    "research_unique_count": 0,
+    "research_returned_count": 0,
+    "research_unique_ratio": 0,
+    "enabled_research_sources": [],
+    "research_source_stats": {},
+    "keyed_research_providers": {}
+  },
   "results": [],
   "structured_data": [],
   "trusted_data": [],
   "insights": {},
-  "trust_report": {}
+  "trust_report": {
+    "validated_count": 0,
+    "trusted_count": 0,
+    "dropped_count": 0
+  }
 }
 ```
+
+`keyed_research_providers` summarizes optional Tavily/Exa/Firecrawl/Jina/Scopus/DeepSeek usage when keys are configured (`configured`, `items_last_run`, etc.).
+
+## Status payload
+
+`GET /api/status` returns `success` and a `status` object including `llm_provider`, `llm_model`, `has_api_key`, `ollama_reachable`, `gemini_configured`, `providers_available`, persistence flags (`save_plans`, `save_raw_data`, …), and cache settings.
 
 ## Server Behavior
 

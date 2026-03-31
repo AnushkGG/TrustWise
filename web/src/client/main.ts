@@ -30,7 +30,7 @@ interface SubmitResponse {
 
 const PIPELINE_STEPS = [
   { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
-  { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
+  { id: "agents", label: "Agents", detail: "Web + multi-source research adapters" },
   { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
   { id: "trust", label: "Trust", detail: "Validation and scoring" },
   { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
@@ -99,7 +99,7 @@ async function loadSystemStatus() {
         statusText.textContent = `Gemini · ${model}`;
         statusDot.className = "status-dot status-dot--ok";
       } else {
-        statusText.textContent = "Gemini API key not set — using mock plan";
+        statusText.textContent = "Gemini API key not set";
         statusDot.className = "status-dot status-dot--warn";
       }
       return;
@@ -315,6 +315,13 @@ function displayExecutionSummary(execution: Record<string, unknown>) {
     ? `<div class="stat-card stat-card--highlight"><div class="stat-value">Yes</div><div class="stat-label">Cache hit</div></div>`
     : `<div class="stat-card"><div class="stat-value">No</div><div class="stat-label">Cache hit</div></div>`;
 
+  const enabledSources = Array.isArray(execution.enabled_research_sources)
+    ? execution.enabled_research_sources
+    : [];
+  const enabledSourcesHtml = enabledSources.length
+    ? `<div class="chip-row">${enabledSources.map((s) => `<span class="chip">${escapeHtml(String(s))}</span>`).join("")}</div>`
+    : '<span class="text-muted">—</span>';
+
   document.getElementById("executionSummary").innerHTML = `
     <h3>Execution metrics</h3>
     <div class="stat-grid">
@@ -326,8 +333,12 @@ function displayExecutionSummary(execution: Record<string, unknown>) {
       <div class="stat-card"><div class="stat-value">${execution.trusted_items ?? 0}</div><div class="stat-label">Trusted</div></div>
       <div class="stat-card"><div class="stat-value">${execution.db_inserted ?? 0}</div><div class="stat-label">DB inserted</div></div>
       <div class="stat-card"><div class="stat-value">${execution.db_skipped ?? 0}</div><div class="stat-label">DB skipped</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_raw_count ?? 0}</div><div class="stat-label">Research raw</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_unique_count ?? 0}</div><div class="stat-label">Research unique</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_unique_ratio ?? 0}</div><div class="stat-label">Unique ratio</div></div>
       ${cacheCard}
     </div>
+    <div class="insights-block"><strong>Enabled research sources</strong>${enabledSourcesHtml}</div>
   `;
 }
 

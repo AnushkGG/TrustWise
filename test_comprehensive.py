@@ -15,7 +15,7 @@ import sqlite3
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -639,6 +639,215 @@ def _test_merge_summaries_empty_input():
     assert merged["concise_answer_origin"] == "ollama"
 
 
+def _test_ollama_chat_to_generate_fallback():
+    """If /api/chat returns 404, llm_client should retry /api/generate."""
+    import requests
+    from orchestrator import llm_client
+
+    class _Resp:
+        def __init__(self, status_code=200, json_data=None):
+            self.status_code = status_code
+            self._json_data = json_data or {}
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                err = requests.exceptions.HTTPError(f"{self.status_code} error")
+                err.response = self
+                raise err
+
+        def json(self):
+            return self._json_data
+
+    calls = []
+
+    def _fake_post(url, json=None, timeout=0):  # noqa: A002
+        calls.append(url)
+        if url.endswith("/api/chat"):
+            return _Resp(status_code=404)
+        if url.endswith("/api/generate"):
+            return _Resp(status_code=200, json_data={"response": '{"goal":"ok","tasks":[]}'})
+        return _Resp(status_code=500)
+
+    with patch("requests.post", side_effect=_fake_post):
+        result = llm_client._call_ollama("test prompt", model_override="llama3.2")
+
+    assert "goal" in result
+    assert any(c.endswith("/api/chat") for c in calls)
+    assert any(c.endswith("/api/generate") for c in calls)
+
+
+def _test_web_relevance_balanced_fallback_gate():
+    """Balanced fallback should accept medium text with at least one query term."""
+    from agents.web_agent import _is_balanced_fallback_content
+
+    text_ok = ("This article covers enterprise AI rollouts in hospitals. " * 8).strip()
+    text_bad = "Short note without useful overlap."
+
+    assert _is_balanced_fallback_content(text_ok, ["hospitals", "ai"]) is True
+    assert _is_balanced_fallback_content(text_bad, ["quantum"]) is False
+
+
+def _test_keyed_tavily_no_key_returns_empty():
+    from agents import keyed_adapters
+    from utils.config import Config
+
+    with patch.object(Config, "TAVILY_API_KEY", None):
+        rows, meta = keyed_adapters.fetch_tavily("test query", 5)
+    assert rows == []
+    assert meta.get("error_type") == "no_key"
+
+
+def _test_keyed_tavily_normalizes():
+    from agents import keyed_adapters
+    from utils.config import Config
+
+    fake = (
+        {"results": [{"url": "https://example.com/p", "title": "Paper", "content": "Abstract text"}]},
+        {"ok": True, "http_status": 200},
+    )
+    with patch.object(Config, "TAVILY_API_KEY", "secret"):
+        with patch.object(keyed_adapters, "safe_request_json", return_value=fake):
+            rows, meta = keyed_adapters.fetch_tavily("ml", 5)
+    assert len(rows) == 1
+    assert rows[0]["source"] == "Tavily"
+    assert rows[0]["url"] == "https://example.com/p"
+    assert "Abstract" in rows[0]["abstract"]
+    assert meta.get("normalized_count") == 1
+
+
+def _test_keyed_exa_normalizes():
+    from agents import keyed_adapters
+    from utils.config import Config
+
+    fake = (
+        {"results": [{"url": "https://exa.test/a", "title": "Exa hit", "snippet": "Snip"}]},
+        {"ok": True, "http_status": 200},
+    )
+    with patch.object(Config, "EXA_API_KEY", "k"):
+        with patch.object(keyed_adapters, "safe_request_json", return_value=fake):
+            rows, _ = keyed_adapters.fetch_exa("q", 3)
+    assert rows[0]["source"] == "Exa"
+
+
+def _test_keyed_firecrawl_normalizes():
+    from agents import keyed_adapters
+    from utils.config import Config
+
+    fake = (
+        {"data": [{"url": "https://fc.test/x", "title": "FC", "markdown": "# Hello"}]},
+        {"ok": True, "http_status": 200},
+    )
+    with patch.object(Config, "FIRECRAWL_API_KEY", "k"):
+        with patch.object(keyed_adapters, "safe_request_json", return_value=fake):
+            rows, _ = keyed_adapters.fetch_firecrawl("q", 2)
+    assert rows[0]["source"] == "Firecrawl"
+
+
+def _test_keyed_jina_extracts_urls():
+    from agents import keyed_adapters
+
+    body = "See https://foo.org/a and https://bar.org/b for more."
+    fake = (body, {"ok": True, "http_status": 200})
+    with patch.object(keyed_adapters, "safe_request_text", return_value=fake):
+        rows, meta = keyed_adapters.fetch_jina_search("quantum", 5)
+    assert len(rows) >= 1
+    assert any("foo.org" in r.get("url", "") for r in rows)
+    assert meta.get("normalized_count") >= 1
+
+
+def _test_keyed_scopus_normalizes():
+    from agents import keyed_adapters
+    from utils.config import Config
+
+    fake = (
+        {
+            "search-results": {
+                "entry": [
+                    {
+                        "dc:title": "Scopus Title",
+                        "dc:creator": "A Smith",
+                        "prism:coverDate": "2024-01-01",
+                        "prism:doi": "10.1000/182",
+                        "link": [{"@href": "https://scopus.example/1"}],
+                    }
+                ]
+            }
+        },
+        {"ok": True, "http_status": 200},
+    )
+    with patch.object(Config, "SCOPUS_API_KEY", "k"):
+        with patch.object(keyed_adapters, "safe_request_json", return_value=fake):
+            rows, _ = keyed_adapters.fetch_scopus("neural", 5)
+    assert rows[0]["source"] == "Scopus"
+    assert rows[0]["doi"]
+
+
+def _test_keyed_deepseek_parses_json():
+    from agents import keyed_adapters
+    from utils.config import Config
+
+    payload = {
+        "choices": [
+            {
+                "message": {
+                    "content": '[{"title":"T1","abstract":"A1","url":"https://d.test","authors":["X"],"published":"2024"}]'
+                }
+            }
+        ]
+    }
+    with patch.object(Config, "DEEPSEEK_API_KEY", "k"):
+        with patch.object(keyed_adapters, "safe_request_json", return_value=(payload, {"ok": True})):
+            rows, meta = keyed_adapters.fetch_deepseek("topic", 5)
+    assert len(rows) == 1
+    assert rows[0]["source"] == "DeepSeek"
+    assert rows[0].get("deepseek_synthetic") is True
+    assert meta.get("normalized_count") == 1
+
+
+def _test_keyed_http_retries_429():
+    import requests
+    from agents.keyed_http import safe_request_json
+
+    class Resp:
+        def __init__(self, status_code, json_data=None):
+            self.status_code = status_code
+            self._json_data = json_data or {}
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                err = requests.exceptions.HTTPError("err")
+                err.response = self
+                raise err
+
+        def json(self):
+            return self._json_data
+
+    sess = MagicMock()
+    sess.request.side_effect = [Resp(429), Resp(200, {"ok": True})]
+
+    with patch("agents.keyed_http.random.random", return_value=0.0):
+        with patch("agents.keyed_http.time.sleep"):
+            data, meta = safe_request_json("GET", "http://localhost/nope", session=sess, max_retries=2)
+    assert data == {"ok": True}
+    assert meta.get("retries_used", 0) >= 1
+
+
+def _test_api_bridge_keyed_snapshot_shape():
+    from api_bridge import _keyed_research_snapshot
+    from utils.config import Config
+
+    stats = {
+        "tavily": {"count": 2, "ok": 1},
+        "exa": {"count": 0, "ok": 0},
+    }
+    with patch.object(Config, "TAVILY_API_KEY", "x"):
+        with patch.object(Config, "EXA_API_KEY", None):
+            snap = _keyed_research_snapshot(stats)
+    assert snap["tavily"]["configured"] is True
+    assert snap["tavily"]["items_last_run"] == 2
+    assert "jina_search_allow_keyless" in snap
+
+
 # ---------------------------------------------------------------------------
 # Integration Tests
 # ---------------------------------------------------------------------------
@@ -653,8 +862,10 @@ def _test_pipeline_mock_end_to_end():
     # Force mock mode (no live Ollama / Gemini)
     original_key = Config.GEMINI_API_KEY
     original_provider = Config.LLM_PROVIDER
+    original_allow_mock = Config.ALLOW_MOCK_FALLBACK
     Config.GEMINI_API_KEY = None
     Config.LLM_PROVIDER = "gemini"
+    Config.ALLOW_MOCK_FALLBACK = True
 
     try:
         plan = generate_plan("AI in healthcare")
@@ -677,6 +888,7 @@ def _test_pipeline_mock_end_to_end():
     finally:
         Config.GEMINI_API_KEY = original_key
         Config.LLM_PROVIDER = original_provider
+        Config.ALLOW_MOCK_FALLBACK = original_allow_mock
 
 
 def _test_cleaner_trust_pipeline():
@@ -799,6 +1011,22 @@ def main():
                 ("Plan merge caps at 8 tasks", _test_merge_plans_cap_at_eight),
                 ("Summary merge with attribution", _test_merge_summaries_attribution),
                 ("Summary merge handles empty input", _test_merge_summaries_empty_input),
+                ("Ollama chat->generate fallback", _test_ollama_chat_to_generate_fallback),
+                ("Web relevance balanced fallback gate", _test_web_relevance_balanced_fallback_gate),
+            ],
+        ),
+        (
+            "Keyed adapters",
+            [
+                ("Tavily no-key empty", _test_keyed_tavily_no_key_returns_empty),
+                ("Tavily normalizes", _test_keyed_tavily_normalizes),
+                ("Exa normalizes", _test_keyed_exa_normalizes),
+                ("Firecrawl normalizes", _test_keyed_firecrawl_normalizes),
+                ("Jina extracts URLs", _test_keyed_jina_extracts_urls),
+                ("Scopus normalizes", _test_keyed_scopus_normalizes),
+                ("DeepSeek parses JSON", _test_keyed_deepseek_parses_json),
+                ("Keyed HTTP retries 429", _test_keyed_http_retries_429),
+                ("API bridge keyed snapshot", _test_api_bridge_keyed_snapshot_shape),
             ],
         ),
         (
