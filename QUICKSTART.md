@@ -40,6 +40,7 @@ python scripts/run_implementation_tests.py
 ## Troubleshooting
 
 - If `lxml` fails to install on Windows, use Python 3.11.
+- If Python tests fail on Unicode symbols in Windows terminals, set `PYTHONIOENCODING=utf-8`.
 - If provider is unavailable, mock plan mode is used automatically.
 - If no data is collected from web tasks, verify network/reachability and retry.
 

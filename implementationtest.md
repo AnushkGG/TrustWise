@@ -47,6 +47,14 @@ Send one valid query and verify:
 python scripts/run_implementation_tests.py
 ```
 
+On Windows terminals that default to cp1252, use UTF-8 output for Python checks:
+
+```powershell
+$env:PYTHONIOENCODING='utf-8'
+python test_basic.py
+python test_comprehensive.py
+```
+
 Useful flags:
 
 - `--ci`
