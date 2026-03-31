@@ -311,12 +311,20 @@
       <div class="task-card" style="animation-delay:${i * 40}ms">
         <div class="task-header">
           <div class="task-title">${item.content_type === "research_paper" ? "Research" : "Web"} \xB7 ${escapeHtml(String(item.title || "Untitled"))}</div>
-          <span class="task-badge">${escapeHtml(String(item.content_type || "item"))}</span>
+          <span class="task-badge task-badge--${item.source?.toLowerCase().replace(/\s+/g, '-') || 'item'}">${escapeHtml(String(item.source || "item"))}</span>
         </div>
         <div class="task-body">
-          <div class="task-meta"><strong>Source</strong> ${escapeHtml(String(item.source || "\u2014"))}</div>
-          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">Open link</a>` : "No URL"}</div>
-          ${trust ? `<div class="task-meta"><strong>Trust score</strong> ${escapeHtml(String(trust.score))}</div>` : ""}
+          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">${escapeHtml(String(item.url.length > 60 ? item.url.substring(0, 60) + '...' : item.url))}</a>` : "No URL"}</div>
+          
+          <div class="relevance-container">
+            <span class="relevance-label">Relevance</span>
+            <div class="relevance-bar">
+              <div class="relevance-fill" style="width: ${(trust ? trust.relevance : 0) * 100}%"></div>
+            </div>
+            <span class="relevance-value">${Math.round((trust ? trust.relevance : 0) * 100)}%</span>
+          </div>
+
+          <div class="task-meta" style="margin-top: 0.5rem"><strong>Trust</strong> ${escapeHtml(String(trust ? (trust.score * 100).toFixed(0) : "0"))}%</div>
           ${item.published_at ? `<div class="task-meta"><strong>Published</strong> ${escapeHtml(String(item.published_at))}</div>` : ""}
           <div class="task-snippet">${escapeHtml(content.substring(0, 500))}${content.length > 500 ? "\u2026" : ""}</div>
         </div>
