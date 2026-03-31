@@ -15,12 +15,9 @@ logger = setup_logger(__name__)
 def run(task: Dict[str, Any]) -> Dict[str, Any]:
     """
     Execute a research paper collection task.
-    
-    Phase 1 Implementation:
-    - Searches arXiv for research papers based on prompt
-    - Collects metadata and abstracts
-    - No validation, summarization, or LLM processing
-    - Simply fetches and stores raw data
+
+    The agent queries arXiv, OpenAlex, and Semantic Scholar, merges results,
+    deduplicates by paper identity, and returns capped raw paper metadata.
     
     Args:
         task: Task dictionary containing task_id, prompt, source_type, agent
@@ -44,8 +41,7 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
     }
     
     try:
-        # Extract search terms from prompt
-        # In Phase 1: Simple keyword extraction from prompt
+        # Extract search terms from prompt with lightweight keyword filtering.
         search_query = _extract_search_query(prompt)
         logger.info(f"[ResearchAgent] Search query: {search_query}")
         
@@ -82,9 +78,8 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
 def _extract_search_query(prompt: str) -> str:
     """
     Extract search keywords from task prompt.
-    
-    Phase 1: Simple extraction without LLM.
-    Removes common words and takes key terms.
+
+    Uses deterministic keyword filtering without any LLM dependency.
     
     Args:
         prompt: Task prompt

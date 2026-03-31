@@ -43,6 +43,7 @@ const RAW_DATA_DIR = path.join(ROOT_DIR, "data", "raw");
 /**
  * Run the Python bridge with a given action and optional JSON payload.
  * Returns the parsed JSON that the bridge writes to stdout.
+ * This keeps the Express layer thin and delegates domain logic to Python.
  */
 function callPythonBridge(
   action: string,

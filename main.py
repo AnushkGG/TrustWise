@@ -19,15 +19,15 @@ logger = setup_logger(__name__)
 
 def main():
     """
-    TrustWise Phase 1 - Main Entry Point
-    
+    Run the full TrustWise CLI pipeline for one user query.
+
     Flow:
     1. Accept user query
-    2. Generate structured execution plan (LLM-based orchestration)
-    3. Chunk tasks
-    4. Schedule tasks to appropriate agents
-    5. Execute tasks via agents
-    6. Collect raw data (no validation or summarization in Phase 1)
+    2. Generate structured execution plan
+    3. Chunk and schedule tasks
+    4. Execute web and research agents
+    5. Normalize and trust-validate collected data
+    6. Persist trusted data and generate insights
     """
     
     print("=" * 60)
@@ -70,7 +70,7 @@ def main():
         print("=" * 60)
         print()
 
-        # Step 1.5: Reuse local trusted data when sufficient (Phase 6)
+        # Optional fast path: reuse trusted local DB data when sufficient.
         if Config.ENABLE_DB_CACHE:
             cached_items = get_cached_trusted_items(
                 query=query,

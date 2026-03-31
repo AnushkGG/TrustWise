@@ -9,9 +9,8 @@ Strategy:
 
 Falls back to Wikipedia API + basic HTTP when Crawl4AI is unavailable.
 
-Phase 1:
-  - Collects raw text/markdown from web sources
-  - No trust validation; no LLM summarisation
+This module only performs collection. Trust scoring, storage, and insights are
+handled in downstream pipeline stages.
 """
 
 import asyncio
@@ -52,7 +51,7 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
       2. Search the web (DuckDuckGo) for relevant URLs
       3. Crawl those pages with Crawl4AI
       4. Also fetch Wikipedia for knowledge queries
-      5. Return collected data
+      5. Return raw collected data
 
     Args:
         task: Dict with task_id, prompt, source_type, agent
