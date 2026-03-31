@@ -70,6 +70,7 @@ TrustWise/
 │   │   └── server.ts           # Express server
 │   └── public/
 │       └── index.html          # Main HTML page
+├── scripts/                    # Automation scripts
 ├── api_bridge.py               # Python API bridge
 └── static/
     ├── css/

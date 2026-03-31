@@ -516,6 +516,10 @@ TrustWise/
 ├── config/
 │   └── sources.json           # Enhanced structure
 │
+├── scripts/                   # Automation scripts
+│   ├── run_implementation_tests.py
+│   └── run_local_varied_inputs.py
+│
 └── data/
     ├── plans/
     │   └── .gitkeep
@@ -566,6 +570,16 @@ python test_basic.py
 ```bash
 python test_comprehensive.py
 ```
+
+### Implementation test plan (automated)
+
+Same layered checks as [implementationtest.md](implementationtest.md): Phase 1 — `test_basic.py`, `test_comprehensive.py`, then `web/` `npm ci` + `npm run build`; Phase 2 — `Config.validate()` when `.env` exists; Phase 4a — `api_bridge` `status` JSON; Phase 4b — HTTP `GET /api/status` (optional locally; omitted when using `--ci`, matching [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+
+```bash
+python scripts/run_implementation_tests.py
+```
+
+See [implementationtest.md](implementationtest.md) for flags (`--ci`, `--no-http`, `--strict-http`, and others) and manual-only phases (3, 5, 6).
 
 ### Demo Mode
 

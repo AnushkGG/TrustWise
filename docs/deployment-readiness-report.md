@@ -1,7 +1,7 @@
 # TrustWise deployment readiness report
 
 Generated: 2026-03-30  
-Last verified: 2026-03-30 (repeat run): `test_basic` 7/7, `test_comprehensive` 33/33, `npm ci` + `npm run build` OK; API `GET /api/status`, `/api/plans`, `/api/raw-data`, `POST /api/submit` (short query), empty-query **400**; browser `/` loads.  
+Last verified: 2026-03-31 (doc refresh): `test_basic` **9/9**, `test_comprehensive` **38/38** (47 total), `npm ci` + `npm run build` OK; CI parity is also run via `python scripts/run_implementation_tests.py --ci` ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)). Earlier API/browser run (2026-03-30): `GET /api/status`, `/api/plans`, `/api/raw-data`, `POST /api/submit` (short query), empty-query **400**; browser `/` loads.  
 Scope: CI-parity automated checks, multi-statement API/runtime validation, prioritized findings.
 
 ## 1. Test execution summary
@@ -11,8 +11,8 @@ Scope: CI-parity automated checks, multi-statement API/runtime validation, prior
 | Step | Result | Notes |
 |------|--------|--------|
 | `pip install -r requirements.txt` | Pass | Used **Python 3.10** (`py -3.10`). Default **Python 3.14** often fails building `lxml` on Windows (no wheel / missing libxml2 headers). CI uses **3.11** (`.github/workflows/ci.yml`). |
-| `python test_basic.py` | Pass | **7/7** with `PYTHONIOENCODING=utf-8`. |
-| `python test_comprehensive.py` | Pass | **33/33**. |
+| `python test_basic.py` | Pass | **9/9** with `PYTHONIOENCODING=utf-8`. |
+| `python test_comprehensive.py` | Pass | **38/38**. |
 | `npm ci` + `npm run build` in `web/` | Pass | CI uses **Node 20**; local run used **Node v25.x** (acceptable; build succeeded). |
 
 **Warnings observed**
@@ -52,6 +52,7 @@ Server started with **Python 3.10** first on `PATH` so `python` matches the envi
 | Python | 3.11 | 3.10 used (3.14 fails `lxml` build) |
 | Node | 20 | 25.x (build OK) |
 | Ollama / API keys | Not required | Optional; mock fallback |
+| Automation script | `python scripts/run_implementation_tests.py --ci` on push/PR | Same command locally for CI parity (skips HTTP); see [implementationtest.md](../implementationtest.md) |
 
 ---
 
@@ -91,24 +92,25 @@ None found for automated CI or core API contracts; empty-query validation works.
 
 ### Low
 
-7. **Documentation drift** — **addressed**  
-   - `IMPLEMENTATION.md` basic test count updated to 7; total 40.
+7. **Documentation drift** — **addressed (2026-03-31)**  
+   - Test counts: **9** basic + **38** comprehensive = **47** total ([`IMPLEMENTATION.md`](../IMPLEMENTATION.md) completion table). Full-stack sign-off: [implementationtest.md](../implementationtest.md); one-command automation: `scripts/run_implementation_tests.py`.
 
 ---
 
 ## 4. Verification checklist (post-fix)
 
-- [ ] CI green on `main` (GitHub Actions).  
-- [ ] Local: `py -3.11` (or 3.10) + `npm ci` + `npm run build` + both test scripts.  
-- [ ] With Ollama or Gemini configured: plans reflect user query.  
-- [ ] With mock only: UI/API indicate mock mode.  
-- [ ] `/api/submit` empty query returns 400.
+- [x] CI green on `main` (GitHub Actions). *(Verified 2026-03-31: latest [`ci.yml`](https://github.com/AnushkGG/TrustWise/actions/workflows/ci.yml) run on `main` **success** via GitHub API; e.g. run id `23760161697` for commit `1dc064ae` — re-check [Actions](https://github.com/AnushkGG/TrustWise/actions) after new pushes.)*  
+- [x] Local: `py -3.11` (or 3.10) + `npm ci` + `npm run build` + both test scripts. *(Verified 2026-03-31: `python scripts/run_implementation_tests.py --ci` exit 0 — same steps as [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) for Phases 1–2 skip / 4a.)*  
+- [ ] With Ollama or Gemini configured: plans reflect user query. *(Requires `.env` and live providers — manual.)*  
+- [ ] With mock only: UI/API indicate mock mode. *(Manual browser/API check.)*  
+- [x] `/api/submit` empty query returns 400. *(Recorded in §1 multi-statement runtime table, 2026-03-30 API run.)*
 
 ---
 
 ## 5. Evidence artifacts
 
-- CI workflow: `.github/workflows/ci.yml`  
+- CI workflow: `.github/workflows/ci.yml` (runs `python scripts/run_implementation_tests.py --ci`)  
+- Automation script: `scripts/run_implementation_tests.py`  
 - Bridge: `api_bridge.py`  
 - Server: `web/src/server.ts`  
 - LLM fallback: `orchestrator/llm_client.py`  

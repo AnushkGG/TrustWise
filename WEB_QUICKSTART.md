@@ -40,6 +40,8 @@ Open your browser and go to:
 http://localhost:5000
 ```
 
+For API smoke (bridge JSON, `GET /api/status`) and optional browser UX checks, see [implementationtest.md](implementationtest.md) Phases 4 and 5.
+
 ## First Use
 
 1. **Prerequisites**

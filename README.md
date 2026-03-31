@@ -121,6 +121,8 @@ venv\Scripts\activate  # Windows
 
 ### 3. Install Dependencies
 
+Use the same Python as in step 2. For a **clean** `pip install`, prefer **3.10–3.12** (CI uses **3.11**). On Windows, **3.14** often fails to build **`lxml`** unless XML/libxml2 build tools are installed.
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -389,6 +391,10 @@ TrustWise/
 ├── config/                   # Config files
 │   └── sources.json          # Trusted sources
 │
+├── scripts/                   # Automation scripts
+│   ├── run_implementation_tests.py # CI parity + full-stack verify
+│   └── run_local_varied_inputs.py  # Local varied input testing
+│
 └── data/                     # Output directory
     ├── plans/                # Execution plans
     ├── raw/                  # Raw agent outputs
@@ -436,10 +442,40 @@ Development was tracked in stages; the running system includes all of the follow
 
 The system falls back to mock responses when API keys are missing, useful for testing the pipeline without LLM costs.
 
+### Multi-phase implementation test plan
+
+Use **[implementationtest.md](implementationtest.md)** when you need a repeatable sign-off of the whole stack (not only unit tests). It walks through phases in order so failures are easy to localize.
+
+| Phase | What it covers |
+|-------|----------------|
+| 1 | **CI parity** — `pip install`, `test_basic.py`, `test_comprehensive.py`, `web/` `npm ci` + `npm run build` (same idea as [`.github/workflows/ci.yml`](.github/workflows/ci.yml)) |
+| 2 | **Configuration** — `.env` from [`.env.example`](.env.example), `Config.validate()` |
+| 3 | **LLM paths** — Ollama, Gemini, `LLM_PROVIDER=both` (merged plans/insights), or mock/no-key flows |
+| 4 | **API** — `api_bridge.py` stdin/JSON smoke, Express `/api/status` and related routes |
+| 5 | **UI** — Optional browser smoke on the local web server |
+| 6 | **Deploy context** — GitHub Pages vs full-stack; links to workflows |
+
+The doc also includes prerequisites, a test matrix (automated vs manual vs network), a results log table, security notes, and troubleshooting.
+
+**Automated stack check:** `python scripts/run_implementation_tests.py` (after `pip install -r requirements.txt`; flags and manual-only phases: [implementationtest.md](implementationtest.md)).
+
 ## License
 
-[Add your license here]
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+Copyright (c) 2026 TrustWise contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Contributing
 
-[Add contribution guidelines here]
+1. Fork the repository and create a branch for your change.
+2. Install dependencies (`pip install -r requirements.txt`; for web work, `cd web && npm ci`).
+3. Run tests before opening a PR: `python test_basic.py`, `python test_comprehensive.py`, and `cd web && npm run build` (or `python scripts/run_implementation_tests.py` — see [implementationtest.md](implementationtest.md)).
+4. Open a pull request against `main` with a clear description of what changed and why.
+
+For a full manual sign-off of the stack, follow [implementationtest.md](implementationtest.md).

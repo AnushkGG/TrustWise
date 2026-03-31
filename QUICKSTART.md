@@ -4,10 +4,12 @@ Get TrustWise up and running in 5 minutes!
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- **Python:** **3.11** matches CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)); **3.10–3.12** are fine locally. On Windows, **3.14** may fail building `lxml` from source—use 3.10–3.12 or install XML build prerequisites (see [README.md](README.md)).
 - pip (Python package manager)
 - Gemini API key or local Ollama server (optional — CLI falls back to mock LLM responses when Gemini is configured without a key)
 - For the **web UI** ([WEB_QUICKSTART.md](WEB_QUICKSTART.md)): Node.js 18+ and `cd web && npm install`
+
+For a full-stack verification checklist (CI parity, API smoke, optional UI), see [implementationtest.md](implementationtest.md). Quick automated parity: `python scripts/run_implementation_tests.py` after `pip install -r requirements.txt` (use `--ci` to skip HTTP, same as GitHub Actions).
 
 **Data collection:** web results use **Crawl4AI**, **DuckDuckGo**, Wikipedia, and HTTP fallback. Research results use **arXiv**, **OpenAlex**, and **Semantic Scholar** (no API keys). **Gemini** (`GEMINI_API_KEY`) is optional and only needed for cloud planning when `LLM_PROVIDER=gemini`.
 
