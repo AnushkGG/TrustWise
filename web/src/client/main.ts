@@ -45,7 +45,10 @@ document.addEventListener("DOMContentLoaded", () => {
   setupModalHandler();
   setupClearHandler();
   setupRefreshHandler();
+  setupExportHandlers();
 });
+
+let currentResults: SubmitResponse | null = null;
 
 function showToast(message: string, type: "info" | "success" | "error" = "info") {
   const container = document.getElementById("toastContainer");
@@ -164,6 +167,38 @@ function setupRefreshHandler() {
   });
 }
 
+function setupExportHandlers() {
+  document.getElementById("exportCsvBtn").addEventListener("click", () => {
+    if (!currentResults || !currentResults.trusted_data) return;
+    exportToCsv(currentResults.trusted_data, "trustwise-results.csv");
+  });
+
+  document.getElementById("exportPdfBtn").addEventListener("click", () => {
+    window.print();
+  });
+}
+
+function exportToCsv(data: any[], filename: string) {
+  if (!data.length) return;
+  const headers = Object.keys(data[0]).join(",");
+  const rows = data.map((obj) =>
+    Object.values(obj)
+      .map((val) => `"${String(val).replace(/"/g, '""')}"`)
+      .join(","),
+  );
+  const csvContent = [headers, ...rows].join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast("CSV exported", "success");
+}
+
 async function submitQuery() {
   const queryInput = document.getElementById("queryInput");
   const query = queryInput.value.trim();
@@ -185,6 +220,7 @@ async function submitQuery() {
     });
     const data = (await response.json()) as SubmitResponse;
     if (data.success) {
+      currentResults = data;
       displayResults(data);
       loadPlans();
       showToast("Pipeline completed.", "success");

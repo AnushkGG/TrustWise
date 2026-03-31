@@ -23,7 +23,7 @@
       <header class="header" id="appHeader">
         <div class="header-content">
           <div class="brand-mark" aria-hidden="true">TW</div>
-          <div>
+          <div class="brand-info">
             <h1>TrustWise</h1>
             <p class="subtitle">Research planning, collection, and validation</p>
           </div>
@@ -85,7 +85,11 @@
         <section id="resultsSection" class="results-section" style="display: none">
           <div class="section-header results-header">
             <h2>Results</h2>
-            <button class="btn btn-secondary btn-sm" id="clearResultsBtn" type="button">Clear</button>
+            <div class="actions-row">
+              <button class="btn btn-secondary btn-sm" id="exportCsvBtn" type="button">Export CSV</button>
+              <button class="btn btn-secondary btn-sm" id="exportPdfBtn" type="button">Print PDF</button>
+              <button class="btn btn-secondary btn-sm" id="clearResultsBtn" type="button">Clear</button>
+            </div>
           </div>
 
           <div class="plan-summary" id="planSummary"></div>
