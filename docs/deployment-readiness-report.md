@@ -66,7 +66,7 @@ None found for automated CI or core API contracts; empty-query validation works.
 
 1. **Mock plan ignores user query** — **addressed (2026-03-30)**  
    - **Was:** `call_llm` returned a static JSON plan.  
-   - **Now:** `build_mock_plan()` in [`orchestrator/llm_client.py`](orchestrator/llm_client.py) derives `goal`, `domains`, and task `prompt`s from the user query; plans include `plan_source: "mock"`.  
+   - **Now:** `build_mock_plan()` in [`orchestrator/llm_client.py`](../orchestrator/llm_client.py) derives `goal`, `domains`, and task `prompt`s from the user query; plans include `plan_source: "mock"`.  
    - **Remaining:** Surface `plan_source` in the web UI when desired.
 
 2. **Windows / Python 3.14: `pip install` failure on `lxml`** — **partially addressed**  
@@ -76,7 +76,7 @@ None found for automated CI or core API contracts; empty-query validation works.
    - **Optional follow-up:** `python_requires` in packaging or optional `lxml` extra.
 
 3. **`python` on PATH vs installed deps** — **addressed (2026-03-30)**  
-   - **Now:** [`web/src/server.ts`](web/src/server.ts) uses `PYTHON_EXE` or `TRUSTWISE_PYTHON` when set, else `python`. Documented in README.
+   - **Now:** [`web/src/server.ts`](../web/src/server.ts) uses `PYTHON_EXE` or `TRUSTWISE_PYTHON` when set, else `python`. Documented in README.
 
 ### Medium
 
