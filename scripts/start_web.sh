@@ -8,7 +8,7 @@ echo ""
 echo "Building TypeScript server..."
 echo ""
 
-cd "$(dirname "$0")/web" || exit 1
+cd "$(dirname "$0")/../web" || exit 1
 npm run build || { echo "Build failed"; exit 1; }
 
 echo ""
