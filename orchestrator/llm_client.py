@@ -286,7 +286,7 @@ def _stamp_tasks(tasks: list, origin: str) -> list:
     return tasks
 
 
-def _dedup_tasks(tasks: list, threshold: float = 0.80) -> list:
+def _dedup_tasks(tasks: list, threshold: float = 0.85) -> list:
     """Remove near-duplicate tasks by prompt similarity.
 
     When two tasks are close enough, the first one is kept and its ``origin``

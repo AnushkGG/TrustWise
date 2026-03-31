@@ -25,11 +25,11 @@ OUTPUT SCHEMA:
 }
 
 TASK GENERATION GUIDELINES:
-- Create 2-4 tasks total (prefer fewer, sharper tasks over many vague ones).
-- Unless the user asks for only one source type, include BOTH web and research_papers when the query needs evidence, news, or academic grounding.
-- For web sources: agent='web_agent', source_type='web' — prompts should name concrete angles (e.g. recent news, official docs, benchmarks).
-- For research: agent='research_agent', source_type='research_papers' — prompts should name fields or methods when possible.
-- Each task prompt must be short (under ~400 characters), actionable, and self-contained.
+- Create 3-4 specialized tasks (deconstruct the query into distinct 'Research Angles' like Core Technology, Safety/Regulatory, and Market Trends).
+- Every query must include BOTH web and research_papers for cross-verification (unless explicitly restricted).
+- For research_agent: prompts must use technical, search-optimized keywords suitable for arXiv/OpenAlex.
+- For web_agent: prompts must focus on current news, official reporting, and industry benchmarks.
+- Each task prompt must be a specialized sub-query (e.g., "Investigate safety concerns of solid-state vs liquid electrolytes" rather than just "solid state battery safety").
 - Tasks should be independent and parallelizable."""
 
 USER_PROMPT_TEMPLATE = """User query: "{query}"

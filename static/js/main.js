@@ -283,18 +283,39 @@
       }
       function renderInsightsPanelHtml(insights) {
         const summary = escapeHtml(insights.concise_answer || insights.summary || "\u2014");
-        const keyPoints = Array.isArray(insights.key_points) ? insights.key_points : Array.isArray(insights.key_highlights) ? insights.key_highlights : [];
-        const keyHtml = keyPoints.length ? `<ul class="insights-list">${keyPoints.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>` : '<p class="text-muted">No key points.</p>';
+        const keyPoints = Array.isArray(insights.key_points) ? insights.key_points : [];
+        
+        const keyHtml = keyPoints.length ? `<ul class="insights-list">${keyPoints.map((p) => {
+          const text = typeof p === "object" ? p.text : p;
+          const consensus = typeof p === "object" && p.consensus ? `<span class="consensus-badge" title="Verified by multiple sources">✓ Consensus</span>` : "";
+          return `<li>${parseCitations(escapeHtml(text))} ${consensus}</li>`;
+        }).join("")}</ul>` : '<p class="text-muted">No key points.</p>';
+        
         const top = Array.isArray(insights.top_sources_detailed) ? insights.top_sources_detailed : [];
         const topHtml = top.length ? `<div class="chip-row">${top.map((x) => `<span class="chip">${escapeHtml(x.source ?? "")} (${escapeHtml(String(x.count ?? ""))})</span>`).join("")}</div>` : "";
-        const conf = insights.confidence !== void 0 && insights.confidence !== null ? `<p class="insights-meta">Confidence: ${escapeHtml(String(insights.confidence))}</p>` : "";
+        
+        const confidence = insights.confidence ?? 0;
+        const confColor = confidence > 0.8 ? "var(--success)" : confidence > 0.5 ? "var(--warning)" : "var(--error)";
+        
         return `
     <h3>Insights</h3>
-    ${conf}
-    <p class="insights-summary">${summary}</p>
+    <div class="confidence-meter-container">
+      <div class="confidence-label">Overall confidence</div>
+      <div class="confidence-meter">
+        <div class="confidence-fill" style="width: ${confidence * 100}%; background: ${confColor}"></div>
+      </div>
+      <div class="confidence-value">${Math.round(confidence * 100)}%</div>
+    </div>
+    <p class="insights-summary">${parseCitations(summary)}</p>
     <div class="insights-block"><strong>Key points</strong>${keyHtml}</div>
     ${topHtml ? `<div class="insights-block"><strong>Sources</strong>${topHtml}</div>` : ""}
   `;
+      }
+      function parseCitations(text) {
+        if (!text) return "";
+        return text.replace(/\[Source\s+(\d+)\]/gi, (match, num) => {
+          return `<a href="#trust-card-${num}" class="citation-link" title="Jump to source ${num}">[${num}]</a>`;
+        });
       }
       function displayItemCards(items, container, opts) {
         if (!container) return;
@@ -308,7 +329,7 @@
             const trust = item.trust;
             const content = String(item.content ?? "");
             return `
-      <div class="task-card" style="animation-delay:${i * 40}ms">
+      <div class="task-card" id="trust-card-${i + 1}" style="animation-delay:${i * 40}ms">
         <div class="task-header">
           <div class="task-title">${item.content_type === "research_paper" ? "Research" : "Web"} \xB7 ${escapeHtml(String(item.title || "Untitled"))}</div>
           <span class="task-badge task-badge--${item.source?.toLowerCase().replace(/\s+/g, '-') || 'item'}">${escapeHtml(String(item.source || "item"))}</span>
