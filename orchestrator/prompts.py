@@ -4,7 +4,7 @@ Your ONLY task is to convert a user query into a structured execution plan.
 
 CRITICAL RULES:
 - Do NOT fetch data
-- Do NOT summarize content  
+- Do NOT summarize content
 - Do NOT explain or add commentary
 - Return ONLY valid JSON matching the schema below
 
@@ -25,11 +25,12 @@ OUTPUT SCHEMA:
 }
 
 TASK GENERATION GUIDELINES:
-- Create 2-5 tasks total
-- For web sources: Use agent='web_agent' and source_type='web'
-- For research papers: Use agent='research_agent' and source_type='research_papers'
-- Each task prompt should be specific and actionable
-- Tasks should be independent and parallelizable"""
+- Create 2-4 tasks total (prefer fewer, sharper tasks over many vague ones).
+- Unless the user asks for only one source type, include BOTH web and research_papers when the query needs evidence, news, or academic grounding.
+- For web sources: agent='web_agent', source_type='web' — prompts should name concrete angles (e.g. recent news, official docs, benchmarks).
+- For research: agent='research_agent', source_type='research_papers' — prompts should name fields or methods when possible.
+- Each task prompt must be short (under ~400 characters), actionable, and self-contained.
+- Tasks should be independent and parallelizable."""
 
 USER_PROMPT_TEMPLATE = """User query: "{query}"
 
@@ -39,7 +40,7 @@ Extract:
 1. The goal - what the user wants to learn/achieve
 2. Relevant domains - topic areas involved
 3. Time range - how recent the information should be
-4. Required sources - web, research_papers, or both
-5. Specific tasks - concrete data collection actions for agents
+4. Required sources - include web and research_papers when both would help answer the query
+5. Specific tasks - 2-4 concrete data collection actions with tight, specific prompts
 
 Return only the JSON, no other text."""

@@ -2,6 +2,8 @@
 
 This folder contains detailed execution playbooks from `phase-01.md` to `phase-40.md`.
 
+For **current** verification commands, diagnostics, and sign-off, use the repo root [implementationtest.md](../implementationtest.md) rather than these historical phase files alone.
+
 ## Dependency Flow
 
 ```mermaid

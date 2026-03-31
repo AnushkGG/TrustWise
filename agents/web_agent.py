@@ -18,6 +18,7 @@ import json
 import re
 from datetime import datetime
 from typing import Dict, Any, List
+from agents.keyed_adapters import fetch_exa, fetch_firecrawl, fetch_jina_search, fetch_tavily
 from utils.config import Config
 from utils.logger import setup_logger
 from utils.rate_limiter import web_limiter
@@ -73,6 +74,7 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
         "prompt": prompt,
         "data": [],
     }
+    no_data_reasons: List[str] = []
 
     try:
         search_terms = _extract_search_terms(prompt)
@@ -88,7 +90,9 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
         if CRAWL4AI_AVAILABLE and search_terms:
             logger.info("[WebAgent] Searching the web for relevant pages...")
             trusted_domains = _trusted_domain_set(_load_trusted_sources())
-            search_urls = _search_duckduckgo(search_terms, max_results=6, preferred_domains=trusted_domains)
+            tool_urls = _search_external_tools(search_terms, max_results=4)
+            ddg_urls = _search_duckduckgo(search_terms, max_results=6, preferred_domains=trusted_domains)
+            search_urls = list(dict.fromkeys(tool_urls + ddg_urls))[:8]
 
             if search_urls:
                 logger.info(f"[WebAgent] Found {len(search_urls)} relevant URLs to crawl")
@@ -96,6 +100,7 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
                 result["data"].extend(crawl_results)
             else:
                 logger.warning("[WebAgent] No search results — crawling trusted topic pages")
+                no_data_reasons.append("duckduckgo_no_results")
                 sources = _load_trusted_sources()
                 if sources:
                     fallback_urls = _expand_sources_for_query(sources, is_news_query)
@@ -113,17 +118,22 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
                     "content_type": "text",
                     "fetch_time": datetime.utcnow().isoformat(),
                 })
+            elif not wiki_content:
+                no_data_reasons.append("wikipedia_no_content")
 
         # ── Step 3: Basic HTTP fallback if nothing collected ──
         if not result["data"] and not CRAWL4AI_AVAILABLE:
             logger.info("[WebAgent] Crawl4AI unavailable — using basic HTTP")
             sources = _load_trusted_sources()
-            for url in sources[:2]:
+            for url in sources[:4]:
                 try:
                     content = _fetch_basic_http(url)
                     if not _is_relevant_content(content, query_terms, url):
-                        continue
-                    if content and len(content) > 200:
+                        # Balanced mode: allow medium-length pages that include at least
+                        # one query term even when boilerplate is present.
+                        if not _is_balanced_fallback_content(content, query_terms):
+                            continue
+                    if content and len(content) > 180:
                         result["data"].append({
                             "source": url,
                             "content": content,
@@ -132,10 +142,30 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
                         })
                 except Exception as e:
                     logger.warning(f"[WebAgent] Failed to fetch {url}: {e}")
+                    no_data_reasons.append(f"http_fetch_failed:{_domain_from_url(url) or url}")
+
+            # Final single-attempt fallback so we do not fail with an empty result set
+            # when relevance filtering is too strict in constrained environments.
+            if not result["data"] and sources:
+                last_url = sources[0]
+                try:
+                    content = _fetch_basic_http(last_url)
+                    if content and len(content) > 120:
+                        result["data"].append({
+                            "source": last_url,
+                            "content": content[:2500],
+                            "content_type": "text",
+                            "fetch_time": datetime.utcnow().isoformat(),
+                            "quality_note": "low_confidence_fallback",
+                        })
+                except Exception:
+                    pass
 
         if not result["data"]:
             result["status"] = "partial"
             result["message"] = "No data collected from any source"
+            if no_data_reasons:
+                result["no_data_reasons"] = no_data_reasons[:8]
             logger.warning(f"[WebAgent] Task {task_id} collected no data")
 
         if Config.SAVE_RAW_DATA:
@@ -147,6 +177,17 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
         result["error"] = str(e)
 
     return result
+
+
+def _is_balanced_fallback_content(content: str, query_terms: List[str]) -> bool:
+    """Looser relevance gate used only when strict filtering rejects everything."""
+    if not content or len(content) < 120:
+        return False
+    lowered = content.lower()
+    if not query_terms:
+        return True
+    overlap = sum(1 for term in query_terms if term in lowered)
+    return overlap >= 1
 
 
 # ═══════════════════════════════════════════
@@ -216,6 +257,55 @@ def _search_duckduckgo(query: str, max_results: int = 5, preferred_domains: set 
 
     except Exception as e:
         logger.warning(f"[WebAgent] DuckDuckGo search failed: {e}")
+        return []
+
+
+def _search_external_tools(query: str, max_results: int = 5) -> List[str]:
+    """
+    Optional tool adapters (Tavily/Exa/Firecrawl/Jina) for better candidate URLs.
+    Returns only URLs and never raises.
+    """
+    urls: List[str] = []
+    urls.extend(_search_tavily(query, max_results=max_results))
+    urls.extend(_search_exa(query, max_results=max_results))
+    urls.extend(_search_firecrawl(query, max_results=max_results))
+    urls.extend(_search_jina_reader(query, max_results=max_results))
+    return list(dict.fromkeys([u for u in urls if isinstance(u, str) and u.startswith("http")]))[:max_results]
+
+
+def _search_tavily(query: str, max_results: int = 5) -> List[str]:
+    try:
+        rows, _ = fetch_tavily(query, max_results)
+        return [u for u in (r.get("url") for r in rows) if u]
+    except Exception as e:
+        logger.warning("[WebAgent] Tavily search failed: %s", e)
+        return []
+
+
+def _search_exa(query: str, max_results: int = 5) -> List[str]:
+    try:
+        rows, _ = fetch_exa(query, max_results)
+        return [u for u in (r.get("url") for r in rows) if u]
+    except Exception as e:
+        logger.warning("[WebAgent] Exa search failed: %s", e)
+        return []
+
+
+def _search_firecrawl(query: str, max_results: int = 5) -> List[str]:
+    try:
+        rows, _ = fetch_firecrawl(query, max_results)
+        return [u for u in (r.get("url") for r in rows) if u]
+    except Exception as e:
+        logger.warning("[WebAgent] Firecrawl search failed: %s", e)
+        return []
+
+
+def _search_jina_reader(query: str, max_results: int = 5) -> List[str]:
+    try:
+        rows, _ = fetch_jina_search(query, max_results)
+        return [u for u in (r.get("url") for r in rows) if u]
+    except Exception as e:
+        logger.warning("[WebAgent] Jina search failed: %s", e)
         return []
 
 

@@ -9,12 +9,12 @@
 
 ```bash
 cd web
-npm install
+npm ci
 npm run build
 npm start
 ```
 
-Open `http://127.0.0.1:5000`.
+Open `http://127.0.0.1:5000` (override with `PORT` / `HOST` in `.env`; see `web/src/server.ts`).
 
 ## Optional Launch Scripts
 
@@ -38,7 +38,8 @@ echo '{"action":"status"}' | python api_bridge.py
 
 - The Express server delegates execution to `api_bridge.py`.
 - Set `PYTHON_EXE` or `TRUSTWISE_PYTHON` when PATH points to the wrong Python interpreter.
-- If provider endpoints are unavailable, the system still runs in mock planning mode.
+- Planning uses the configured LLM (`LLM_PROVIDER`: Ollama, Gemini, or both). For Gemini or `both`, set `GEMINI_API_KEY` in `.env` (never commit it). With `ALLOW_MOCK_FALLBACK=true`, the planner can use a synthetic mock plan when the real provider is unavailable (for example Ollama connection errors, HTTP 404 on both `/api/chat` and `/api/generate`, or missing Gemini key in those code paths).
+- After a submit, inspect `execution` and `results` in the JSON response; for empty data or errors, use the symptom table in [implementationtest.md](implementationtest.md).
 
-For endpoint details see [FRONTEND.md](FRONTEND.md).
+For endpoint details see [FRONTEND.md](FRONTEND.md). CLI-oriented setup is in [QUICKSTART.md](QUICKSTART.md).
 

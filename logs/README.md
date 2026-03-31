@@ -16,6 +16,7 @@
 
 ## Related Docs
 
-- [implementationtest.md](../implementationtest.md)
+- [implementationtest.md](../implementationtest.md) (diagnostics table, CI phases)
+- [QUICKSTART.md](../QUICKSTART.md) / [WEB_QUICKSTART.md](../WEB_QUICKSTART.md) (run and smoke checks)
 - [docs/deployment-readiness-report.md](../docs/deployment-readiness-report.md)
 
