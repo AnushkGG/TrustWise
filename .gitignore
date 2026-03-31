@@ -50,6 +50,9 @@ data/trustwise.db
 # Logs
 *.log
 
+# Local ad-hoc test runs (full logs, JSON captures, PIDs)
+logs/local-test/
+
 # OS
 .DS_Store
 Thumbs.db

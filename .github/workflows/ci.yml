@@ -33,13 +33,6 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Python tests
-        env:
-          PYTHONIOENCODING: utf-8
-        run: |
-          python test_basic.py
-          python test_comprehensive.py
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -47,8 +40,7 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      - name: Install web dependencies and build
-        working-directory: web
-        run: |
-          npm ci
-          npm run build
+      - name: Implementation test plan (automated)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python scripts/run_implementation_tests.py --ci
