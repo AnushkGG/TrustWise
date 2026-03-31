@@ -1,5 +1,8 @@
 
+"""Validation helpers for TrustWise execution plans."""
+
 def validate_plan(plan: dict):
+    """Validate the minimum required structure for a generated plan."""
     required_keys = ["goal", "domains", "time_range", "sources", "tasks"]
     for key in required_keys:
         if key not in plan:

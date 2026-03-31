@@ -37,6 +37,7 @@ const PIPELINE_STEPS = [
   { id: "insights", label: "Insights", detail: "Summary and highlights" },
 ];
 
+/** Wire up UI events and initial status/history fetches. */
 document.addEventListener("DOMContentLoaded", () => {
   loadSystemStatus();
   loadPlans();
@@ -50,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let currentResults: SubmitResponse | null = null;
 
+/** Show transient toast feedback in the UI. */
 function showToast(message: string, type: "info" | "success" | "error" = "info") {
   const container = document.getElementById("toastContainer");
   if (!container) return;
@@ -112,6 +114,7 @@ async function loadSystemStatus() {
   }
 }
 
+/** Bind query form submit to pipeline execution. */
 function setupFormHandler() {
   document.getElementById("queryForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -119,6 +122,7 @@ function setupFormHandler() {
   });
 }
 
+/** Populate query input from suggestion chips. */
 function setupChipHandler() {
   document.querySelectorAll(".chip[data-query]").forEach((chip) => {
     chip.addEventListener("click", () => {
@@ -237,6 +241,7 @@ async function submitQuery() {
   }
 }
 
+/** Render all primary result panels after submit. */
 function displayResults(data: SubmitResponse) {
   const resultsSection = document.getElementById("resultsSection");
   resultsSection.style.display = "block";
