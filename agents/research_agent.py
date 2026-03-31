@@ -81,17 +81,20 @@ def _extract_search_query(prompt: str) -> str:
     Returns:
         Search query string
     """
-    # Remove common instruction words
-    stop_words = {'search', 'find', 'papers', 'on', 'about', 'for', 'the', 'a', 'an', 
-                  'in', 'of', 'and', 'to', 'with', 'from', 'at', 'retrieve', 'research',
-                  'published', 'recent', 'past', 'year', 'focusing', 'peer-reviewed',
-                  'journals', 'articles', 'extract', 'get', 'fetch'}
+    # Remove common instruction words and generic research descriptors
+    stop_words = {
+        'search', 'find', 'papers', 'on', 'about', 'for', 'the', 'a', 'an', 
+        'in', 'of', 'and', 'to', 'with', 'from', 'at', 'retrieve', 'research',
+        'published', 'recent', 'past', 'year', 'focusing', 'peer-reviewed',
+        'journals', 'articles', 'extract', 'get', 'fetch', 'latest', 'advancements',
+        'trends', 'implications', 'impact', 'perspective', 'review', 'analysis'
+    }
     
-    words = prompt.lower().split()
+    words = re.findall(r"[a-z0-9]+", prompt.lower())
     keywords = [w for w in words if w not in stop_words and len(w) > 2]
     
-    # Return joined keywords.
-    query = ' '.join(keywords[:5])  # Limit to 5 keywords
+    # Return joined keywords (limit to top 3 for precision).
+    query = ' '.join(keywords[:3])  
     logger.info(f"[ResearchAgent] Filtered keywords: {query}")
     return query
 

@@ -198,13 +198,13 @@ def _rxiv_search(server: str, query: str, limit: int) -> List[Dict[str, Any]]:
     r = requests.get(url, timeout=Config.RESEARCH_SOURCE_TIMEOUT)
     r.raise_for_status()
     items = (r.json().get("collection") or [])[:500]
-    q = query.lower()
+    q_terms = {t for t in query.lower().split() if len(t) > 2}
     out: List[Dict[str, Any]] = []
     for item in items:
         title = (item.get("title") or "").strip()
         abstract = (item.get("abstract") or "").strip()
         hay = f"{title} {abstract}".lower()
-        if q and q.split()[0] not in hay:
+        if q_terms and not any(t in hay for t in q_terms):
             continue
         out.append(
             {

@@ -30,8 +30,8 @@ def validate_structured_data(items: List[Dict[str, Any]], query: str = "") -> Di
         else:
             seen_signatures.add(signature)
 
-        min_relevance = 0.28 if (scored_item.get("content_type") == "web") else 0.15
-        min_score = 0.65 if (scored_item.get("content_type") == "web") else 0.6
+        min_relevance = 0.35 if (scored_item.get("content_type") == "web") else 0.25
+        min_score = 0.75 if (scored_item.get("content_type") == "web") else 0.65
         scored_item["trust"]["trusted"] = (
             scored_item["trust"]["score"] >= min_score
             and not scored_item["trust"]["duplicate"]
@@ -74,10 +74,10 @@ def _score_item(item: Dict[str, Any], trusted_domains: Set[str], query_terms: Se
     if item.get("content_type") == "research_paper":
         sl = source.lower()
         if "arxiv" in sl or sl in {"arxiv", "arxiv.org"}:
-            score += 0.55
+            score += 0.40
             reasons.append("Research source recognized (arXiv)")
         elif "openalex" in sl or "semantic" in sl:
-            score += 0.52
+            score += 0.38
             reasons.append("Research source recognized (OpenAlex / Semantic Scholar)")
     elif domain in trusted_domains:
         score += 0.45
