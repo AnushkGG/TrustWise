@@ -322,7 +322,7 @@ def _call_llm_for_summary(query: str, context: str) -> Dict[str, Any]:
     return {}
 
 
-def generate_insights(trusted_items: List[Dict[str, Any]], query: str) -> Dict[str, Any]:
+def generate_insights(trusted_items: List[Dict[str, Any]], query: str, source_links: List[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate easy-to-read insights from trusted items."""
     if not trusted_items:
         return {
@@ -452,6 +452,7 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str) -> Dict[s
         "source_breakdown": dict(sources),
         "content_type_breakdown": dict(content_types),
         "confidence": round(avg_score, 3),
+        "citation_links": source_links or [],
     }
     if concise_answer_origin:
         result["concise_answer_origin"] = concise_answer_origin

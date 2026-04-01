@@ -41,6 +41,10 @@ class Config:
     # OpenAlex polite-pool: include a contact in User-Agent (set your email for production)
     OPENALEX_MAILTO: str = os.getenv("OPENALEX_MAILTO", "mailto:dev@localhost")
     
+    # Citation Scraper Settings
+    CITATION_MAX_SOURCES: int = int(os.getenv("CITATION_MAX_SOURCES", "12"))
+    CITATION_PAGES_PER_SOURCE: int = int(os.getenv("CITATION_PAGES_PER_SOURCE", "2"))
+    
     # System Settings
     SAVE_PLANS: bool = os.getenv("SAVE_PLANS", "true").lower() == "true"
     SAVE_RAW_DATA: bool = os.getenv("SAVE_RAW_DATA", "true").lower() == "true"

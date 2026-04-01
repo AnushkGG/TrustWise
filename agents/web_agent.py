@@ -166,27 +166,30 @@ def _search_duckduckgo(query: str, max_results: int = 5, preferred_domains: set 
     try:
         import warnings
         warnings.filterwarnings("ignore", category=RuntimeWarning)
-        from duckduckgo_search import DDGS
+        # Try new package first (old one was renamed and returns 0 results)
+        try:
+            from ddgs import DDGS
+        except ImportError:
+            from duckduckgo_search import DDGS
     except ImportError:
-        logger.warning("[WebAgent] duckduckgo_search not installed — cannot search web")
+        logger.warning("[WebAgent] ddgs/duckduckgo_search not installed — cannot search web")
         return []
 
     try:
         logger.info(f"[WebAgent] DuckDuckGo search: {query}")
 
-        # Try multiple backends — 'api' is most reliable,
-        # fall back to 'lite' then default if needed
+        # Try new API (positional query) then old API (keywords kwarg)
         results = []
-        for backend in ("api", "lite", None):
+        for attempt_fn in [
+            lambda: DDGS().text(query, max_results=max_results),
+            lambda: DDGS().text(keywords=query, max_results=max_results),
+        ]:
             try:
-                kwargs = {"keywords": query, "max_results": max_results}
-                if backend:
-                    kwargs["backend"] = backend
-                results = DDGS().text(**kwargs)
+                results = attempt_fn()
                 if results:
-                    logger.info(f"[WebAgent] DDG backend '{backend or 'default'}' returned {len(results)} results")
+                    logger.info(f"[WebAgent] DDG returned {len(results)} results")
                     break
-            except Exception:
+            except (TypeError, Exception):
                 continue
 
         urls = []

@@ -12,6 +12,7 @@
       var PIPELINE_STEPS = [
         { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
         { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
+        { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
         { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
         { id: "trust", label: "Trust", detail: "Validation and scoring" },
         { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
@@ -25,7 +26,9 @@
         setupModalHandler();
         setupClearHandler();
         setupRefreshHandler();
+        setupExportHandlers();
       });
+      var currentResults = null;
       function showToast(message, type = "info") {
         const container = document.getElementById("toastContainer");
         if (!container) return;
@@ -129,6 +132,33 @@
           showToast("Plans refreshed", "success");
         });
       }
+      function setupExportHandlers() {
+        document.getElementById("exportCsvBtn").addEventListener("click", () => {
+          if (!currentResults || !currentResults.trusted_data) return;
+          exportToCsv(currentResults.trusted_data, "trustwise-results.csv");
+        });
+        document.getElementById("exportPdfBtn").addEventListener("click", () => {
+          window.print();
+        });
+      }
+      function exportToCsv(data, filename) {
+        if (!data.length) return;
+        const headers = Object.keys(data[0]).join(",");
+        const rows = data.map(
+          (obj) => Object.values(obj).map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")
+        );
+        const csvContent = [headers, ...rows].join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("CSV exported", "success");
+      }
       async function submitQuery() {
         const queryInput = document.getElementById("queryInput");
         const query = queryInput.value.trim();
@@ -148,6 +178,7 @@
           });
           const data = await response.json();
           if (data.success) {
+            currentResults = data;
             displayResults(data);
             loadPlans();
             showToast("Pipeline completed.", "success");
@@ -225,6 +256,7 @@
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-value">${execution.web_tasks}</div><div class="stat-label">Web tasks</div></div>
       <div class="stat-card"><div class="stat-value">${execution.paper_tasks}</div><div class="stat-label">Research tasks</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.citation_sources ?? 0}</div><div class="stat-label">Citation sources</div></div>
       <div class="stat-card"><div class="stat-value">${execution.total_results}</div><div class="stat-label">Agent results</div></div>
       <div class="stat-card"><div class="stat-value">${execution.successful}</div><div class="stat-label">Successful</div></div>
       <div class="stat-card"><div class="stat-value">${execution.structured_items ?? 0}</div><div class="stat-label">Structured</div></div>
@@ -252,12 +284,35 @@
         const top = Array.isArray(insights.top_sources_detailed) ? insights.top_sources_detailed : [];
         const topHtml = top.length ? `<div class="chip-row">${top.map((x) => `<span class="chip">${escapeHtml(x.source ?? "")} (${escapeHtml(String(x.count ?? ""))})</span>`).join("")}</div>` : "";
         const conf = insights.confidence !== void 0 && insights.confidence !== null ? `<p class="insights-meta">Confidence: ${escapeHtml(String(insights.confidence))}</p>` : "";
+        const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links : [];
+        let citationHtml = "";
+        if (citationLinks.length > 0) {
+          const byCategory = {};
+          for (const link of citationLinks) {
+            const cat = link.category || "Other";
+            if (!byCategory[cat]) byCategory[cat] = [];
+            byCategory[cat].push(link);
+          }
+          let linksInner = "";
+          for (const [cat, links] of Object.entries(byCategory)) {
+            linksInner += `<div class="citation-category"><div class="citation-category-label">${escapeHtml(cat)}</div>`;
+            for (const link of links) {
+              const displayUrl = link.page_url || link.url || "";
+              const displayName = link.name || "Source";
+              const title = link.page_title ? ` \u2014 ${escapeHtml(link.page_title)}` : "";
+              linksInner += `<div class="citation-link"><a href="${escapeHtml(displayUrl)}" target="_blank" rel="noopener">\u{1F517} ${escapeHtml(displayName)}${title}</a></div>`;
+            }
+            linksInner += `</div>`;
+          }
+          citationHtml = `<div class="insights-block"><strong>Source Citations (${citationLinks.length} sources)</strong><div class="citation-links-grid">${linksInner}</div></div>`;
+        }
         return `
     <h3>Insights</h3>
     ${conf}
     <p class="insights-summary">${summary}</p>
     <div class="insights-block"><strong>Key points</strong>${keyHtml}</div>
     ${topHtml ? `<div class="insights-block"><strong>Sources</strong>${topHtml}</div>` : ""}
+    ${citationHtml}
   `;
       }
       function displayItemCards(items, container, opts) {

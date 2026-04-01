@@ -44,6 +44,7 @@ from orchestrator.orchestrator import generate_plan
 from chunker.chunker import chunk_tasks
 from scheduler.scheduler import schedule
 from agents import web_agent, research_agent
+from agents.citation_scraper import scrape_citations
 from cleaner import normalize_results
 from trust import validate_structured_data
 from storage import get_cached_trusted_items, save_trusted_items
@@ -74,7 +75,29 @@ def handle_submit(payload: dict) -> dict:
             query=query, min_items=Config.DB_CACHE_MIN_ITEMS, limit=8
         )
         if cached_items:
-            insights = generate_insights(cached_items, query=query)
+            # Even on cache hit, run citation scraper for multi-source data
+            citation_result = {"scraped_items": [], "source_links": [], "sources_used": 0}
+            try:
+                citation_result = scrape_citations(
+                    query=query,
+                    max_sources=Config.CITATION_MAX_SOURCES,
+                    max_pages_per_source=Config.CITATION_PAGES_PER_SOURCE,
+                )
+                logger.info(
+                    f"Bridge: Citation scraper (cache-hit path) returned "
+                    f"{citation_result.get('sources_used', 0)} sources"
+                )
+            except Exception as e:
+                logger.error(f"Bridge: Citation scraper failed on cache path: {e}")
+
+            # Merge citation items into cached items for richer insights
+            all_items = list(cached_items)
+            citation_items = citation_result.get("scraped_items", [])
+            if citation_items:
+                all_items.extend(citation_items)
+
+            source_links = citation_result.get("source_links", [])
+            insights = generate_insights(all_items, query=query, source_links=source_links)
             return {
                 "success": True,
                 "plan": {
@@ -89,19 +112,20 @@ def handle_submit(payload: dict) -> dict:
                     "paper_tasks": 0,
                     "total_results": 0,
                     "successful": 0,
-                    "structured_items": len(cached_items),
-                    "trusted_items": len(cached_items),
+                    "structured_items": len(all_items),
+                    "trusted_items": len(all_items),
+                    "citation_sources": citation_result.get("sources_used", 0),
                     "db_inserted": 0,
                     "db_skipped": 0,
                     "cache_hit": True,
                 },
                 "results": [],
-                "structured_data": cached_items,
-                "trusted_data": cached_items,
+                "structured_data": all_items,
+                "trusted_data": all_items,
                 "insights": insights,
                 "trust_report": {
-                    "validated_count": len(cached_items),
-                    "trusted_count": len(cached_items),
+                    "validated_count": len(all_items),
+                    "trusted_count": len(all_items),
                     "dropped_count": 0,
                 },
             }
@@ -143,8 +167,29 @@ def handle_submit(payload: dict) -> dict:
                 {"task_id": task.get("task_id"), "status": "failed", "error": str(e)}
             )
 
+    # Step 4.5: Scrape trusted citation sources for multi-source data
+    citation_result = {"scraped_items": [], "source_links": [], "sources_used": 0}
+    try:
+        citation_result = scrape_citations(
+            query=query,
+            max_sources=Config.CITATION_MAX_SOURCES,
+            max_pages_per_source=Config.CITATION_PAGES_PER_SOURCE,
+        )
+        logger.info(
+            f"Bridge: Citation scraper returned {citation_result.get('sources_used', 0)} sources"
+        )
+    except Exception as e:
+        logger.error(f"Bridge: Citation scraper failed: {e}")
+
     # Step 5-8: Clean, Trust, Store, Insights
     structured_data = normalize_results(results, query=query)
+
+    # Merge citation-scraped items into structured data
+    citation_items = citation_result.get("scraped_items", [])
+    if citation_items:
+        structured_data.extend(citation_items)
+        logger.info(f"Bridge: Merged {len(citation_items)} citation items into structured data")
+
     trust_report = validate_structured_data(structured_data, query=query)
     trusted_data = trust_report["trusted_items"]
 
@@ -153,7 +198,8 @@ def handle_submit(payload: dict) -> dict:
         db_stats = save_trusted_items(trusted_data, query=query)
 
     insight_input = trusted_data if trusted_data else structured_data
-    insights = generate_insights(insight_input, query=query)
+    source_links = citation_result.get("source_links", [])
+    insights = generate_insights(insight_input, query=query, source_links=source_links)
 
     return {
         "success": True,
@@ -171,6 +217,7 @@ def handle_submit(payload: dict) -> dict:
             "successful": sum(1 for r in results if r.get("status") == "success"),
             "structured_items": len(structured_data),
             "trusted_items": len(trusted_data),
+            "citation_sources": citation_result.get("sources_used", 0),
             "db_inserted": db_stats["inserted"],
             "db_skipped": db_stats["skipped"],
             "cache_hit": False,
