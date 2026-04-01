@@ -80,17 +80,20 @@ def _rank_sentences(sentences: List[str], query_terms: List[str], require_overla
     return ranked
 
 
-def _build_summary_context(items: List[Dict[str, Any]], max_items: int = 4, max_chars: int = 900) -> str:
+def _build_summary_context(items: List[Dict[str, Any]], max_items: int = 5, max_chars: int = 1200) -> str:
     blocks: List[str] = []
     for idx, item in enumerate(items[:max_items], start=1):
         title = (item.get("title") or "Untitled").strip()
         source = (item.get("source") or "unknown").strip()
+        
+        # Use a more descriptive prefix to help the LLM cite correctly
+        prefix = f"[Source {idx}] ({source}: {title})"
+        
         content = _normalize_sentence((item.get("content") or "").replace("\n", " "))
         snippet = content[:max_chars]
         blocks.append(
-            f"Source {idx}: {source}\n"
-            f"Title {idx}: {title}\n"
-            f"Content {idx}: {snippet}"
+            f"{prefix}\n"
+            f"Content: {snippet}"
         )
     return "\n\n".join(blocks)
 
@@ -119,20 +122,21 @@ def _parse_json_response(raw: str) -> Dict[str, Any]:
 def _summary_prompt(query: str, context: str) -> Tuple[str, str]:
     """Return (system_prompt, user_prompt) pair for summary generation."""
     system_prompt = (
-        "You are a precise research summarizer. "
-        "Write concise, factual summaries from provided sources only. "
-        "Do not include cookie/privacy/legal boilerplate."
+        "You are a precise research analyst. "
+        "Your task is to write concise, factual summaries using ONLY the provided sources. "
+        "Strict Rule: Every factual claim must include a citation in the format [Source X] (or [Source X, Source Y]) at the end of the sentence. "
+        "If sources contradict each other, explicitly note the discrepancy."
     )
     user_prompt = (
-        "Summarize the information for the query below.\n"
-        "Return ONLY valid JSON with keys: concise_answer (string), key_points (array of 3-5 strings).\n"
+        "Analyze the provided research data to answer the query below.\n"
+        "Return ONLY a JSON object with keys: 'concise_answer' (string) and 'key_points' (array of strings).\n"
         "Rules:\n"
-        "- concise_answer: 2-4 sentences, plain English, max 120 words\n"
-        "- key_points: 3-5 bullets, each 1 sentence\n"
-        "- keep it brief and relevant to the query\n"
-        "- if evidence is weak, say so clearly\n\n"
+        "- concise_answer: 2-4 sentences with [Source X] citations.\n"
+        "- key_points: 3-5 factual bullets with [Source X] citations.\n"
+        "- Never cite a [Source X] that is not listed below.\n"
+        "- If the information is missing or contradictory, state it clearly.\n\n"
         f"Query: {query}\n\n"
-        f"Sources:\n{context}"
+        f"Research Sources:\n{context}"
     )
     return system_prompt, user_prompt
 
@@ -404,8 +408,25 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str, source_li
         if llm_answer:
             concise_answer = llm_answer
             summary_method = "llm"
+        
+        # Cross-Source Consensus Discovery
         if llm_points:
-            key_points = llm_points[:5]
+            verified_points = []
+            for p in llm_points:
+                text = p["text"] if isinstance(p, dict) else str(p)
+                # Count distinct citations: e.g. "[Source 1, Source 2]" or "[Source 1][Source 2]"
+                citations = set(re.findall(r"\[Source\s+(\d+)\]", text))
+                is_consensus = len(citations) >= 2
+                
+                point_obj = {
+                    "text": text,
+                    "consensus": is_consensus,
+                    "citation_count": len(citations),
+                    "origin": p.get("origin", "") if isinstance(p, dict) else ""
+                }
+                verified_points.append(point_obj)
+            
+            key_points = verified_points[:5]
             summary_method = "llm"
 
     if not concise_answer:

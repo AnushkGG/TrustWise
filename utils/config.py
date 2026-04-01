@@ -37,9 +37,41 @@ class Config:
     ARXIV_MAX_RESULTS: int = int(os.getenv("ARXIV_MAX_RESULTS", "5"))
     RESEARCH_OPENALEX_MAX: int = int(os.getenv("RESEARCH_OPENALEX_MAX", "5"))
     RESEARCH_SEMANTIC_SCHOLAR_MAX: int = int(os.getenv("RESEARCH_SEMANTIC_SCHOLAR_MAX", "5"))
+    RESEARCH_CROSSREF_MAX: int = int(os.getenv("RESEARCH_CROSSREF_MAX", "5"))
+    RESEARCH_PUBMED_MAX: int = int(os.getenv("RESEARCH_PUBMED_MAX", "5"))
+    RESEARCH_ARXIV_MAX: int = int(os.getenv("RESEARCH_ARXIV_MAX", "5"))
+    RESEARCH_CORE_MAX: int = int(os.getenv("RESEARCH_CORE_MAX", "5"))
+    RESEARCH_DOAJ_MAX: int = int(os.getenv("RESEARCH_DOAJ_MAX", "5"))
+    RESEARCH_BASE_MAX: int = int(os.getenv("RESEARCH_BASE_MAX", "5"))
+    RESEARCH_BIORXIV_MAX: int = int(os.getenv("RESEARCH_BIORXIV_MAX", "5"))
+    RESEARCH_MEDRXIV_MAX: int = int(os.getenv("RESEARCH_MEDRXIV_MAX", "5"))
     RESEARCH_TOTAL_MAX: int = int(os.getenv("RESEARCH_TOTAL_MAX", "15"))
+    RESEARCH_SOURCE_TIMEOUT: int = int(os.getenv("RESEARCH_SOURCE_TIMEOUT", "15"))
+    RESEARCH_MAX_WORKERS: int = int(os.getenv("RESEARCH_MAX_WORKERS", "6"))
+    RESEARCH_PER_SOURCE_RETRIES: int = int(os.getenv("RESEARCH_PER_SOURCE_RETRIES", "2"))
     # OpenAlex polite-pool: include a contact in User-Agent (set your email for production)
     OPENALEX_MAILTO: str = os.getenv("OPENALEX_MAILTO", "mailto:dev@localhost")
+    # Source toggles (disable any unstable source quickly without code edits)
+    ENABLE_SOURCE_ARXIV: bool = os.getenv("ENABLE_SOURCE_ARXIV", "true").lower() == "true"
+    ENABLE_SOURCE_OPENALEX: bool = os.getenv("ENABLE_SOURCE_OPENALEX", "true").lower() == "true"
+    ENABLE_SOURCE_SEMANTIC_SCHOLAR: bool = os.getenv("ENABLE_SOURCE_SEMANTIC_SCHOLAR", "true").lower() == "true"
+    ENABLE_SOURCE_CROSSREF: bool = os.getenv("ENABLE_SOURCE_CROSSREF", "true").lower() == "true"
+    ENABLE_SOURCE_PUBMED: bool = os.getenv("ENABLE_SOURCE_PUBMED", "true").lower() == "true"
+    ENABLE_SOURCE_CORE: bool = os.getenv("ENABLE_SOURCE_CORE", "true").lower() == "true"
+    ENABLE_SOURCE_DOAJ: bool = os.getenv("ENABLE_SOURCE_DOAJ", "true").lower() == "true"
+    ENABLE_SOURCE_BASE: bool = os.getenv("ENABLE_SOURCE_BASE", "true").lower() == "true"
+    ENABLE_SOURCE_BIORXIV: bool = os.getenv("ENABLE_SOURCE_BIORXIV", "true").lower() == "true"
+    ENABLE_SOURCE_MEDRXIV: bool = os.getenv("ENABLE_SOURCE_MEDRXIV", "true").lower() == "true"
+    # Optional key-based tools from the 37-tool catalog
+    TAVILY_API_KEY: Optional[str] = os.getenv("TAVILY_API_KEY")
+    EXA_API_KEY: Optional[str] = os.getenv("EXA_API_KEY")
+    FIRECRAWL_API_KEY: Optional[str] = os.getenv("FIRECRAWL_API_KEY")
+    JINA_API_KEY: Optional[str] = os.getenv("JINA_API_KEY")
+    CORE_API_KEY: Optional[str] = os.getenv("CORE_API_KEY")
+    DEEPSEEK_API_KEY: Optional[str] = os.getenv("DEEPSEEK_API_KEY")
+    SCOPUS_API_KEY: Optional[str] = os.getenv("SCOPUS_API_KEY")
+    # Allow Jina s.jina.ai search without API key (optional; rate limits apply).
+    JINA_SEARCH_ALLOW_KEYLESS: bool = os.getenv("JINA_SEARCH_ALLOW_KEYLESS", "false").lower() == "true"
     
     # Citation Scraper Settings
     CITATION_MAX_SOURCES: int = int(os.getenv("CITATION_MAX_SOURCES", "12"))
@@ -53,6 +85,8 @@ class Config:
     SAVE_TO_DB: bool = os.getenv("SAVE_TO_DB", "true").lower() == "true"
     ENABLE_DB_CACHE: bool = os.getenv("ENABLE_DB_CACHE", "true").lower() == "true"
     DB_CACHE_MIN_ITEMS: int = int(os.getenv("DB_CACHE_MIN_ITEMS", "3"))
+    # When false, runtime never returns synthetic mock plans/data.
+    ALLOW_MOCK_FALLBACK: bool = os.getenv("ALLOW_MOCK_FALLBACK", "false").lower() == "true"
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
     @classmethod

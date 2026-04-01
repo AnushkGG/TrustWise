@@ -30,14 +30,19 @@ interface SubmitResponse {
 
 const PIPELINE_STEPS = [
   { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
+<<<<<<< HEAD
   { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
   { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
+=======
+  { id: "agents", label: "Agents", detail: "Web + multi-source research adapters" },
+>>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
   { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
   { id: "trust", label: "Trust", detail: "Validation and scoring" },
   { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
   { id: "insights", label: "Insights", detail: "Summary and highlights" },
 ];
 
+/** Wire up UI events and initial status/history fetches. */
 document.addEventListener("DOMContentLoaded", () => {
   loadSystemStatus();
   loadPlans();
@@ -51,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let currentResults: SubmitResponse | null = null;
 
+/** Show transient toast feedback in the UI. */
 function showToast(message: string, type: "info" | "success" | "error" = "info") {
   const container = document.getElementById("toastContainer");
   if (!container) return;
@@ -98,7 +104,7 @@ async function loadSystemStatus() {
         statusText.textContent = `Gemini · ${model}`;
         statusDot.className = "status-dot status-dot--ok";
       } else {
-        statusText.textContent = "Gemini API key not set — using mock plan";
+        statusText.textContent = "Gemini API key not set";
         statusDot.className = "status-dot status-dot--warn";
       }
       return;
@@ -113,6 +119,7 @@ async function loadSystemStatus() {
   }
 }
 
+/** Bind query form submit to pipeline execution. */
 function setupFormHandler() {
   document.getElementById("queryForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -120,6 +127,7 @@ function setupFormHandler() {
   });
 }
 
+/** Populate query input from suggestion chips. */
 function setupChipHandler() {
   document.querySelectorAll(".chip[data-query]").forEach((chip) => {
     chip.addEventListener("click", () => {
@@ -238,6 +246,7 @@ async function submitQuery() {
   }
 }
 
+/** Render all primary result panels after submit. */
 function displayResults(data: SubmitResponse) {
   const resultsSection = document.getElementById("resultsSection");
   resultsSection.style.display = "block";
@@ -311,6 +320,13 @@ function displayExecutionSummary(execution: Record<string, unknown>) {
     ? `<div class="stat-card stat-card--highlight"><div class="stat-value">Yes</div><div class="stat-label">Cache hit</div></div>`
     : `<div class="stat-card"><div class="stat-value">No</div><div class="stat-label">Cache hit</div></div>`;
 
+  const enabledSources = Array.isArray(execution.enabled_research_sources)
+    ? execution.enabled_research_sources
+    : [];
+  const enabledSourcesHtml = enabledSources.length
+    ? `<div class="chip-row">${enabledSources.map((s) => `<span class="chip">${escapeHtml(String(s))}</span>`).join("")}</div>`
+    : '<span class="text-muted">—</span>';
+
   document.getElementById("executionSummary").innerHTML = `
     <h3>Execution metrics</h3>
     <div class="stat-grid">
@@ -323,8 +339,12 @@ function displayExecutionSummary(execution: Record<string, unknown>) {
       <div class="stat-card"><div class="stat-value">${execution.trusted_items ?? 0}</div><div class="stat-label">Trusted</div></div>
       <div class="stat-card"><div class="stat-value">${execution.db_inserted ?? 0}</div><div class="stat-label">DB inserted</div></div>
       <div class="stat-card"><div class="stat-value">${execution.db_skipped ?? 0}</div><div class="stat-label">DB skipped</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_raw_count ?? 0}</div><div class="stat-label">Research raw</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_unique_count ?? 0}</div><div class="stat-label">Research unique</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_unique_ratio ?? 0}</div><div class="stat-label">Unique ratio</div></div>
       ${cacheCard}
     </div>
+    <div class="insights-block"><strong>Enabled research sources</strong>${enabledSourcesHtml}</div>
   `;
 }
 
