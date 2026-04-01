@@ -30,8 +30,8 @@ def validate_structured_data(items: List[Dict[str, Any]], query: str = "") -> Di
         else:
             seen_signatures.add(signature)
 
-        min_relevance = 0.28 if (scored_item.get("content_type") == "web") else 0.15
-        min_score = 0.65 if (scored_item.get("content_type") == "web") else 0.6
+        min_relevance = 0.28 if (scored_item.get("content_type") in ("web", "web_article")) else 0.15
+        min_score = 0.65 if (scored_item.get("content_type") in ("web", "web_article")) else 0.6
         scored_item["trust"]["trusted"] = (
             scored_item["trust"]["score"] >= min_score
             and not scored_item["trust"]["duplicate"]
@@ -158,18 +158,36 @@ def _extract_query_terms(query: str) -> Set[str]:
 
 
 def _load_trusted_domains() -> Set[str]:
-    sources_file = Config.CONFIG_DIR / "sources.json"
-    if not sources_file.exists():
-        return set()
+    domains: Set[str] = set()
 
-    try:
-        data = json.loads(sources_file.read_text(encoding="utf-8"))
-        urls = data.get("trusted_web_sources", []) if isinstance(data, dict) else data
-        domains = {_get_domain(url) for url in urls}
-        return {d for d in domains if d}
-    except Exception as e:
-        logger.warning(f"[Trust] Could not load trusted sources: {e}")
-        return set()
+    # Load from sources.json
+    sources_file = Config.CONFIG_DIR / "sources.json"
+    if sources_file.exists():
+        try:
+            data = json.loads(sources_file.read_text(encoding="utf-8"))
+            urls = data.get("trusted_web_sources", []) if isinstance(data, dict) else data
+            for url in urls:
+                d = _get_domain(url)
+                if d:
+                    domains.add(d)
+        except Exception as e:
+            logger.warning(f"[Trust] Could not load trusted sources: {e}")
+
+    # Load from trusted_citations.json
+    citations_file = Config.CONFIG_DIR / "trusted_citations.json"
+    if citations_file.exists():
+        try:
+            data = json.loads(citations_file.read_text(encoding="utf-8"))
+            categories = data.get("categories", {})
+            for cat_data in categories.values():
+                for source in cat_data.get("sources", []):
+                    d = _get_domain(source.get("url", ""))
+                    if d:
+                        domains.add(d)
+        except Exception as e:
+            logger.warning(f"[Trust] Could not load trusted citations: {e}")
+
+    return domains
 
 
 def _get_domain(url_or_source: str) -> str:

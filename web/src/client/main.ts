@@ -31,6 +31,7 @@ interface SubmitResponse {
 const PIPELINE_STEPS = [
   { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
   { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
+  { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
   { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
   { id: "trust", label: "Trust", detail: "Validation and scoring" },
   { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
@@ -315,6 +316,7 @@ function displayExecutionSummary(execution: Record<string, unknown>) {
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-value">${execution.web_tasks}</div><div class="stat-label">Web tasks</div></div>
       <div class="stat-card"><div class="stat-value">${execution.paper_tasks}</div><div class="stat-label">Research tasks</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.citation_sources ?? 0}</div><div class="stat-label">Citation sources</div></div>
       <div class="stat-card"><div class="stat-value">${execution.total_results}</div><div class="stat-label">Agent results</div></div>
       <div class="stat-card"><div class="stat-value">${execution.successful}</div><div class="stat-label">Successful</div></div>
       <div class="stat-card"><div class="stat-value">${execution.structured_items ?? 0}</div><div class="stat-label">Structured</div></div>
@@ -360,12 +362,40 @@ function renderInsightsPanelHtml(insights: Record<string, unknown>) {
       ? `<p class="insights-meta">Confidence: ${escapeHtml(String(insights.confidence))}</p>`
       : "";
 
+  // Citation links section
+  const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links : [];
+  let citationHtml = "";
+  if (citationLinks.length > 0) {
+    // Group by category
+    const byCategory: Record<string, typeof citationLinks> = {};
+    for (const link of citationLinks) {
+      const cat = link.category || "Other";
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(link);
+    }
+
+    let linksInner = "";
+    for (const [cat, links] of Object.entries(byCategory)) {
+      linksInner += `<div class="citation-category"><div class="citation-category-label">${escapeHtml(cat)}</div>`;
+      for (const link of links) {
+        const displayUrl = link.page_url || link.url || "";
+        const displayName = link.name || "Source";
+        const title = link.page_title ? ` — ${escapeHtml(link.page_title)}` : "";
+        linksInner += `<div class="citation-link"><a href="${escapeHtml(displayUrl)}" target="_blank" rel="noopener">🔗 ${escapeHtml(displayName)}${title}</a></div>`;
+      }
+      linksInner += `</div>`;
+    }
+
+    citationHtml = `<div class="insights-block"><strong>Source Citations (${citationLinks.length} sources)</strong><div class="citation-links-grid">${linksInner}</div></div>`;
+  }
+
   return `
     <h3>Insights</h3>
     ${conf}
     <p class="insights-summary">${summary}</p>
     <div class="insights-block"><strong>Key points</strong>${keyHtml}</div>
     ${topHtml ? `<div class="insights-block"><strong>Sources</strong>${topHtml}</div>` : ""}
+    ${citationHtml}
   `;
 }
 

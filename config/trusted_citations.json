@@ -1,0 +1,153 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "last_updated": "2026-04-01",
+    "total_sources": 200,
+    "note": "Curated list of trusted technical blogs, research sites, and engineering resources organized by category."
+  },
+  "categories": {
+    "ai_ml_research": {
+      "label": "AI / ML / Data Science Research",
+      "sources": [
+        {"name": "BAIR Blog", "url": "https://bair.berkeley.edu/blog/", "tags": ["ai", "research", "berkeley"]},
+        {"name": "MIT News AI", "url": "https://news.mit.edu/topic/artificial-intelligence2", "tags": ["ai", "research", "mit"]},
+        {"name": "Stanford AI Lab Blog", "url": "https://ai.stanford.edu/blog/", "tags": ["ai", "research", "stanford"]},
+        {"name": "ML@CMU", "url": "https://blog.ml.cmu.edu/", "tags": ["ml", "research", "cmu"]},
+        {"name": "Distill", "url": "https://distill.pub/", "tags": ["ml", "visualization", "research"]},
+        {"name": "NeurIPS Blog", "url": "https://blog.neurips.cc/", "tags": ["ml", "conference", "research"]},
+        {"name": "AutoML Group", "url": "https://www.automl.org/", "tags": ["automl", "research"]},
+        {"name": "OpenAI Blog", "url": "https://openai.com/blog/", "tags": ["ai", "gpt", "research"]},
+        {"name": "Google AI Blog", "url": "https://ai.googleblog.com/", "tags": ["ai", "google", "research"]},
+        {"name": "DeepMind Blog", "url": "https://deepmind.google/", "tags": ["ai", "deepmind", "research"]},
+        {"name": "Meta AI Blog", "url": "https://ai.meta.com/blog/", "tags": ["ai", "meta", "research"]},
+        {"name": "Apple ML Research", "url": "https://machinelearning.apple.com/", "tags": ["ml", "apple", "research"]},
+        {"name": "Microsoft Research Blog", "url": "https://www.microsoft.com/en-us/research/blog/", "tags": ["research", "microsoft"]},
+        {"name": "Amazon Science Blog", "url": "https://www.amazon.science/", "tags": ["ai", "amazon", "research"]},
+        {"name": "NVIDIA Deep Learning Blog", "url": "https://blogs.nvidia.com/blog/category/deep-learning/", "tags": ["deep-learning", "nvidia", "gpu"]},
+        {"name": "Intel AI Blog", "url": "https://www.intel.com/content/www/us/en/artificial-intelligence/overview.html", "tags": ["ai", "intel", "hardware"]},
+        {"name": "Spotify Engineering ML", "url": "https://engineering.atspotify.com/", "tags": ["ml", "spotify", "engineering"]},
+        {"name": "OpenMined Blog", "url": "https://www.openmined.org/", "tags": ["privacy", "ml", "federated"]},
+        {"name": "Towards Data Science", "url": "https://towardsdatascience.com/", "tags": ["data-science", "ml", "tutorials"]},
+        {"name": "Hugging Face Blog", "url": "https://huggingface.co/blog", "tags": ["nlp", "transformers", "ml"]},
+        {"name": "Machine Learning Mastery", "url": "https://machinelearningmastery.com/", "tags": ["ml", "tutorials", "python"]},
+        {"name": "Andrej Karpathy Blog", "url": "https://karpathy.bearblog.dev/", "tags": ["ai", "deep-learning", "research"]},
+        {"name": "Sebastian Raschka Blog", "url": "https://sebastianraschka.com/blog/", "tags": ["ml", "research", "python"]},
+        {"name": "Kaggle Blog", "url": "https://www.kaggle.com/blog", "tags": ["data-science", "competitions", "ml"]},
+        {"name": "KDnuggets", "url": "https://www.kdnuggets.com/", "tags": ["data-science", "ml", "news"]},
+        {"name": "The Gradient", "url": "https://thegradient.pub/", "tags": ["ai", "research", "perspectives"]},
+        {"name": "EleutherAI Blog", "url": "https://www.eleuther.ai/", "tags": ["ai", "open-source", "research"]},
+        {"name": "Lambda Labs Blog", "url": "https://lambdalabs.com/blog", "tags": ["gpu", "deep-learning", "infrastructure"]},
+        {"name": "Weights & Biases Blog", "url": "https://wandb.ai/site/blog", "tags": ["mlops", "experiment-tracking"]},
+        {"name": "Neptune.ai Blog", "url": "https://neptune.ai/blog", "tags": ["mlops", "experiment-tracking"]},
+        {"name": "PyTorch Blog", "url": "https://pytorch.org/blog/", "tags": ["pytorch", "deep-learning", "framework"]},
+        {"name": "TensorFlow Blog", "url": "https://blog.tensorflow.org/", "tags": ["tensorflow", "deep-learning", "framework"]},
+        {"name": "Data Science Central", "url": "https://www.datasciencecentral.com/", "tags": ["data-science", "analytics"]},
+        {"name": "Machine Learning Plus", "url": "https://www.machinelearningplus.com/", "tags": ["ml", "tutorials", "python"]},
+        {"name": "Lilian Weng Blog", "url": "https://lilianweng.github.io/", "tags": ["ai", "research", "tutorials"]},
+        {"name": "LessWrong", "url": "https://www.lesswrong.com/", "tags": ["ai-safety", "alignment", "rationality"]},
+        {"name": "Redwood Research", "url": "https://www.redwoodresearch.org/", "tags": ["ai-safety", "alignment"]},
+        {"name": "Simon Willison Blog", "url": "https://simonwillison.net/", "tags": ["ai", "llm", "python"]},
+        {"name": "The Neuron", "url": "https://www.theneurondaily.com/", "tags": ["ai", "news", "newsletter"]},
+        {"name": "The Batch", "url": "https://www.deeplearning.ai/the-batch/", "tags": ["ai", "news", "andrew-ng"]},
+        {"name": "One Useful Thing", "url": "https://www.oneusefulthing.org/", "tags": ["ai", "productivity", "education"]},
+        {"name": "MarkTechPost", "url": "https://www.marktechpost.com/", "tags": ["ai", "research", "news"]},
+        {"name": "VentureBeat AI", "url": "https://venturebeat.com/category/ai/", "tags": ["ai", "news", "enterprise"]},
+        {"name": "AI Trends", "url": "https://www.aitrends.com/", "tags": ["ai", "trends", "enterprise"]},
+        {"name": "GodOfPrompt", "url": "https://www.godofprompt.ai/", "tags": ["ai", "prompts", "llm"]},
+        {"name": "Agent.ai Blog", "url": "https://agent.ai/", "tags": ["ai", "agents", "automation"]}
+      ]
+    },
+    "systems_cloud_engineering": {
+      "label": "Systems, Cloud & Distributed Systems Engineering",
+      "sources": [
+        {"name": "Netflix Tech Blog", "url": "https://netflixtechblog.com/", "tags": ["systems", "microservices", "netflix"]},
+        {"name": "Meta Engineering", "url": "https://engineering.fb.com/", "tags": ["engineering", "meta", "systems"]},
+        {"name": "Uber Engineering", "url": "https://eng.uber.com/", "tags": ["engineering", "uber", "systems"]},
+        {"name": "LinkedIn Engineering", "url": "https://engineering.linkedin.com/blog", "tags": ["engineering", "linkedin"]},
+        {"name": "High Scalability", "url": "http://highscalability.com/", "tags": ["scalability", "architecture"]},
+        {"name": "Dropbox Tech Blog", "url": "https://dropbox.tech/", "tags": ["engineering", "dropbox"]},
+        {"name": "Shopify Engineering", "url": "https://shopify.engineering/", "tags": ["engineering", "shopify", "ecommerce"]},
+        {"name": "Stripe Engineering", "url": "https://stripe.com/blog/engineering", "tags": ["engineering", "stripe", "payments"]},
+        {"name": "Slack Engineering", "url": "https://slack.engineering/", "tags": ["engineering", "slack", "messaging"]},
+        {"name": "Airbnb Engineering", "url": "https://medium.com/airbnb-engineering", "tags": ["engineering", "airbnb"]},
+        {"name": "GitHub Engineering", "url": "https://github.blog/category/engineering/", "tags": ["engineering", "github", "devtools"]},
+        {"name": "Etsy Code as Craft", "url": "https://www.etsy.com/codeascraft", "tags": ["engineering", "etsy"]},
+        {"name": "Twilio Engineering", "url": "https://www.twilio.com/blog/engineering", "tags": ["engineering", "twilio", "api"]},
+        {"name": "Atlassian Engineering", "url": "https://www.atlassian.com/engineering", "tags": ["engineering", "atlassian", "devtools"]},
+        {"name": "Pinterest Engineering", "url": "https://medium.com/@Pinterest_Engineering", "tags": ["engineering", "pinterest"]},
+        {"name": "Booking.com Tech Blog", "url": "https://blog.booking.com/", "tags": ["engineering", "booking", "travel"]},
+        {"name": "Yelp Engineering", "url": "https://engineeringblog.yelp.com/", "tags": ["engineering", "yelp"]},
+        {"name": "PayPal Engineering", "url": "https://medium.com/paypal-engineering", "tags": ["engineering", "paypal", "fintech"]},
+        {"name": "Square Engineering", "url": "https://developer.squareup.com/blog/", "tags": ["engineering", "square", "fintech"]},
+        {"name": "Databricks Engineering", "url": "https://databricks.com/blog/category/engineering", "tags": ["engineering", "databricks", "data"]},
+        {"name": "AWS Architecture Blog", "url": "https://aws.amazon.com/blogs/architecture/", "tags": ["cloud", "aws", "architecture"]},
+        {"name": "Google Cloud Blog", "url": "https://cloud.google.com/blog", "tags": ["cloud", "gcp", "google"]},
+        {"name": "Microsoft Azure Blog", "url": "https://azure.microsoft.com/en-us/blog/", "tags": ["cloud", "azure", "microsoft"]},
+        {"name": "Cloudflare Blog", "url": "https://blog.cloudflare.com/", "tags": ["networking", "security", "cloudflare"]},
+        {"name": "All Things Distributed", "url": "https://www.allthingsdistributed.com/", "tags": ["distributed-systems", "aws", "architecture"]},
+        {"name": "Docker Blog", "url": "https://www.docker.com/blog/", "tags": ["containers", "docker", "devops"]},
+        {"name": "Confluent Blog", "url": "https://www.confluent.io/blog/", "tags": ["kafka", "streaming", "data"]},
+        {"name": "Cockroach Labs Blog", "url": "https://www.cockroachlabs.com/blog/", "tags": ["database", "distributed-systems"]},
+        {"name": "DataStax Blog", "url": "https://www.datastax.com/blog", "tags": ["database", "cassandra", "data"]}
+      ]
+    },
+    "programming_developer": {
+      "label": "Programming & Developer Learning",
+      "sources": [
+        {"name": "DEV.to", "url": "https://dev.to/", "tags": ["programming", "community", "tutorials"]},
+        {"name": "Hacker Noon", "url": "https://hackernoon.com/", "tags": ["programming", "tech", "startups"]},
+        {"name": "CSS-Tricks", "url": "https://css-tricks.com/", "tags": ["css", "frontend", "web"]},
+        {"name": "Real Python", "url": "https://realpython.com/", "tags": ["python", "tutorials", "programming"]},
+        {"name": "A List Apart", "url": "https://alistapart.com/", "tags": ["web", "design", "frontend"]},
+        {"name": "Smashing Magazine", "url": "https://www.smashingmagazine.com/", "tags": ["web", "design", "frontend"]},
+        {"name": "SitePoint", "url": "https://www.sitepoint.com/", "tags": ["web", "programming", "tutorials"]},
+        {"name": "Mozilla Hacks", "url": "https://hacks.mozilla.org/", "tags": ["web", "browser", "mozilla"]},
+        {"name": "GeeksforGeeks", "url": "https://www.geeksforgeeks.org/", "tags": ["programming", "algorithms", "tutorials"]},
+        {"name": "freeCodeCamp", "url": "https://www.freecodecamp.org/news/", "tags": ["programming", "tutorials", "web"]},
+        {"name": "DigitalOcean Community", "url": "https://www.digitalocean.com/community/", "tags": ["devops", "tutorials", "cloud"]},
+        {"name": "Toptal Engineering", "url": "https://www.toptal.com/engineering-blog", "tags": ["engineering", "tutorials"]},
+        {"name": "DZone", "url": "https://dzone.com/", "tags": ["programming", "java", "devops"]}
+      ]
+    },
+    "academic_cs": {
+      "label": "Academic & Theory-Focused CS",
+      "sources": [
+        {"name": "Godels Lost Letter", "url": "https://rjlipton.wordpress.com/", "tags": ["theory", "complexity", "cs"]},
+        {"name": "Daniel Lemire Blog", "url": "https://lemire.me/blog/", "tags": ["performance", "databases", "cs"]},
+        {"name": "The Endeavour", "url": "https://www.johndcook.com/blog/", "tags": ["math", "statistics", "cs"]},
+        {"name": "Computational Complexity", "url": "https://blog.computationalcomplexity.org/", "tags": ["complexity", "theory", "cs"]},
+        {"name": "Windows on Theory", "url": "https://windowsontheory.org/", "tags": ["theory", "cs", "research"]},
+        {"name": "Freedom to Tinker", "url": "https://freedom-to-tinker.com/", "tags": ["policy", "security", "cs"]},
+        {"name": "Google Research Blog", "url": "https://research.googleblog.com/", "tags": ["research", "google", "cs"]}
+      ]
+    },
+    "cybersecurity": {
+      "label": "Cybersecurity Research",
+      "sources": [
+        {"name": "Krebs on Security", "url": "https://krebsonsecurity.com/", "tags": ["security", "cybercrime", "news"]},
+        {"name": "Schneier on Security", "url": "https://www.schneier.com/", "tags": ["security", "cryptography", "policy"]},
+        {"name": "Dark Reading", "url": "https://www.darkreading.com/", "tags": ["security", "enterprise", "news"]},
+        {"name": "The Hacker News", "url": "https://thehackernews.com/", "tags": ["security", "hacking", "news"]},
+        {"name": "Troy Hunt", "url": "https://www.troyhunt.com/", "tags": ["security", "web", "breaches"]},
+        {"name": "Bleeping Computer", "url": "https://www.bleepingcomputer.com/", "tags": ["security", "malware", "news"]},
+        {"name": "CrowdStrike Blog", "url": "https://www.crowdstrike.com/blog/", "tags": ["security", "threats", "enterprise"]},
+        {"name": "SANS Institute Blog", "url": "https://www.sans.org/blog/", "tags": ["security", "training", "research"]},
+        {"name": "EFF Deeplinks", "url": "https://www.eff.org/deeplinks", "tags": ["privacy", "policy", "digital-rights"]},
+        {"name": "SecurityWeek", "url": "https://www.securityweek.com/", "tags": ["security", "news", "enterprise"]},
+        {"name": "Help Net Security", "url": "https://www.helpnetsecurity.com/", "tags": ["security", "news"]},
+        {"name": "Naked Security", "url": "https://news.sophos.com/en-us/", "tags": ["security", "sophos", "news"]},
+        {"name": "Akamai Blog", "url": "https://www.akamai.com/blog", "tags": ["security", "cdn", "web"]},
+        {"name": "Errata Security", "url": "https://erratasec.blogspot.com/", "tags": ["security", "research"]}
+      ]
+    },
+    "devops_infrastructure": {
+      "label": "DevOps & Infrastructure",
+      "sources": [
+        {"name": "DevOps.com", "url": "https://devops.com/", "tags": ["devops", "ci-cd", "automation"]},
+        {"name": "DevOpsCube", "url": "https://www.devopscube.com/", "tags": ["devops", "kubernetes", "tutorials"]},
+        {"name": "Puppet Blog", "url": "https://puppet.com/blog/", "tags": ["devops", "configuration", "automation"]},
+        {"name": "IT Revolution", "url": "https://itrevolution.com/", "tags": ["devops", "transformation", "books"]}
+      ]
+    }
+  }
+}

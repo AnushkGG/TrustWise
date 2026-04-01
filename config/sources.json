@@ -3,11 +3,23 @@
     "https://techcrunch.com",
     "https://arstechnica.com",
     "https://www.nature.com",
-    "https://www.sciencedaily.com"
+    "https://www.sciencedaily.com",
+    "https://openai.com/blog/",
+    "https://ai.googleblog.com/",
+    "https://deepmind.google/",
+    "https://ai.meta.com/blog/",
+    "https://huggingface.co/blog",
+    "https://www.marktechpost.com/",
+    "https://venturebeat.com/category/ai/",
+    "https://netflixtechblog.com/",
+    "https://engineering.fb.com/",
+    "https://blog.cloudflare.com/",
+    "https://krebsonsecurity.com/",
+    "https://thehackernews.com/"
   ],
   "metadata": {
-    "version": "1.0",
-    "last_updated": "2026-02-17",
-    "note": "Phase 1: Basic trusted sources list. Phase 2+ will include trust scores and verification metadata."
+    "version": "2.0",
+    "last_updated": "2026-04-01",
+    "note": "Extended trusted sources. Full citation list is in config/trusted_citations.json."
   }
 }
