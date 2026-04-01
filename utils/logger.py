@@ -5,6 +5,7 @@ import sys
 _VALID_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
 def setup_logger(name: str):
+    """Create or return a configured stream logger for the given module name."""
     logger = logging.getLogger(name)
     if not logger.handlers:
         level_name = os.getenv("LOG_LEVEL", "INFO").upper()

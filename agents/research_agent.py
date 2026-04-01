@@ -1,12 +1,8 @@
 import json
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any
 
-from agents.research_sources import (
-    dedupe_papers,
-    fetch_openalex,
-    fetch_semantic_scholar,
-)
+from agents.source_registry import collect_research_records
 from utils.config import Config
 from utils.logger import setup_logger
 
@@ -15,12 +11,9 @@ logger = setup_logger(__name__)
 def run(task: Dict[str, Any]) -> Dict[str, Any]:
     """
     Execute a research paper collection task.
-    
-    Phase 1 Implementation:
-    - Searches arXiv for research papers based on prompt
-    - Collects metadata and abstracts
-    - No validation, summarization, or LLM processing
-    - Simply fetches and stores raw data
+
+    The agent queries arXiv, OpenAlex, and Semantic Scholar, merges results,
+    deduplicates by paper identity, and returns capped raw paper metadata.
     
     Args:
         task: Task dictionary containing task_id, prompt, source_type, agent
@@ -44,27 +37,24 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
     }
     
     try:
-        # Extract search terms from prompt
-        # In Phase 1: Simple keyword extraction from prompt
+        # Extract search terms from prompt with lightweight keyword filtering.
         search_query = _extract_search_query(prompt)
         logger.info(f"[ResearchAgent] Search query: {search_query}")
         
-        # arXiv + OpenAlex + Semantic Scholar (keyless), merge and dedupe
-        papers_arxiv = _search_arxiv(search_query)
-        papers_oa = fetch_openalex(search_query, Config.RESEARCH_OPENALEX_MAX)
-        papers_s2 = fetch_semantic_scholar(search_query, Config.RESEARCH_SEMANTIC_SCHOLAR_MAX)
-        merged = list(papers_arxiv) + papers_oa + papers_s2
-        papers = dedupe_papers(merged)[: Config.RESEARCH_TOTAL_MAX]
+        papers, metrics = collect_research_records(search_query)
 
         if papers:
             result["data"] = papers
+            result["source_metrics"] = metrics
             logger.info(
                 f"[ResearchAgent] Found {len(papers)} papers "
-                f"(arxiv={len(papers_arxiv)} openalex={len(papers_oa)} s2={len(papers_s2)} after dedupe)"
+                f"(raw={metrics.get('raw_count', 0)} unique={metrics.get('unique_count', 0)} "
+                f"sources={len(metrics.get('enabled_sources', []))})"
             )
         else:
             result["status"] = "partial"
             result["message"] = "No papers found"
+            result["source_metrics"] = metrics
             logger.warning(f"[ResearchAgent] Task {task_id} found no papers")
         
         # Save raw data if configured
@@ -82,9 +72,8 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
 def _extract_search_query(prompt: str) -> str:
     """
     Extract search keywords from task prompt.
-    
-    Phase 1: Simple extraction without LLM.
-    Removes common words and takes key terms.
+
+    Uses deterministic keyword filtering without any LLM dependency.
     
     Args:
         prompt: Task prompt
@@ -92,69 +81,22 @@ def _extract_search_query(prompt: str) -> str:
     Returns:
         Search query string
     """
-    # Remove common instruction words
-    stop_words = {'search', 'find', 'papers', 'on', 'about', 'for', 'the', 'a', 'an', 
-                  'in', 'of', 'and', 'to', 'with', 'from', 'at', 'retrieve', 'research',
-                  'published', 'recent', 'past', 'year', 'focusing', 'peer-reviewed',
-                  'journals', 'articles', 'extract', 'get', 'fetch'}
+    # Remove common instruction words and generic research descriptors
+    stop_words = {
+        'search', 'find', 'papers', 'on', 'about', 'for', 'the', 'a', 'an', 
+        'in', 'of', 'and', 'to', 'with', 'from', 'at', 'retrieve', 'research',
+        'published', 'recent', 'past', 'year', 'focusing', 'peer-reviewed',
+        'journals', 'articles', 'extract', 'get', 'fetch', 'latest', 'advancements',
+        'trends', 'implications', 'impact', 'perspective', 'review', 'analysis'
+    }
     
-    words = prompt.lower().split()
+    words = re.findall(r"[a-z0-9]+", prompt.lower())
     keywords = [w for w in words if w not in stop_words and len(w) > 2]
     
-    # Return joined keywords (arXiv expects space-separated terms)
-    query = ' '.join(keywords[:5])  # Limit to 5 keywords
+    # Return joined keywords (limit to top 3 for precision).
+    query = ' '.join(keywords[:3])  
     logger.info(f"[ResearchAgent] Filtered keywords: {query}")
     return query
-
-
-def _search_arxiv(query: str) -> List[Dict[str, Any]]:
-    """
-    Search arXiv API for research papers.
-    
-    Args:
-        query: Search query string
-        
-    Returns:
-        List of paper metadata dictionaries
-    """
-    try:
-        import feedparser
-        import urllib.parse
-    except ImportError:
-        logger.error("feedparser package not installed. Run: pip install feedparser")
-        raise ImportError("feedparser required. Install with: pip install feedparser")
-    
-    # Construct arXiv API query
-    base_url = 'http://export.arxiv.org/api/query?'
-    search_query = f'search_query=all:{urllib.parse.quote(query)}'
-    max_results = f'max_results={Config.ARXIV_MAX_RESULTS}'
-    sort_by = 'sortBy=submittedDate&sortOrder=descending'
-    
-    query_url = f"{base_url}{search_query}&{max_results}&{sort_by}"
-    
-    logger.info(f"[ResearchAgent] Querying arXiv: {query_url}")
-    
-    # Parse feed
-    feed = feedparser.parse(query_url)
-    
-    papers = []
-    for entry in feed.entries:
-        abs_url = entry.id
-        paper = {
-            "title": entry.title,
-            "authors": [author.name for author in entry.authors],
-            "abstract": entry.summary,
-            "published": entry.published,
-            "arxiv_id": entry.id.split('/abs/')[-1],
-            "pdf_url": entry.id.replace('/abs/', '/pdf/') + '.pdf',
-            "url": abs_url,
-            "categories": [tag.term for tag in entry.tags] if hasattr(entry, 'tags') else [],
-            "source": "arXiv",
-            "doi": "",
-        }
-        papers.append(paper)
-    
-    return papers
 
 
 def _save_raw_data(task_id: str, result: Dict[str, Any]):

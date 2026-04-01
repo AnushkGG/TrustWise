@@ -11,8 +11,12 @@
       var pipelineTimer = null;
       var PIPELINE_STEPS = [
         { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
+<<<<<<< HEAD
         { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
         { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
+=======
+        { id: "agents", label: "Agents", detail: "Web + multi-source research adapters" },
+>>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
         { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
         { id: "trust", label: "Trust", detail: "Validation and scoring" },
         { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
@@ -71,7 +75,7 @@
               statusText.textContent = `Gemini \xB7 ${model}`;
               statusDot.className = "status-dot status-dot--ok";
             } else {
-              statusText.textContent = "Gemini API key not set \u2014 using mock plan";
+              statusText.textContent = "Gemini API key not set";
               statusDot.className = "status-dot status-dot--warn";
             }
             return;
@@ -251,6 +255,8 @@
       }
       function displayExecutionSummary(execution) {
         const cacheCard = execution.cache_hit ? `<div class="stat-card stat-card--highlight"><div class="stat-value">Yes</div><div class="stat-label">Cache hit</div></div>` : `<div class="stat-card"><div class="stat-value">No</div><div class="stat-label">Cache hit</div></div>`;
+        const enabledSources = Array.isArray(execution.enabled_research_sources) ? execution.enabled_research_sources : [];
+        const enabledSourcesHtml = enabledSources.length ? `<div class="chip-row">${enabledSources.map((s) => `<span class="chip">${escapeHtml(String(s))}</span>`).join("")}</div>` : '<span class="text-muted">\u2014</span>';
         document.getElementById("executionSummary").innerHTML = `
     <h3>Execution metrics</h3>
     <div class="stat-grid">
@@ -263,8 +269,12 @@
       <div class="stat-card"><div class="stat-value">${execution.trusted_items ?? 0}</div><div class="stat-label">Trusted</div></div>
       <div class="stat-card"><div class="stat-value">${execution.db_inserted ?? 0}</div><div class="stat-label">DB inserted</div></div>
       <div class="stat-card"><div class="stat-value">${execution.db_skipped ?? 0}</div><div class="stat-label">DB skipped</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_raw_count ?? 0}</div><div class="stat-label">Research raw</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_unique_count ?? 0}</div><div class="stat-label">Research unique</div></div>
+      <div class="stat-card"><div class="stat-value">${execution.research_unique_ratio ?? 0}</div><div class="stat-label">Unique ratio</div></div>
       ${cacheCard}
     </div>
+    <div class="insights-block"><strong>Enabled research sources</strong>${enabledSourcesHtml}</div>
   `;
       }
       function renderTrustPanelHtml(trustReport, execution) {
@@ -279,10 +289,17 @@
       }
       function renderInsightsPanelHtml(insights) {
         const summary = escapeHtml(insights.concise_answer || insights.summary || "\u2014");
-        const keyPoints = Array.isArray(insights.key_points) ? insights.key_points : Array.isArray(insights.key_highlights) ? insights.key_highlights : [];
-        const keyHtml = keyPoints.length ? `<ul class="insights-list">${keyPoints.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>` : '<p class="text-muted">No key points.</p>';
+        const keyPoints = Array.isArray(insights.key_points) ? insights.key_points : [];
+        
+        const keyHtml = keyPoints.length ? `<ul class="insights-list">${keyPoints.map((p) => {
+          const text = typeof p === "object" ? p.text : p;
+          const consensus = typeof p === "object" && p.consensus ? `<span class="consensus-badge" title="Verified by multiple sources">✓ Consensus</span>` : "";
+          return `<li>${parseCitations(escapeHtml(text))} ${consensus}</li>`;
+        }).join("")}</ul>` : '<p class="text-muted">No key points.</p>';
+        
         const top = Array.isArray(insights.top_sources_detailed) ? insights.top_sources_detailed : [];
         const topHtml = top.length ? `<div class="chip-row">${top.map((x) => `<span class="chip">${escapeHtml(x.source ?? "")} (${escapeHtml(String(x.count ?? ""))})</span>`).join("")}</div>` : "";
+<<<<<<< HEAD
         const conf = insights.confidence !== void 0 && insights.confidence !== null ? `<p class="insights-meta">Confidence: ${escapeHtml(String(insights.confidence))}</p>` : "";
         const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links : [];
         let citationHtml = "";
@@ -306,14 +323,32 @@
           }
           citationHtml = `<div class="insights-block"><strong>Source Citations (${citationLinks.length} sources)</strong><div class="citation-links-grid">${linksInner}</div></div>`;
         }
+=======
+        
+        const confidence = insights.confidence ?? 0;
+        const confColor = confidence > 0.8 ? "var(--success)" : confidence > 0.5 ? "var(--warning)" : "var(--error)";
+        
+>>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
         return `
     <h3>Insights</h3>
-    ${conf}
-    <p class="insights-summary">${summary}</p>
+    <div class="confidence-meter-container">
+      <div class="confidence-label">Overall confidence</div>
+      <div class="confidence-meter">
+        <div class="confidence-fill" style="width: ${confidence * 100}%; background: ${confColor}"></div>
+      </div>
+      <div class="confidence-value">${Math.round(confidence * 100)}%</div>
+    </div>
+    <p class="insights-summary">${parseCitations(summary)}</p>
     <div class="insights-block"><strong>Key points</strong>${keyHtml}</div>
     ${topHtml ? `<div class="insights-block"><strong>Sources</strong>${topHtml}</div>` : ""}
     ${citationHtml}
   `;
+      }
+      function parseCitations(text) {
+        if (!text) return "";
+        return text.replace(/\[Source\s+(\d+)\]/gi, (match, num) => {
+          return `<a href="#trust-card-${num}" class="citation-link" title="Jump to source ${num}">[${num}]</a>`;
+        });
       }
       function displayItemCards(items, container, opts) {
         if (!container) return;
@@ -327,15 +362,23 @@
             const trust = item.trust;
             const content = String(item.content ?? "");
             return `
-      <div class="task-card" style="animation-delay:${i * 40}ms">
+      <div class="task-card" id="trust-card-${i + 1}" style="animation-delay:${i * 40}ms">
         <div class="task-header">
           <div class="task-title">${item.content_type === "research_paper" ? "Research" : "Web"} \xB7 ${escapeHtml(String(item.title || "Untitled"))}</div>
-          <span class="task-badge">${escapeHtml(String(item.content_type || "item"))}</span>
+          <span class="task-badge task-badge--${item.source?.toLowerCase().replace(/\s+/g, '-') || 'item'}">${escapeHtml(String(item.source || "item"))}</span>
         </div>
         <div class="task-body">
-          <div class="task-meta"><strong>Source</strong> ${escapeHtml(String(item.source || "\u2014"))}</div>
-          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">Open link</a>` : "No URL"}</div>
-          ${trust ? `<div class="task-meta"><strong>Trust score</strong> ${escapeHtml(String(trust.score))}</div>` : ""}
+          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">${escapeHtml(String(item.url.length > 60 ? item.url.substring(0, 60) + '...' : item.url))}</a>` : "No URL"}</div>
+          
+          <div class="relevance-container">
+            <span class="relevance-label">Relevance</span>
+            <div class="relevance-bar">
+              <div class="relevance-fill" style="width: ${(trust ? trust.relevance : 0) * 100}%"></div>
+            </div>
+            <span class="relevance-value">${Math.round((trust ? trust.relevance : 0) * 100)}%</span>
+          </div>
+
+          <div class="task-meta" style="margin-top: 0.5rem"><strong>Trust</strong> ${escapeHtml(String(trust ? (trust.score * 100).toFixed(0) : "0"))}%</div>
           ${item.published_at ? `<div class="task-meta"><strong>Published</strong> ${escapeHtml(String(item.published_at))}</div>` : ""}
           <div class="task-snippet">${escapeHtml(content.substring(0, 500))}${content.length > 500 ? "\u2026" : ""}</div>
         </div>

@@ -1,13 +1,22 @@
-# Logs directory
+# Logs Directory Guide
 
-## `local-test/` (gitignored, semi-permanent)
+`logs/local-test/` stores local run artifacts and is gitignored.
 
-Ad-hoc full local test output from [implementationtest.md](../implementationtest.md)–style runs: per-phase `*.log`, HTTP captures `*.json` / `*.txt`, and optional `server.pid`. These files are typically removed during repository cleanup to maintain a fresh state.
+## Typical Artifacts
 
-This folder is listed in [.gitignore](../.gitignore) so large or machine-specific artifacts are not committed.
+- Server stdout/stderr captures
+- API response snapshots
+- Per-run verification notes
 
-### Conventions
+## Conventions
 
-- **Server logs:** Capture may produce `server-stdout.log`, `server-stdout2.log`, or a separate `server-stderr.log` depending on how you redirect streams. The summary index should list **files that actually exist** for that run.
-- **PowerShell:** Do not assign to `$PID` / `$pid` when saving a process id from a file — use e.g. `$serverPid = Get-Content ...`.
-- **pip / `lxml` on Windows:** A clean install needs Python **3.10–3.12** (see [README.md](../README.md)); Python **3.14** often fails building `lxml` without libxml2 development headers.
+- Keep filenames stable per run (timestamp or run id).
+- Do not commit machine-specific logs.
+- Use UTF-8 output in test environments when possible.
+
+## Related Docs
+
+- [implementationtest.md](../implementationtest.md) (diagnostics table, CI phases)
+- [QUICKSTART.md](../QUICKSTART.md) / [WEB_QUICKSTART.md](../WEB_QUICKSTART.md) (run and smoke checks)
+- [docs/deployment-readiness-report.md](../docs/deployment-readiness-report.md)
+
