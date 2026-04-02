@@ -27,10 +27,19 @@ def build_mock_plan(user_query: str) -> dict:
     q = (user_query or "").strip() or "General research query"
     goal = _truncate(q, 280)
     snippet = _truncate(q, 800)
+    stop_words = {
+        "the", "a", "an", "and", "or", "to", "of", "for", "in", "on", "with",
+        "about", "what", "how", "why", "when", "where", "who", "which", "are",
+        "is", "was", "were", "has", "have", "been", "being", "from", "into",
+        "that", "this", "its", "their", "our", "your", "can", "will", "would",
+        "could", "should", "may", "might", "does", "did", "not", "but", "also",
+        "latest", "recent", "new", "current", "biggest", "most", "best",
+        "tell", "me", "please", "find", "search", "get",
+    }
     words = [
         w.lower().strip(".,;:!?")
         for w in q.replace("/", " ").split()
-        if len(w.strip(".,;:!?")) > 2
+        if len(w.strip(".,;:!?")) > 2 and w.lower().strip(".,;:!?") not in stop_words
     ]
     seen = []
     for w in words:

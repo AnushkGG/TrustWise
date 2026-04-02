@@ -1,0 +1,582 @@
+================================================================================
+TrustWise 10-Query Integration Test & Analysis Report
+Generated: 2026-04-02T14:44:27.153645
+Mode: Mock fallback (no API keys)
+================================================================================
+
+                                OVERALL SUMMARY                                 
+--------------------------------------------------------------------------------
+  Total queries:        10
+  Successful:           10/10
+  Failed:               0/10
+  Average response time: 1.83s
+
+
+================================================================================
+QUERY 1: What are the latest breakthroughs in artificial intelligence for healthcare?
+================================================================================
+  Status:    PASS
+  Time:      1.83s
+
+  --- Plan ---
+  Goal:          True (length: 76 chars)
+  Domains:       ['breakthroughs', 'artificial', 'intelligence', 'healthcare']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 2: How is climate change affecting global food production in 2025?
+================================================================================
+  Status:    PASS
+  Time:      1.84s
+
+  --- Plan ---
+  Goal:          True (length: 63 chars)
+  Domains:       ['climate', 'change', 'affecting', 'global']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 3: What are the current trends in cryptocurrency regulation worldwide?
+================================================================================
+  Status:    PASS
+  Time:      1.85s
+
+  --- Plan ---
+  Goal:          True (length: 67 chars)
+  Domains:       ['trends', 'cryptocurrency', 'regulation', 'worldwide']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 4: What are the biggest cybersecurity threats facing enterprises in 2025?
+================================================================================
+  Status:    PASS
+  Time:      1.8s
+
+  --- Plan ---
+  Goal:          True (length: 70 chars)
+  Domains:       ['cybersecurity', 'threats', 'facing', 'enterprises']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 5: What are the recent discoveries from the James Webb Space Telescope?
+================================================================================
+  Status:    PASS
+  Time:      1.81s
+
+  --- Plan ---
+  Goal:          True (length: 68 chars)
+  Domains:       ['discoveries', 'james', 'webb', 'space']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 6: How is AI transforming personalized learning in K-12 education?
+================================================================================
+  Status:    PASS
+  Time:      1.84s
+
+  --- Plan ---
+  Goal:          True (length: 63 chars)
+  Domains:       ['transforming', 'personalized', 'learning', 'k-12']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 7: What are the latest developments in CRISPR gene editing therapy?
+================================================================================
+  Status:    PASS
+  Time:      1.85s
+
+  --- Plan ---
+  Goal:          True (length: 64 chars)
+  Domains:       ['developments', 'crispr', 'gene', 'editing']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 8: What progress has been made in nuclear fusion energy research?
+================================================================================
+  Status:    PASS
+  Time:      1.83s
+
+  --- Plan ---
+  Goal:          True (length: 62 chars)
+  Domains:       ['progress', 'made', 'nuclear', 'fusion']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 9: How are US-China trade tensions impacting the global semiconductor supply chain?
+================================================================================
+  Status:    PASS
+  Time:      1.82s
+
+  --- Plan ---
+  Goal:          True (length: 80 chars)
+  Domains:       ['us-china', 'trade', 'tensions', 'impacting']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+================================================================================
+QUERY 10: quantum computing applications
+================================================================================
+  Status:    PASS
+  Time:      1.82s
+
+  --- Plan ---
+  Goal:          True (length: 30 chars)
+  Domains:       ['quantum', 'computing', 'applications']
+  Total tasks:   2
+  Sources:       ['web', 'research_papers']
+
+  --- Execution ---
+  Web tasks:     1
+  Paper tasks:   1
+  Total results: 2
+  Successful:    0
+  Structured:    0
+  Trusted:       0
+  Citations:     0
+  Cache hit:     False
+  Research sources: ['arxiv', 'base', 'biorxiv', 'core', 'crossref', 'doaj', 'medrxiv', 'openalex', 'pubmed', 'semantic_scholar']
+
+  --- Trust Report ---
+  Validated:     0
+  Trusted:       0
+  Dropped:       0
+  Trust rate:    0.0%
+
+  --- Insights ---
+  Summary:       Yes (47 chars)
+  Concise answer: Yes (56 chars)
+  Key points:    0
+  Key highlights: 0
+  Confidence:    0.0
+  Method:        unknown
+  Source breakdown: {}
+  Content types: {}
+  Recommended reading: 0
+  Citation links: 0
+
+  --- Data Quality ---
+  Structured items: 0
+  Trusted items:    0
+  Items with URLs:  0
+  Items with titles: 0
+  Items with content (>100 chars): 0
+  Avg trust score:  0
+  Content types:    []
+
+
+================================================================================
+                              CROSS-QUERY ANALYSIS                              
+================================================================================
+
+  Response Times:
+    Min:     1.8s
+    Max:     1.85s
+    Avg:     1.83s
+
+  Pipeline Consistency:
+    All have plan goal:    YES
+    All have summary:      YES
+    All have concise answer: YES
+
+  Trust Metrics:
+    Avg trust rate:   0.0%
+    Avg confidence:   0.0
+
+  Content Metrics:
+    Avg key points:   0.0
+    Avg highlights:   0.0
+
+  Issues Found:
+    [Q1] No key points generated
+    [Q1] No trusted items (all filtered out)
+    [Q1] Very low trust rate: 0.0%
+    [Q1] Very low confidence: 0.0
+    [Q2] No key points generated
+    [Q2] No trusted items (all filtered out)
+    [Q2] Very low trust rate: 0.0%
+    [Q2] Very low confidence: 0.0
+    [Q3] No key points generated
+    [Q3] No trusted items (all filtered out)
+    [Q3] Very low trust rate: 0.0%
+    [Q3] Very low confidence: 0.0
+    [Q4] No key points generated
+    [Q4] No trusted items (all filtered out)
+    [Q4] Very low trust rate: 0.0%
+    [Q4] Very low confidence: 0.0
+    [Q5] No key points generated
+    [Q5] No trusted items (all filtered out)
+    [Q5] Very low trust rate: 0.0%
+    [Q5] Very low confidence: 0.0
+    [Q6] No key points generated
+    [Q6] No trusted items (all filtered out)
+    [Q6] Very low trust rate: 0.0%
+    [Q6] Very low confidence: 0.0
+    [Q7] No key points generated
+    [Q7] No trusted items (all filtered out)
+    [Q7] Very low trust rate: 0.0%
+    [Q7] Very low confidence: 0.0
+    [Q8] No key points generated
+    [Q8] No trusted items (all filtered out)
+    [Q8] Very low trust rate: 0.0%
+    [Q8] Very low confidence: 0.0
+    [Q9] No key points generated
+    [Q9] No trusted items (all filtered out)
+    [Q9] Very low trust rate: 0.0%
+    [Q9] Very low confidence: 0.0
+    [Q10] No key points generated
+    [Q10] No trusted items (all filtered out)
+    [Q10] Very low trust rate: 0.0%
+    [Q10] Very low confidence: 0.0
+
+================================================================================
+END OF REPORT
+================================================================================
