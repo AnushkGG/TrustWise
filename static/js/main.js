@@ -11,12 +11,8 @@
       var pipelineTimer = null;
       var PIPELINE_STEPS = [
         { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
-<<<<<<< HEAD
-        { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
-        { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
-=======
         { id: "agents", label: "Agents", detail: "Web + multi-source research adapters" },
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
+        { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
         { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
         { id: "trust", label: "Trust", detail: "Validation and scoring" },
         { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
@@ -287,21 +283,50 @@
     <p class="trust-line"><strong>${t}</strong> trusted / <strong>${v}</strong> validated \xB7 <strong>${d}</strong> dropped${cache}</p>
   `;
       }
+      function resolveCitationTarget(sourceNumber, citationReferenceMap, citationLinks) {
+        const mapEntry = citationReferenceMap.find(
+          (x) => Number(x.source_id) === sourceNumber
+        );
+        const fallbackEntry = citationLinks[sourceNumber - 1];
+        const entry = mapEntry || fallbackEntry;
+        if (!entry) return null;
+        const rawUrl = String(entry.url || entry.page_url || "").trim();
+        if (!/^https?:\/\//i.test(rawUrl)) return null;
+        const label = String(entry.source || entry.name || `Source ${sourceNumber}`);
+        return { url: rawUrl, label };
+      }
+      function renderTextWithCitations(text, citationReferenceMap, citationLinks) {
+        const escaped = escapeHtml(String(text || ""));
+        return escaped.replace(/\[(?:s|sh)ource\s*(\d+)\s*\]/gi, (_m, n) => {
+          const sourceNumber = Number(n);
+          if (!Number.isFinite(sourceNumber) || sourceNumber < 1) {
+            return `[Source ${escapeHtml(n)}]`;
+          }
+          const target = resolveCitationTarget(sourceNumber, citationReferenceMap, citationLinks);
+          if (!target) {
+            return `[Source ${sourceNumber}]`;
+          }
+          return `<a href="${escapeHtml(target.url)}" target="_blank" rel="noopener" title="${escapeHtml(target.label)}">[Source ${sourceNumber}]</a>`;
+        });
+      }
       function renderInsightsPanelHtml(insights) {
-        const summary = escapeHtml(insights.concise_answer || insights.summary || "\u2014");
-        const keyPoints = Array.isArray(insights.key_points) ? insights.key_points : [];
-        
+        const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links : [];
+        const citationReferenceMap = Array.isArray(insights.citation_reference_map) ? insights.citation_reference_map : [];
+        const summary = renderTextWithCitations(insights.concise_answer || insights.summary || "\u2014", citationReferenceMap, citationLinks);
+        const keyPoints = Array.isArray(insights.key_points) ? insights.key_points : Array.isArray(insights.key_highlights) ? insights.key_highlights : [];
         const keyHtml = keyPoints.length ? `<ul class="insights-list">${keyPoints.map((p) => {
-          const text = typeof p === "object" ? p.text : p;
-          const consensus = typeof p === "object" && p.consensus ? `<span class="consensus-badge" title="Verified by multiple sources">✓ Consensus</span>` : "";
-          return `<li>${parseCitations(escapeHtml(text))} ${consensus}</li>`;
+          if (typeof p === "string") return `<li>${renderTextWithCitations(p, citationReferenceMap, citationLinks)}</li>`;
+          if (p && typeof p === "object") {
+            const obj = p;
+            const text = renderTextWithCitations(obj.text || String(p), citationReferenceMap, citationLinks);
+            const badge = obj.consensus ? ' <span class="consensus-badge">consensus</span>' : "";
+            return `<li>${text}${badge}</li>`;
+          }
+          return `<li>${renderTextWithCitations(String(p), citationReferenceMap, citationLinks)}</li>`;
         }).join("")}</ul>` : '<p class="text-muted">No key points.</p>';
-        
         const top = Array.isArray(insights.top_sources_detailed) ? insights.top_sources_detailed : [];
         const topHtml = top.length ? `<div class="chip-row">${top.map((x) => `<span class="chip">${escapeHtml(x.source ?? "")} (${escapeHtml(String(x.count ?? ""))})</span>`).join("")}</div>` : "";
-<<<<<<< HEAD
         const conf = insights.confidence !== void 0 && insights.confidence !== null ? `<p class="insights-meta">Confidence: ${escapeHtml(String(insights.confidence))}</p>` : "";
-        const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links : [];
         let citationHtml = "";
         if (citationLinks.length > 0) {
           const byCategory = {};
@@ -312,43 +337,25 @@
           }
           let linksInner = "";
           for (const [cat, links] of Object.entries(byCategory)) {
-            linksInner += `<div class="citation-category"><div class="citation-category-label">${escapeHtml(cat)}</div>`;
+            linksInner += `<div class="src-cite-category"><div class="src-cite-category-label">${escapeHtml(cat)}</div><div class="src-cite-items">`;
             for (const link of links) {
               const displayUrl = link.page_url || link.url || "";
               const displayName = link.name || "Source";
               const title = link.page_title ? ` \u2014 ${escapeHtml(link.page_title)}` : "";
-              linksInner += `<div class="citation-link"><a href="${escapeHtml(displayUrl)}" target="_blank" rel="noopener">\u{1F517} ${escapeHtml(displayName)}${title}</a></div>`;
+              linksInner += `<a class="src-cite-item" href="${escapeHtml(displayUrl)}" target="_blank" rel="noopener">\u{1F517} ${escapeHtml(displayName)}${title}</a>`;
             }
-            linksInner += `</div>`;
+            linksInner += `</div></div>`;
           }
-          citationHtml = `<div class="insights-block"><strong>Source Citations (${citationLinks.length} sources)</strong><div class="citation-links-grid">${linksInner}</div></div>`;
+          citationHtml = `<div class="insights-block"><strong>Source Citations (${citationLinks.length} sources)</strong><div class="src-cite-grid">${linksInner}</div></div>`;
         }
-=======
-        
-        const confidence = insights.confidence ?? 0;
-        const confColor = confidence > 0.8 ? "var(--success)" : confidence > 0.5 ? "var(--warning)" : "var(--error)";
-        
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
         return `
     <h3>Insights</h3>
-    <div class="confidence-meter-container">
-      <div class="confidence-label">Overall confidence</div>
-      <div class="confidence-meter">
-        <div class="confidence-fill" style="width: ${confidence * 100}%; background: ${confColor}"></div>
-      </div>
-      <div class="confidence-value">${Math.round(confidence * 100)}%</div>
-    </div>
-    <p class="insights-summary">${parseCitations(summary)}</p>
+    ${conf}
+    <p class="insights-summary">${summary}</p>
     <div class="insights-block"><strong>Key points</strong>${keyHtml}</div>
     ${topHtml ? `<div class="insights-block"><strong>Sources</strong>${topHtml}</div>` : ""}
     ${citationHtml}
   `;
-      }
-      function parseCitations(text) {
-        if (!text) return "";
-        return text.replace(/\[Source\s+(\d+)\]/gi, (match, num) => {
-          return `<a href="#trust-card-${num}" class="citation-link" title="Jump to source ${num}">[${num}]</a>`;
-        });
       }
       function displayItemCards(items, container, opts) {
         if (!container) return;
@@ -362,23 +369,15 @@
             const trust = item.trust;
             const content = String(item.content ?? "");
             return `
-      <div class="task-card" id="trust-card-${i + 1}" style="animation-delay:${i * 40}ms">
+      <div class="task-card" style="animation-delay:${i * 40}ms">
         <div class="task-header">
           <div class="task-title">${item.content_type === "research_paper" ? "Research" : "Web"} \xB7 ${escapeHtml(String(item.title || "Untitled"))}</div>
-          <span class="task-badge task-badge--${item.source?.toLowerCase().replace(/\s+/g, '-') || 'item'}">${escapeHtml(String(item.source || "item"))}</span>
+          <span class="task-badge">${escapeHtml(String(item.content_type || "item"))}</span>
         </div>
         <div class="task-body">
-          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">${escapeHtml(String(item.url.length > 60 ? item.url.substring(0, 60) + '...' : item.url))}</a>` : "No URL"}</div>
-          
-          <div class="relevance-container">
-            <span class="relevance-label">Relevance</span>
-            <div class="relevance-bar">
-              <div class="relevance-fill" style="width: ${(trust ? trust.relevance : 0) * 100}%"></div>
-            </div>
-            <span class="relevance-value">${Math.round((trust ? trust.relevance : 0) * 100)}%</span>
-          </div>
-
-          <div class="task-meta" style="margin-top: 0.5rem"><strong>Trust</strong> ${escapeHtml(String(trust ? (trust.score * 100).toFixed(0) : "0"))}%</div>
+          <div class="task-meta"><strong>Source</strong> ${escapeHtml(String(item.source || "\u2014"))}</div>
+          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">Open link</a>` : "No URL"}</div>
+          ${trust ? `<div class="task-meta"><strong>Trust score</strong> ${escapeHtml(String(trust.score))}</div>` : ""}
           ${item.published_at ? `<div class="task-meta"><strong>Published</strong> ${escapeHtml(String(item.published_at))}</div>` : ""}
           <div class="task-snippet">${escapeHtml(content.substring(0, 500))}${content.length > 500 ? "\u2026" : ""}</div>
         </div>

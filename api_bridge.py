@@ -12,6 +12,7 @@ import json
 import logging
 import sys
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -54,6 +55,78 @@ from utils.logger import setup_logger
 from utils.retry import execute_with_retry
 
 logger = setup_logger(__name__)
+
+
+def _extract_query_terms(query: str) -> set:
+    words = re.findall(r"[a-zA-Z0-9]+", (query or "").lower())
+    stop = {
+        "the", "a", "an", "and", "or", "to", "of", "for", "in", "on", "with",
+        "about", "latest", "recent", "new", "tell", "me", "what", "is", "are",
+        "from", "into", "at", "by", "as", "their", "its", "be", "this", "that",
+        "weekly", "update", "updates", "source", "sources", "links",
+        "major", "latest", "recent", "new", "changes", "announcements",
+        "announcement", "product", "products", "launch", "launches",
+        "incidents", "enterprise", "deployment", "deployments", "trends",
+        "concerns", "outcomes", "results", "report", "reports",
+    }
+    return {w for w in words if len(w) > 2 and w not in stop}
+
+
+def _item_relevance_score(item: dict, query_terms: set) -> float:
+    if not query_terms:
+        return 0.0
+    title = str(item.get("title") or "").lower()
+    source = str(item.get("source") or "").lower()
+    content = str(item.get("content") or "").lower()[:2000]
+    blob = f"{title} {source} {content}"
+    tokens = set(re.findall(r"[a-zA-Z0-9]+", blob))
+    hits = sum(1 for t in query_terms if t in tokens)
+    return hits / max(1, len(query_terms))
+
+
+def _filter_relevant_items(items: list, query: str, min_score: float = 0.30) -> list:
+    query_terms = _extract_query_terms(query)
+    if not query_terms:
+        return list(items)
+    generic_terms = {
+        "tech", "technology", "update", "updates", "weekly", "latest", "recent",
+        "news", "trend", "trends", "story", "stories", "system", "platform",
+        "engineering", "development", "software", "tools", "guide", "blog",
+    }
+    focused_terms = {t for t in query_terms if t not in generic_terms}
+    filtered = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title") or "").lower()
+        source = str(item.get("source") or "").lower()
+        content = str(item.get("content") or "").lower()[:2200]
+        blob = f"{title} {source} {content}"
+        tokens = set(re.findall(r"[a-zA-Z0-9]+", blob))
+        score = _item_relevance_score(item, query_terms)
+        focused_overlap = sum(1 for t in focused_terms if t in tokens)
+        if focused_terms and focused_overlap == 0:
+            continue
+        if score >= min_score:
+            filtered.append(item)
+    return filtered
+
+
+def _dedupe_items(items: list) -> list:
+    seen = set()
+    out = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        key = (
+            str(item.get("url") or "").strip().lower(),
+            str(item.get("title") or "").strip().lower(),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
 
 
 def _keyed_research_snapshot(source_stats: dict) -> dict:
@@ -121,7 +194,12 @@ def handle_submit(payload: dict) -> dict:
                 all_items.extend(citation_items)
 
             source_links = citation_result.get("source_links", [])
-            insights = generate_insights(all_items, query=query, source_links=source_links)
+            insight_input = _dedupe_items(
+                citation_items + _filter_relevant_items(cached_items, query=query)
+            ) if citation_items else _filter_relevant_items(all_items, query=query)
+            if not insight_input:
+                insight_input = list(citation_items) if citation_items else list(all_items)
+            insights = generate_insights(insight_input, query=query, source_links=source_links)
             return {
                 "success": True,
                 "plan": {
@@ -139,6 +217,7 @@ def handle_submit(payload: dict) -> dict:
                     "structured_items": len(all_items),
                     "trusted_items": len(all_items),
                     "citation_sources": citation_result.get("sources_used", 0),
+                    "citations_dir": citation_result.get("citations_dir", ""),
                     "db_inserted": 0,
                     "db_skipped": 0,
                     "cache_hit": True,
@@ -198,7 +277,6 @@ def handle_submit(payload: dict) -> dict:
                 {"task_id": task.get("task_id"), "status": "failed", "error": str(e)}
             )
 
-<<<<<<< HEAD
     # Step 4.5: Scrape trusted citation sources for multi-source data
     citation_result = {"scraped_items": [], "source_links": [], "sources_used": 0}
     try:
@@ -212,7 +290,7 @@ def handle_submit(payload: dict) -> dict:
         )
     except Exception as e:
         logger.error(f"Bridge: Citation scraper failed: {e}")
-=======
+
     # Aggregate source-level metrics from research agents.
     source_stats: dict = {}
     enabled_sources: set = set()
@@ -235,7 +313,6 @@ def handle_submit(payload: dict) -> dict:
                 item["ok"] += 1
             else:
                 item["fail"] += 1
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
 
     # Step 5-8: Clean, Trust, Store, Insights
     structured_data = normalize_results(results, query=query)
@@ -253,7 +330,18 @@ def handle_submit(payload: dict) -> dict:
     if Config.SAVE_TO_DB:
         db_stats = save_trusted_items(trusted_data, query=query)
 
-    insight_input = trusted_data if trusted_data else structured_data
+    # Prioritize citation-scraped and query-relevant items for insight quality.
+    # This avoids off-topic leakage from generic homepage crawls.
+    focused_trusted = _filter_relevant_items(trusted_data, query=query)
+    focused_structured = _filter_relevant_items(structured_data, query=query)
+    insight_input = list(focused_trusted) if focused_trusted else list(focused_structured)
+    citation_items = citation_result.get("scraped_items", [])
+    if citation_items:
+        insight_input = _dedupe_items(list(citation_items) + insight_input)
+
+    if not insight_input:
+        insight_input = list(citation_items) if citation_items else (list(trusted_data) if trusted_data else list(structured_data))
+
     source_links = citation_result.get("source_links", [])
     insights = generate_insights(insight_input, query=query, source_links=source_links)
 
@@ -274,6 +362,7 @@ def handle_submit(payload: dict) -> dict:
             "structured_items": len(structured_data),
             "trusted_items": len(trusted_data),
             "citation_sources": citation_result.get("sources_used", 0),
+            "citations_dir": citation_result.get("citations_dir", ""),
             "db_inserted": db_stats["inserted"],
             "db_skipped": db_stats["skipped"],
             "cache_hit": False,

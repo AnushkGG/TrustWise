@@ -703,6 +703,51 @@ textarea:focus {
   transform: scale(1.1);
 }
 
+/* Source Citation Grid (insights panel – distinct from inline .citation-link badges) */
+.src-cite-grid {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.src-cite-category {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+}
+.src-cite-category-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+.src-cite-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.src-cite-item {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.src-cite-item:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
 .task-card {
   scroll-margin-top: 100px;
 }

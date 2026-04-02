@@ -30,13 +30,8 @@ def validate_structured_data(items: List[Dict[str, Any]], query: str = "") -> Di
         else:
             seen_signatures.add(signature)
 
-<<<<<<< HEAD
-        min_relevance = 0.28 if (scored_item.get("content_type") in ("web", "web_article")) else 0.15
-        min_score = 0.65 if (scored_item.get("content_type") in ("web", "web_article")) else 0.6
-=======
-        min_relevance = 0.35 if (scored_item.get("content_type") == "web") else 0.25
-        min_score = 0.75 if (scored_item.get("content_type") == "web") else 0.65
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
+        min_relevance = 0.35 if (scored_item.get("content_type") in ("web", "web_article")) else 0.25
+        min_score = 0.75 if (scored_item.get("content_type") in ("web", "web_article")) else 0.65
         scored_item["trust"]["trusted"] = (
             scored_item["trust"]["score"] >= min_score
             and not scored_item["trust"]["duplicate"]

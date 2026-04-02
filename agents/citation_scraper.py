@@ -8,6 +8,7 @@ Returns structured data with source links for the insights pipeline.
 """
 
 import asyncio
+import hashlib
 import json
 import re
 import os
@@ -95,6 +96,9 @@ def _extract_query_terms(query: str) -> List[str]:
         "those", "such", "also", "other", "some", "many", "more",
         "information", "give", "me", "updates", "tell", "what", "is",
         "are", "how", "can", "does", "do", "news",
+        "major", "latest", "recent", "new", "changes", "announcement",
+        "announcements", "product", "products", "launch", "launches",
+        "results", "report", "reports",
     }
     aliases = {
         "ai": ["artificial", "intelligence"],
@@ -124,15 +128,23 @@ def _source_relevance_score(source: Dict[str, Any], query_terms: List[str]) -> i
     name = source.get("name", "").lower()
     url = source.get("url", "").lower()
     category = source.get("category", "").lower()
-    
+
     searchable = " ".join(tags + [name, url, category])
-    
+    tokens = set(re.findall(r"[a-zA-Z0-9]+", searchable))
+
     for term in query_terms:
-        if term in searchable:
+        if term in tokens:
             score += 2
-        # Partial match for compound terms
-        for tag in tags:
-            if term in tag or tag in term:
+        # Conservative partial matching for longer terms only.
+        if len(term) >= 5:
+            for tag in tags:
+                if term in tag or tag in term:
+                    score += 1
+                    break
+
+        # Lightweight acronym bridge: gcp/aws style exact acronyms in url/name.
+        if len(term) <= 4 and term.isalpha():
+            if re.search(rf"\b{re.escape(term)}\b", name) or re.search(rf"\b{re.escape(term)}\b", url):
                 score += 1
     
     return score
@@ -169,6 +181,38 @@ def _select_relevant_sources(
             selected.append(s)
     
     return selected
+
+
+def _apply_intent_source_filter(
+    sources: List[Dict[str, Any]],
+    query_terms: List[str],
+) -> List[Dict[str, Any]]:
+    """Apply lightweight intent-specific source filtering for noisy domains."""
+    term_set = set(query_terms)
+
+    fintech_intent = bool(
+        term_set.intersection(
+            {"fintech", "payments", "payment", "bank", "banking", "rbi", "sec", "fraud", "regulatory", "finance", "crypto"}
+        )
+    )
+    if not fintech_intent:
+        return sources
+
+    fintech_tags = {
+        "fintech", "payments", "payment", "bank", "banking", "finance", "crypto",
+        "regulatory", "stripe", "paypal", "square",
+    }
+    filtered: List[Dict[str, Any]] = []
+    for s in sources:
+        tags = {str(t).lower() for t in s.get("tags", [])}
+        name = str(s.get("name", "")).lower()
+        if tags.intersection(fintech_tags):
+            filtered.append(s)
+            continue
+        if any(k in name for k in ("stripe", "paypal", "square", "fintech", "bank")):
+            filtered.append(s)
+
+    return filtered if filtered else sources
 
 
 # ═══════════════════════════════════════════
@@ -279,6 +323,7 @@ async def _crawl_urls(urls: List[str], query_terms: List[str]) -> List[Dict[str,
                         if len(content) > 150:
                             final_url = getattr(result, "url", url) or url
                             collected.append({
+                                "requested_url": url,
                                 "url": final_url,
                                 "content": content,
                                 "success": True,
@@ -371,7 +416,14 @@ def _save_source_md(
 ) -> Path:
     """Save a per-source markdown file."""
     safe_name = re.sub(r"[^\w\s-]", "", source_name)[:40].strip().replace(" ", "_").lower()
-    filepath = citations_dir / f"{safe_name}.md"
+    page_hint = ""
+    if page_title:
+        page_hint = re.sub(r"[^\w\s-]", "", page_title)[:30].strip().replace(" ", "_").lower()
+    if not page_hint:
+        page_hint = re.sub(r"[^\w\s-]", "", page_url.split("/")[-1])[:30].strip().replace(" ", "_").lower()
+    page_hash = hashlib.md5(page_url.encode("utf-8")).hexdigest()[:8]
+    suffix = f"{page_hint}_{page_hash}" if page_hint else page_hash
+    filepath = citations_dir / f"{safe_name}_{suffix}.md"
     
     md_content = f"""# {source_name}
 
@@ -477,7 +529,18 @@ def _is_content_relevant(content: str, query_terms: List[str]) -> bool:
     # At least some query terms should appear in the content
     if query_terms:
         overlap = sum(1 for term in query_terms if term in lowered)
-        return overlap >= 1
+        generic_terms = {
+            "tech", "technology", "update", "updates", "weekly", "latest",
+            "recent", "news", "trend", "trends", "story", "stories",
+        }
+        focused_terms = [term for term in query_terms if term not in generic_terms]
+        focused_overlap = sum(1 for term in focused_terms if term in lowered)
+
+        # For specific queries, require stronger overlap to reduce off-topic pages.
+        min_overlap = 1 if len(query_terms) <= 3 else 2
+        if focused_terms and focused_overlap == 0:
+            return False
+        return overlap >= min_overlap
     
     return True
 
@@ -522,6 +585,39 @@ def _search_general_ddg(
         return []
 
 
+def _enforce_source_diversity(
+    urls_to_crawl: List[Tuple[str, Dict[str, Any], str]],
+    max_sources: int,
+    max_pages_per_source: int,
+) -> List[Tuple[str, Dict[str, Any], str]]:
+    """Prioritize broad source coverage before taking extra pages per source."""
+    by_source: Dict[str, List[Tuple[str, Dict[str, Any], str]]] = {}
+    for entry in urls_to_crawl:
+        _url, source, _title = entry
+        source_key = source.get("url", "") or source.get("name", "unknown")
+        bucket = by_source.setdefault(source_key, [])
+        if len(bucket) < max_pages_per_source:
+            bucket.append(entry)
+
+    source_keys = list(by_source.keys())[:max_sources]
+
+    selected: List[Tuple[str, Dict[str, Any], str]] = []
+    # First pass: one page per source for breadth.
+    for key in source_keys:
+        pages = by_source.get(key, [])
+        if pages:
+            selected.append(pages[0])
+
+    # Second pass: add extra pages while preserving ordering by source and depth.
+    for depth in range(1, max_pages_per_source):
+        for key in source_keys:
+            pages = by_source.get(key, [])
+            if depth < len(pages):
+                selected.append(pages[depth])
+
+    return selected
+
+
 def scrape_citations(
     query: str,
     max_sources: int = 12,
@@ -558,6 +654,8 @@ def scrape_citations(
 
     # Select tag-relevant sources for site-specific search
     relevant_sources = _select_relevant_sources(all_sources, query_terms, max_sources=max_sources)
+    relevant_sources = _apply_intent_source_filter(relevant_sources, query_terms)
+    relevant_source_urls = {s.get("url", "") for s in relevant_sources}
     logger.info(f"[CitationScraper] Selected {len(relevant_sources)} tag-relevant sources")
 
     # Create output directory
@@ -587,7 +685,11 @@ def scrape_citations(
                     matched_source = src
                     break
 
-        if matched_source and url not in seen_urls:
+        if (
+            matched_source
+            and matched_source.get("url", "") in relevant_source_urls
+            and url not in seen_urls
+        ):
             urls_to_crawl.append((url, matched_source, hit.get("title", "")))
             seen_urls.add(url)
 
@@ -621,6 +723,12 @@ def scrape_citations(
                 urls_to_crawl.append((source_url, source, source["name"]))
                 seen_urls.add(source_url)
 
+    urls_to_crawl = _enforce_source_diversity(
+        urls_to_crawl,
+        max_sources=max_sources,
+        max_pages_per_source=max_pages_per_source,
+    )
+
     logger.info(f"[CitationScraper] Total URLs to scrape: {len(urls_to_crawl)}")
 
     if not urls_to_crawl:
@@ -633,17 +741,27 @@ def scrape_citations(
         all_urls = [u[0] for u in urls_to_crawl]
         crawled = _run_async(_crawl_urls(all_urls, query_terms))
 
-        crawled_by_url = {item["url"]: item for item in crawled}
+        crawled_by_requested = {
+            item.get("requested_url", ""): item
+            for item in crawled
+            if item.get("requested_url")
+        }
+        crawled_by_final = {
+            item.get("url", ""): item
+            for item in crawled
+            if item.get("url")
+        }
 
         for page_url, source, page_title in urls_to_crawl:
-            crawl_result = crawled_by_url.get(page_url)
+            crawl_result = crawled_by_requested.get(page_url) or crawled_by_final.get(page_url)
             if crawl_result and crawl_result.get("success"):
                 content = crawl_result["content"]
                 if _is_content_relevant(content, query_terms):
+                    resolved_url = crawl_result.get("url") or page_url
                     scraped_data.append({
                         "source_name": source["name"],
                         "source_url": source["url"],
-                        "page_url": page_url,
+                        "page_url": resolved_url,
                         "page_title": page_title,
                         "content": content,
                         "category": source.get("category", ""),
@@ -706,7 +824,7 @@ def scrape_citations(
     result = {
         "scraped_items": scraped_items,
         "citations_dir": str(citations_dir),
-        "sources_used": len(scraped_data),
+        "sources_used": len({item.get("source_name", "") for item in scraped_data if item.get("source_name")}),
         "source_links": source_links,
     }
 

@@ -80,8 +80,13 @@ def _rank_sentences(sentences: List[str], query_terms: List[str], require_overla
     return ranked
 
 
-def _build_summary_context(items: List[Dict[str, Any]], max_items: int = 5, max_chars: int = 1200) -> str:
+def _build_summary_context(
+    items: List[Dict[str, Any]],
+    max_items: int = 5,
+    max_chars: int = 1200,
+) -> Tuple[str, List[Dict[str, Any]]]:
     blocks: List[str] = []
+    source_refs: List[Dict[str, Any]] = []
     for idx, item in enumerate(items[:max_items], start=1):
         title = (item.get("title") or "Untitled").strip()
         source = (item.get("source") or "unknown").strip()
@@ -91,11 +96,19 @@ def _build_summary_context(items: List[Dict[str, Any]], max_items: int = 5, max_
         
         content = _normalize_sentence((item.get("content") or "").replace("\n", " "))
         snippet = content[:max_chars]
+        source_refs.append(
+            {
+                "source_id": idx,
+                "source": source,
+                "title": title,
+                "url": (item.get("url") or "").strip(),
+            }
+        )
         blocks.append(
             f"{prefix}\n"
             f"Content: {snippet}"
         )
-    return "\n\n".join(blocks)
+    return "\n\n".join(blocks), source_refs
 
 
 def _parse_json_response(raw: str) -> Dict[str, Any]:
@@ -326,7 +339,11 @@ def _call_llm_for_summary(query: str, context: str) -> Dict[str, Any]:
     return {}
 
 
-def generate_insights(trusted_items: List[Dict[str, Any]], query: str, source_links: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+def generate_insights(
+    trusted_items: List[Dict[str, Any]],
+    query: str,
+    source_links: List[Dict[str, Any]] | None = None,
+) -> Dict[str, Any]:
     """Generate easy-to-read insights from trusted items."""
     if not trusted_items:
         return {
@@ -339,6 +356,7 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str, source_li
             "source_breakdown": {},
             "content_type_breakdown": {},
             "confidence": 0.0,
+            "citation_reference_map": [],
         }
 
     sources = Counter((item.get("source") or "unknown") for item in trusted_items)
@@ -361,6 +379,17 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str, source_li
         avg_score = sum(scores) / len(scores)
 
     query_terms = _extract_query_terms(query)
+    if avg_score <= 0.0 and trusted_items:
+        # Fallback confidence when trust scores are missing: blend relevance and source diversity.
+        relevance_hits = 0
+        for item in trusted_items:
+            blob = f"{item.get('title') or ''} {item.get('source') or ''} {item.get('content') or ''}".lower()
+            if any(term in blob for term in query_terms):
+                relevance_hits += 1
+        relevance_ratio = relevance_hits / max(1, len(trusted_items))
+        diversity_ratio = min(1.0, len(sources) / 5.0)
+        avg_score = max(0.1, min(0.85, 0.15 + (0.55 * relevance_ratio) + (0.20 * diversity_ratio)))
+
     ranked_items = sorted(
         trusted_items,
         key=lambda item: float((item.get("trust") or {}).get("score", 0.0)),
@@ -381,7 +410,7 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str, source_li
 
     summary_method = "extractive"
     concise_answer_origin = ""
-    context = _build_summary_context(ranked_items)
+    context, source_reference_map = _build_summary_context(ranked_items)
     if context:
         llm_json = _call_llm_for_summary(query=query, context=context)
         llm_answer = _normalize_sentence(str(llm_json.get("concise_answer") or ""))
@@ -474,6 +503,7 @@ def generate_insights(trusted_items: List[Dict[str, Any]], query: str, source_li
         "content_type_breakdown": dict(content_types),
         "confidence": round(avg_score, 3),
         "citation_links": source_links or [],
+        "citation_reference_map": source_reference_map,
     }
     if concise_answer_origin:
         result["concise_answer_origin"] = concise_answer_origin

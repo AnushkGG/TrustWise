@@ -30,12 +30,8 @@ interface SubmitResponse {
 
 const PIPELINE_STEPS = [
   { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
-<<<<<<< HEAD
-  { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
-  { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
-=======
   { id: "agents", label: "Agents", detail: "Web + multi-source research adapters" },
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
+  { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
   { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
   { id: "trust", label: "Trust", detail: "Validation and scoring" },
   { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
@@ -359,15 +355,69 @@ function renderTrustPanelHtml(trustReport: Record<string, unknown>, execution?: 
   `;
 }
 
+function resolveCitationTarget(
+  sourceNumber: number,
+  citationReferenceMap: Array<Record<string, unknown>>,
+  citationLinks: Array<Record<string, unknown>>,
+): { url: string; label: string } | null {
+  const mapEntry = citationReferenceMap.find(
+    (x) => Number(x.source_id) === sourceNumber,
+  );
+  const fallbackEntry = citationLinks[sourceNumber - 1];
+  const entry = mapEntry || fallbackEntry;
+  if (!entry) return null;
+
+  const rawUrl = String(entry.url || entry.page_url || "").trim();
+  if (!/^https?:\/\//i.test(rawUrl)) return null;
+  const label = String(entry.source || entry.name || `Source ${sourceNumber}`);
+  return { url: rawUrl, label };
+}
+
+function renderTextWithCitations(
+  text: unknown,
+  citationReferenceMap: Array<Record<string, unknown>>,
+  citationLinks: Array<Record<string, unknown>>,
+): string {
+  const escaped = escapeHtml(String(text || ""));
+  return escaped.replace(/\[(?:s|sh)ource\s*(\d+)\s*\]/gi, (_m: string, n: string) => {
+    const sourceNumber = Number(n);
+    if (!Number.isFinite(sourceNumber) || sourceNumber < 1) {
+      return `[Source ${escapeHtml(n)}]`;
+    }
+    const target = resolveCitationTarget(sourceNumber, citationReferenceMap, citationLinks);
+    if (!target) {
+      return `[Source ${sourceNumber}]`;
+    }
+    return `<a href="${escapeHtml(target.url)}" target="_blank" rel="noopener" title="${escapeHtml(target.label)}">[Source ${sourceNumber}]</a>`;
+  });
+}
+
 function renderInsightsPanelHtml(insights: Record<string, unknown>) {
-  const summary = escapeHtml(insights.concise_answer || insights.summary || "—");
+  const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links as Array<Record<string, unknown>> : [];
+  const citationReferenceMap = Array.isArray(insights.citation_reference_map)
+    ? insights.citation_reference_map as Array<Record<string, unknown>>
+    : [];
+  const summary = renderTextWithCitations(insights.concise_answer || insights.summary || "—", citationReferenceMap, citationLinks);
   const keyPoints = Array.isArray(insights.key_points)
     ? insights.key_points
     : Array.isArray(insights.key_highlights)
       ? insights.key_highlights
       : [];
+
+  // key_points may be strings OR objects {text, consensus, citation_count}
   const keyHtml = keyPoints.length
-    ? `<ul class="insights-list">${keyPoints.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>`
+    ? `<ul class="insights-list">${keyPoints.map((p: unknown) => {
+        if (typeof p === "string") return `<li>${renderTextWithCitations(p, citationReferenceMap, citationLinks)}</li>`;
+        if (p && typeof p === "object") {
+          const obj = p as { text?: string; consensus?: boolean; citation_count?: number };
+          const text = renderTextWithCitations(obj.text || String(p), citationReferenceMap, citationLinks);
+          const badge = obj.consensus
+            ? ' <span class="consensus-badge">consensus</span>'
+            : "";
+          return `<li>${text}${badge}</li>`;
+        }
+        return `<li>${renderTextWithCitations(String(p), citationReferenceMap, citationLinks)}</li>`;
+      }).join("")}</ul>`
     : '<p class="text-muted">No key points.</p>';
 
   const top = Array.isArray(insights.top_sources_detailed) ? insights.top_sources_detailed : [];
@@ -383,7 +433,6 @@ function renderInsightsPanelHtml(insights: Record<string, unknown>) {
       : "";
 
   // Citation links section
-  const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links : [];
   let citationHtml = "";
   if (citationLinks.length > 0) {
     // Group by category
@@ -396,17 +445,17 @@ function renderInsightsPanelHtml(insights: Record<string, unknown>) {
 
     let linksInner = "";
     for (const [cat, links] of Object.entries(byCategory)) {
-      linksInner += `<div class="citation-category"><div class="citation-category-label">${escapeHtml(cat)}</div>`;
+      linksInner += `<div class="src-cite-category"><div class="src-cite-category-label">${escapeHtml(cat)}</div><div class="src-cite-items">`;
       for (const link of links) {
         const displayUrl = link.page_url || link.url || "";
         const displayName = link.name || "Source";
         const title = link.page_title ? ` — ${escapeHtml(link.page_title)}` : "";
-        linksInner += `<div class="citation-link"><a href="${escapeHtml(displayUrl)}" target="_blank" rel="noopener">🔗 ${escapeHtml(displayName)}${title}</a></div>`;
+        linksInner += `<a class="src-cite-item" href="${escapeHtml(displayUrl)}" target="_blank" rel="noopener">🔗 ${escapeHtml(displayName)}${title}</a>`;
       }
-      linksInner += `</div>`;
+      linksInner += `</div></div>`;
     }
 
-    citationHtml = `<div class="insights-block"><strong>Source Citations (${citationLinks.length} sources)</strong><div class="citation-links-grid">${linksInner}</div></div>`;
+    citationHtml = `<div class="insights-block"><strong>Source Citations (${citationLinks.length} sources)</strong><div class="src-cite-grid">${linksInner}</div></div>`;
   }
 
   return `
