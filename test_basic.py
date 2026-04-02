@@ -6,7 +6,12 @@ Run with: python test_basic.py
 """
 
 import json
+import sys
 from pathlib import Path
+
+# Ensure Unicode output works on all platforms (including Windows cp1252)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 def test_imports():
     """Test that all modules import correctly."""

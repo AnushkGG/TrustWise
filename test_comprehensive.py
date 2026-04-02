@@ -12,10 +12,15 @@ import hashlib
 import json
 import os
 import sqlite3
+import sys
 import tempfile
 import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+# Ensure Unicode output works on all platforms (including Windows cp1252)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # ---------------------------------------------------------------------------
 # Helpers

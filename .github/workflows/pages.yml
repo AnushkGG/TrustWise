@@ -31,13 +31,24 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure Pages
+        id: configure
         uses: actions/configure-pages@v4
+        continue-on-error: true
+
+      - name: Check Pages configuration
+        if: steps.configure.outcome == 'failure'
+        run: |
+          echo "::warning::GitHub Pages is not enabled for this repository."
+          echo "Enable it in Settings → Pages → Source: GitHub Actions."
+          exit 1
 
       - name: Upload artifact
+        if: steps.configure.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs
 
       - name: Deploy to GitHub Pages
+        if: steps.configure.outcome == 'success'
         id: deploy
         uses: actions/deploy-pages@v4
