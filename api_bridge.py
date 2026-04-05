@@ -198,7 +198,6 @@ def handle_submit(payload: dict) -> dict:
                 {"task_id": task.get("task_id"), "status": "failed", "error": str(e)}
             )
 
-<<<<<<< HEAD
     # Step 4.5: Scrape trusted citation sources for multi-source data
     citation_result = {"scraped_items": [], "source_links": [], "sources_used": 0}
     try:
@@ -212,7 +211,7 @@ def handle_submit(payload: dict) -> dict:
         )
     except Exception as e:
         logger.error(f"Bridge: Citation scraper failed: {e}")
-=======
+
     # Aggregate source-level metrics from research agents.
     source_stats: dict = {}
     enabled_sources: set = set()
@@ -235,7 +234,6 @@ def handle_submit(payload: dict) -> dict:
                 item["ok"] += 1
             else:
                 item["fail"] += 1
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
 
     # Step 5-8: Clean, Trust, Store, Insights
     structured_data = normalize_results(results, query=query)

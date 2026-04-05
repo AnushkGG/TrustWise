@@ -15,9 +15,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY web/package.json web/package-lock.json ./web/
-RUN cd web && npm ci && npm run build
+RUN cd web && npm ci
 
 COPY . .
+
+RUN cd web && npm run build
 
 ENV PYTHONUNBUFFERED=1
 ENV HOST=0.0.0.0

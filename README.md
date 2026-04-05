@@ -21,24 +21,39 @@ Query -> Orchestrator -> Chunker -> Scheduler -> Agents
       -> Cleaner -> Trust Validator -> Storage -> Insights
 ```
 
-## Quick Start
+## Quick Start (Recommended: Docker)
+
+The fastest and most stable way to run TrustWise is via Docker:
+
+```bash
+# 1. Clone and enter
+git clone https://github.com/abhishekeb211/TrustWise.git
+cd TrustWise
+
+# 2. Setup environment
+copy .env.example .env
+# Edit .env and set your keys (see Configuration Notes)
+
+# 3. Launch with Docker Compose
+docker-compose up --build
+```
+Access the UI at `http://localhost:5000`.
+
+## Quick Start (Native)
+
+If you prefer to run natively, ensure you have Python 3.11 and Node.js 20+ installed:
 
 ```bash
 pip install -r requirements.txt
-copy .env.example .env  # Windows
+copy .env.example .env
 python main.py
 ```
 
 For the web UI:
 
 ```bash
-cd web
-npm ci
-npm run build
-npm start
+cd web && npm ci && npm run build && npm start
 ```
-
-(`npm install` works for ad hoc use; `npm ci` matches CI and [implementationtest.md](implementationtest.md) Phase A.)
 
 ## Configuration Notes
 

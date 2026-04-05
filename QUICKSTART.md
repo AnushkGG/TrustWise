@@ -12,7 +12,17 @@
 - Put real keys only in a **local** `.env` (gitignored). Never commit keys or paste them into the repository.
 - If a Gemini (or other) key was exposed, **rotate** it in the provider console and update `.env` only on your machine.
 
-## Setup
+## Setup (Recommended: Docker)
+
+```bash
+copy .env.example .env
+# Edit .env and set OLLAMA_BASE_URL to http://host.docker.internal:11434
+# and add your GEMINI_API_KEY if needed.
+
+docker-compose up --build
+```
+
+## Setup (Native)
 
 ```bash
 pip install -r requirements.txt
@@ -21,7 +31,7 @@ copy .env.example .env  # Windows
 python -c "from utils.config import Config; Config.validate(); print('OK')"
 ```
 
-## Run
+## Run (Native)
 
 ```bash
 python main.py

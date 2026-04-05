@@ -30,12 +30,8 @@ interface SubmitResponse {
 
 const PIPELINE_STEPS = [
   { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
-<<<<<<< HEAD
   { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
   { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
-=======
-  { id: "agents", label: "Agents", detail: "Web + multi-source research adapters" },
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
   { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
   { id: "trust", label: "Trust", detail: "Validation and scoring" },
   { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
@@ -367,7 +363,7 @@ function renderInsightsPanelHtml(insights: Record<string, unknown>) {
       ? insights.key_highlights
       : [];
   const keyHtml = keyPoints.length
-    ? `<ul class="insights-list">${keyPoints.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>`
+    ? `<ul class="insights-list">${keyPoints.map((p) => `<li>${escapeHtml(typeof p === "object" ? (p.point || p.text || p.content || JSON.stringify(p)) : p)}</li>`).join("")}</ul>`
     : '<p class="text-muted">No key points.</p>';
 
   const top = Array.isArray(insights.top_sources_detailed) ? insights.top_sources_detailed : [];

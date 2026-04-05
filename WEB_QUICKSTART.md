@@ -5,7 +5,17 @@
 - Complete Python setup first (`pip install -r requirements.txt`).
 - Node.js 18+.
 
-## Start Web App
+## Start Web App (Recommended: Docker)
+
+```bash
+copy .env.example .env
+# Edit .env and set OLLAMA_BASE_URL to http://host.docker.internal:11434
+
+docker-compose up --build
+```
+Open `http://localhost:5000`.
+
+## Start Web App (Native)
 
 ```bash
 cd web
