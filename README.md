@@ -1,111 +1,127 @@
-# TrustWise
+# TrustWise: Trust-First AI Intelligence Pipeline
 
-TrustWise is a trust-first AI pipeline for collecting, validating, storing, and summarizing technology intelligence from web and research sources.
+TrustWise is a professional-grade research engine that converts natural language queries into verifiable technology intelligence. Unlike standard LLM chat interfaces, TrustWise enforces a **Zero-Trust** validation layer, ensuring every insight is backed by academic-grade or reputable web sources.
 
-## Core Flow
+---
 
-1. Generate a structured JSON plan from a natural-language query.
-2. Chunk and schedule tasks to source-specific agents.
-3. Collect raw data from web and research APIs.
-4. Normalize records into one schema.
-5. Score and filter records with trust validation.
-6. Save trusted outputs to SQLite.
-7. Generate concise insights.
+## 🚀 Key Features
 
-## Architecture
+- **Strategic Planning**: Decomposes complex queries into multi-step research missions.
+- **Academic Fanout**: Concurrent retrieval from 10+ sources (OpenAlex, Semantic Scholar, arXiv, etc.).
+- **Zero-Trust Validation**: Proprietary scoring based on domain authority, relevance, and content integrity.
+- **RAG Synthesis**: Insight generation with inline citations and "Consensus Discovery" across providers.
+- **Privacy-First**: Local SQLite persistence and query caching; no third-party data tracking.
+- **Docker-First**: One-command deployment via Docker Compose.
 
-High-level flow: query to plan JSON, then agents, normalization, trust, storage, and insights. **Diagrams** (pipeline, repo layout, web bridge, LLM modes): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+---
 
-```text
-Query -> Orchestrator -> Chunker -> Scheduler -> Agents
-      -> Cleaner -> Trust Validator -> Storage -> Insights
+## 🏗️ System Architecture & Process Flow
+
+TrustWise operates as a 7-stage linear pipeline, coordinated by a Python backend and a TypeScript/Express gateway.
+
+```mermaid
+graph TD
+  User((User)) -->|Query| WebUI[TypeScript React UI]
+  WebUI -->|JSON| Express[Express Server]
+  Express -->|stdin| Bridge[api_bridge.py]
+  
+  subgraph Pipeline [TrustWise Core Pipeline]
+    Bridge --> Stage1[1. Orchestration: Plan Generation]
+    Stage1 --> Stage2[2. Decomposition: Chunker & Scheduler]
+    Stage2 --> Stage3[3. Collection: Multi-Agent Fanout]
+    Stage3 --> Stage4[4. Normalization: Cleaner]
+    Stage4 --> Stage5[5. Validation: Zero-Trust Scoring]
+    Stage5 --> Stage6[6. Persistence: SQLite Storage]
+    Stage6 --> Stage7[7. Synthesis: RAG Insights]
+  end
+  
+  Stage7 -->|stdout JSON| Express
+  Express -->|Result| WebUI
 ```
 
-## Quick Start (Recommended: Docker)
+### The 7-Stage Lifecycle
 
-The fastest and most stable way to run TrustWise is via Docker:
+1.  **Orchestration**: The `orchestrator` invokes the LLM (Gemini/Ollama) to produce a structured JSON execution plan.
+2.  **Decomposition**: The `chunker` breaks the plan into actionable tasks, and the `scheduler` routes them to specialized agents.
+3.  **Collection**: 
+    - **Research Agent**: Queries academic APIs (OpenAlex, Semantic Scholar, Crossref).
+    - **Web Agent**: Uses `Crawl4AI` (headless browser) and `DuckDuckGo` for high-signal web scraping.
+4.  **Normalization**: The `cleaner` maps diverse source schemas into a unified TrustWise record format.
+5.  **Validation**: Every record is scored (0.0 to 1.0). Items below the threshold are dropped.
+6.  **Persistence**: Validated items are hashed (for deduplication) and stored in local SQLite.
+7.  **Synthesis**: The `insights` generator performs RAG, identifying consensus points across multiple sources.
 
+---
+
+## 📦 Module Reference
+
+### Core Packages
+
+| Module | Core Function | Responsibility |
+| :--- | :--- | :--- |
+| **`orchestrator`** | `generate_plan()` | Strategic decomposition of user intent into JSON. |
+| **`agents`** | `run()` | The execution layer. Handles API fanout and web crawling. |
+| **`trust`** | `validate_structured_data()` | The Zero-Trust scoring engine. Filters by domain & proximity. |
+| **`insights`** | `generate_insights()` | LLM-driven synthesis with inline citation mapping. |
+| **`storage`** | `save_trusted_items()` | SQLite persistence and content-hash deduplication. |
+| **`cleaner`** | `normalize_results()` | Transforms raw JSON/Markdown into the unified internal schema. |
+| **`utils`** | `Config` / `Logger` | Global environment management and structured audit logging. |
+
+### Entry Points
+
+- **`main.py`**: The CLI entry point for direct pipeline execution.
+- **`api_bridge.py`**: The secure JSON-over-stdin interface used by the Express server.
+
+---
+
+## 🛠️ Technology Stack
+
+### Backend (Python 3.11+)
+- **LLM**: `google-generativeai` (Gemini Pro), `Ollama` (Llama 3.2).
+- **Collection**: `crawl4ai` (Headless Chromium), `duckduckgo_search`, `feedparser`.
+- **Infrastructure**: `SQLAlchemy` (SQLite), `python-dotenv`, `requests`.
+
+### Frontend (Node.js 20+)
+- **Gateway**: `Express.js` (TypeScript).
+- **Runtime**: `Node.js` (Child Process management for the Python bridge).
+- **UI**: Vanilla TypeScript/HTML5 with a focused CSS design system.
+
+---
+
+## 🚦 Operational Guide
+
+### Quick Start (Recommended: Docker)
 ```bash
-# 1. Clone and enter
-git clone https://github.com/abhishekeb211/TrustWise.git
-cd TrustWise
-
-# 2. Setup environment
+# Setup environment
 copy .env.example .env
-# Edit .env and set your keys (see Configuration Notes)
+# Set LLM_PROVIDER=ollama or gemini
 
-# 3. Launch with Docker Compose
+# Launch
 docker-compose up --build
 ```
-Access the UI at `http://localhost:5000`.
+Access the dashboard at `http://localhost:5000`.
 
-## Quick Start (Native)
-
-If you prefer to run natively, ensure you have Python 3.11 and Node.js 20+ installed:
-
+### Local Verification
 ```bash
-pip install -r requirements.txt
-copy .env.example .env
-python main.py
-```
-
-For the web UI:
-
-```bash
-cd web && npm ci && npm run build && npm start
-```
-
-## Configuration Notes
-
-- `LLM_PROVIDER` supports `ollama`, `gemini`, or `both`.
-- Gemini requires `GEMINI_API_KEY` when `LLM_PROVIDER` is `gemini` or `both` (`Config.validate()`). Model name: `GEMINI_MODEL` or fallback `LLM_MODEL` (`Config.get_gemini_model()`).
-- Never commit `.env`; rotate keys in the provider console if they are exposed.
-- Runtime mock fallback is disabled by default (`ALLOW_MOCK_FALLBACK=false`).
-- Research adapters support multi-source fanout (arXiv, OpenAlex, Semantic Scholar, Crossref, PubMed, CORE, DOAJ, BASE, bioRxiv, medRxiv). Optional key-gated tools (Tavily, Exa, Firecrawl, Jina, Scopus, DeepSeek) are enabled only when the corresponding env vars are set; see `.env.example`.
-
-## Documentation index
-
-| Doc | Purpose |
-|-----|---------|
-| [.env.example](.env.example) | Environment template (copy to local `.env`; do not commit secrets) |
-| [QUICKSTART.md](QUICKSTART.md) | CLI setup, security notes, web preflight |
-| [WEB_QUICKSTART.md](WEB_QUICKSTART.md) | Express app, smoke URLs, bridge checks |
-| [FRONTEND.md](FRONTEND.md) | REST contract, submit/status payloads, client workflow |
-| [IMPLEMENTATION.md](IMPLEMENTATION.md) | What is implemented, known gaps, verification commands |
-| [implementationtest.md](implementationtest.md) | CI phases, diagnostics table, sign-off |
-| [docs/deployment-readiness-report.md](docs/deployment-readiness-report.md) | Readiness checklist and risks |
-| [logs/README.md](logs/README.md) | Local audit logs under `logs/local-test/` |
-| [implementation-phases/README.md](implementation-phases/README.md) | Historical 40-phase pack (see **implementationtest** for current checks) |
-| [docs/README.md](docs/README.md) | Index of files under `docs/` |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Diagrams: pipeline, planner boundary, repo layout, web bridge |
-| [LICENSE](LICENSE) | MIT license text |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Dev setup, tests, PR expectations |
-| [SECURITY.md](SECURITY.md) | Vulnerability reporting |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards (Contributor Covenant 2.1) |
-| [CHANGELOG.md](CHANGELOG.md) | Release notes (Keep a Changelog) |
-
-## Community
-
-- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Security:** [SECURITY.md](SECURITY.md)
-- **Code of conduct:** [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
-- **License:** [LICENSE](LICENSE) (MIT)
-
-## Documentation changelog
-
-- Phase execution pack and unified onboarding/frontend docs.
-- Latest alignment: Gemini/Ollama + mock fallback, `execution` / keyed-provider metrics, no-data troubleshooting.
-
-## Verification
-
-```bash
+# Run basic connectivity tests
 python test_basic.py
-python test_comprehensive.py
+
+# Run full implementation audit
 python scripts/run_implementation_tests.py --ci
 ```
 
-## Project Status
+---
 
-The repository is maintained as one integrated pipeline. Historical "phase" labels in code comments should be interpreted as internal milestones, not separate products.
+## 📄 Documentation Index
 
+Explore the detailed sub-documentation for deep dives:
+- 🗺️ [Architecture Diagrams](docs/ARCHITECTURE.md)
+- 📋 [Product Requirements (PRD)](docs/PRD.md)
+- 💼 [Business Requirements (BRD)](docs/BRD.md)
+- 🌐 [API Specifications](FRONTEND.md)
+- 🛠️ [Implementation Status](IMPLEMENTATION.md)
+
+---
+
+## ⚖️ License
+Distributed under the MIT License. See `LICENSE` for more information.

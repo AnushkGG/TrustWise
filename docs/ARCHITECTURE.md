@@ -126,7 +126,100 @@ flowchart TB
 
 All modes still produce **plan JSON** for the same downstream pipeline.
 
-## Related documentation
+## Request/Response Lifecycle (Sequence Diagram)
 
-- [FRONTEND.md](../FRONTEND.md) — REST contract and payloads
-- [orchestrator/llm_client.py](../orchestrator/llm_client.py) — provider calls and merge logic
+The following sequence diagram illustrates the handoff between the TypeScript frontend and the Python research pipeline:
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Browser
+  participant Express (TS)
+  participant Bridge (PY)
+  participant LLM (Ollama/Gemini)
+  participant Agents
+  participant DB (SQLite)
+
+  User->>Browser: Enters query
+  Browser->>Express (TS): POST /api/submit
+  Express (TS) ->> Bridge (PY): spawn(python api_bridge.py)
+  Bridge (PY) ->> LLM (Ollama/Gemini): Generate research plan
+  LLM (Ollama/Gemini) -->> Bridge (PY): Plan JSON
+  Bridge (PY) ->> Agents: Parallel task execution
+  Agents -->> Bridge (PY): Raw JSON results
+  Bridge (PY) ->> Bridge (PY): Process (Clean -> Trust -> Insight)
+  Bridge (PY) ->> DB (SQLite): Save trusted items
+  Bridge (PY) -->> Express (TS): Combined JSON result (stdout)
+  Express (TS) -->> Browser: 200 OK (Full Result)
+  Browser ->> User: Display strategic insights
+```
+
+## Zero-Trust Validation State Machine
+
+How a raw data item matures into a **Trusted Insight**:
+
+```mermaid
+stateDiagram-v2
+  [*] --> RawData: Agent collection
+  RawData --> Normalized: Cleaner (Schema mapping)
+  Normalized --> Validated: Trust Validator (Scoring)
+  
+  state Validated {
+    [*] --> Scored
+    Scored --> Passed: Score > Threshold
+    Scored --> Dropped: Score <= Threshold
+  }
+
+  Passed --> Stored: SQLite persistence
+  Dropped --> [*]: Audit trail only
+  Stored --> Synthesized: Insight generation
+  Synthesized --> [*]: Strategic Result
+```
+
+## Component Interconnect Map
+
+A detailed view of and dependency relationships between core services:
+
+```mermaid
+graph TB
+  subgraph frontend [Frontend Experience]
+    ui[React/TS Web UI]
+    apiClient[API Bridge Client]
+  end
+
+  subgraph apiLayer [API Core]
+    expressSrv[Express Server]
+    bridgeLogic[api_bridge.py Dispatcher]
+  end
+
+  subgraph pipelineCore [Pipeline Core]
+    planEngine[Orchestration Engine]
+    executor[Chunker & Scheduler]
+    trustEngine[Zero-Trust Scoring]
+    insightEngine[Insight Synthesis]
+  end
+
+  subgraph sourceLayer [Research Sources]
+    academic[Academic Source Academy (OpenAlex, etc.)]
+    web[Web Search Academy (Tavily, etc.)]
+  end
+
+  ui --> apiClient
+  apiClient --> expressSrv
+  expressSrv --> bridgeLogic
+  bridgeLogic --> planEngine
+  planEngine --> executor
+  executor --> academic
+  executor --> web
+  academic --> trustEngine
+  web --> trustEngine
+  trustEngine --> insightEngine
+```
+
+---
+
+## Technical Specifications
+Detailed REST contracts and internal function signatures are documented in:
+- [PRD.md](PRD.md) — Product & Functional Requirements
+- [BRD.md](BRD.md) — Business Value & Success KPIs
+- [FRONTEND.md](../FRONTEND.md) — Full API Endpoint Specifications
