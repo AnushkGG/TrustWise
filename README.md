@@ -90,14 +90,23 @@ graph TD
 
 ## 🚦 Operational Guide
 
-### Quick Start (Recommended: Docker)
-```bash
-# Setup environment
-copy .env.example .env
-# Set LLM_PROVIDER=ollama or gemini
+### Quick Start (Recommended: Automated)
 
-# Launch
-docker-compose up --build
+TrustWise provides automated setup scripts for all platforms.
+
+#### Windows (PowerShell)
+```powershell
+.\setup\setup.ps1
+```
+
+#### Linux/macOS (Bash)
+```bash
+bash setup/setup.sh
+```
+
+### Docker Deployment
+```bash
+docker-compose -f setup/docker-compose.yml up --build
 ```
 Access the dashboard at `http://localhost:5000`.
 

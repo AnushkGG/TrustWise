@@ -1,12 +1,14 @@
 services:
   trustwise:
-    build: .
+    build:
+      context: ..
+      dockerfile: setup/Dockerfile
     image: trustwise:latest
     container_name: trustwise-local
     ports:
       - "5000:5000"
     env_file:
-      - .env
+      - ../.env
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
