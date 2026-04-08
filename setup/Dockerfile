@@ -11,7 +11,7 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY setup/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY web/package.json web/package-lock.json ./web/
