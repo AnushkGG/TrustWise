@@ -1,28 +1,152 @@
 "use strict";
 (() => {
   var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __commonJS = (cb, mod) => function __require() {
-    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-  };
+  var __commonJS = (cb, mod) =>
+    function __require() {
+      return (
+        mod ||
+          (0, cb[__getOwnPropNames(cb)[0]])(
+            (mod = { exports: {} }).exports,
+            mod,
+          ),
+        mod.exports
+      );
+    };
 
   // src/client/main.ts
   var require_main = __commonJS({
     "src/client/main.ts"() {
       var pipelineTimer = null;
       var PIPELINE_STEPS = [
-        { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
-<<<<<<< HEAD
-        { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
-        { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
-=======
-        { id: "agents", label: "Agents", detail: "Web + multi-source research adapters" },
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
-        { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
+        {
+          id: "plan",
+          label: "Planning",
+          detail: "LLM produces JSON execution plan",
+        },
+        {
+          id: "agents",
+          label: "Agents",
+          detail:
+            "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)",
+        },
+        {
+          id: "citations",
+          label: "Citations",
+          detail: "Scraping curated trusted sources for query-relevant data",
+        },
+        {
+          id: "structure",
+          label: "Structure",
+          detail: "Cleaner normalizes records",
+        },
         { id: "trust", label: "Trust", detail: "Validation and scoring" },
-        { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
-        { id: "insights", label: "Insights", detail: "Summary and highlights" }
+        {
+          id: "store",
+          label: "Storage",
+          detail: "SQLite deduplication / cache",
+        },
+        { id: "insights", label: "Insights", detail: "Summary and highlights" },
       ];
+      function initBackgroundCanvas() {
+        const canvas = document.getElementById("bgCanvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
+        let mouse = { x: width / 2, y: height / 2 };
+        window.addEventListener("resize", () => {
+          width = canvas.width = window.innerWidth;
+          height = canvas.height = window.innerHeight;
+        });
+        window.addEventListener("mousemove", (e) => {
+          mouse.x = e.clientX;
+          mouse.y = e.clientY;
+        });
+        const orbs = [];
+        const orbColors = [
+          "6, 182, 212",
+          // cyan
+          "139, 92, 246",
+          // violet
+          "52, 211, 153",
+          // emerald
+          "99, 102, 241",
+          // indigo
+        ];
+        for (let i = 0; i < 5; i++) {
+          orbs.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            radius: 200 + Math.random() * 250,
+            color: orbColors[i % orbColors.length],
+            alpha: 0.08 + Math.random() * 0.06,
+          });
+        }
+        function animate() {
+          ctx.clearRect(0, 0, width, height);
+          for (const orb of orbs) {
+            const dx = mouse.x - orb.x;
+            const dy = mouse.y - orb.y;
+            orb.vx += dx * 3e-6;
+            orb.vy += dy * 3e-6;
+            orb.x += orb.vx;
+            orb.y += orb.vy;
+            if (orb.x < -orb.radius) orb.x = width + orb.radius;
+            if (orb.x > width + orb.radius) orb.x = -orb.radius;
+            if (orb.y < -orb.radius) orb.y = height + orb.radius;
+            if (orb.y > height + orb.radius) orb.y = -orb.radius;
+            const gradient = ctx.createRadialGradient(
+              orb.x,
+              orb.y,
+              0,
+              orb.x,
+              orb.y,
+              orb.radius,
+            );
+            gradient.addColorStop(0, `rgba(${orb.color}, ${orb.alpha})`);
+            gradient.addColorStop(1, `rgba(${orb.color}, 0)`);
+            ctx.beginPath();
+            ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+          }
+          requestAnimationFrame(animate);
+        }
+        animate();
+      }
+      function initScrollReveal() {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.style.animationPlayState = "running";
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1 },
+        );
+        document
+          .querySelectorAll(".task-card, .plan-card, .stat-card")
+          .forEach((el) => {
+            el.style.animationPlayState = "paused";
+            observer.observe(el);
+          });
+      }
+      function initTextareaAutoResize() {
+        const textarea = document.getElementById("queryInput");
+        if (!textarea) return;
+        textarea.addEventListener("input", () => {
+          textarea.style.height = "auto";
+          textarea.style.height = Math.min(textarea.scrollHeight, 150) + "px";
+        });
+      }
       document.addEventListener("DOMContentLoaded", () => {
+        initBackgroundCanvas();
+        initTextareaAutoResize();
         loadSystemStatus();
         loadPlans();
         setupFormHandler();
@@ -38,7 +162,9 @@
         if (!container) return;
         const toast = document.createElement("div");
         toast.className = `toast ${type}`;
-        toast.innerHTML = `<span>${type === "error" ? "!" : type === "success" ? "OK" : "i"}</span> <span>${escapeHtml(message)}</span>`;
+        const icon =
+          type === "error" ? "\u2715" : type === "success" ? "\u2713" : "i";
+        toast.innerHTML = `<span>${icon}</span> <span>${escapeHtml(message)}</span>`;
         container.appendChild(toast);
         setTimeout(() => {
           toast.classList.add("toast-exit");
@@ -61,16 +187,18 @@
           if (provider === "ollama") {
             const ok = s.ollama_reachable === true || s.has_api_key === true;
             if (ok) {
-              statusText.textContent = `Local \xB7 Ollama \xB7 ${model}`;
+              statusText.textContent = `Ollama \xB7 ${model}`;
               statusDot.className = "status-dot status-dot--ok";
             } else {
-              statusText.textContent = "Ollama unreachable \u2014 start Ollama or check OLLAMA_BASE_URL";
+              statusText.textContent = "Ollama unreachable";
               statusDot.className = "status-dot status-dot--warn";
             }
             return;
           }
           if (provider === "gemini") {
-            const ok = s.gemini_configured === true || s.has_api_key === true && !!s.llm_model;
+            const ok =
+              s.gemini_configured === true ||
+              (s.has_api_key === true && !!s.llm_model);
             if (ok) {
               statusText.textContent = `Gemini \xB7 ${model}`;
               statusDot.className = "status-dot status-dot--ok";
@@ -89,10 +217,12 @@
         }
       }
       function setupFormHandler() {
-        document.getElementById("queryForm").addEventListener("submit", async (e) => {
-          e.preventDefault();
-          await submitQuery();
-        });
+        document
+          .getElementById("queryForm")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            await submitQuery();
+          });
       }
       function setupChipHandler() {
         document.querySelectorAll(".chip[data-query]").forEach((chip) => {
@@ -101,12 +231,15 @@
             const input = document.getElementById("queryInput");
             input.value = q;
             input.focus();
+            input.dispatchEvent(new Event("input"));
           });
         });
       }
       function setupModalHandler() {
         const overlay = document.getElementById("planModal");
-        document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+        document
+          .getElementById("modalCloseBtn")
+          .addEventListener("click", closeModal);
         overlay.addEventListener("click", (e) => {
           if (e.target === overlay) closeModal();
         });
@@ -125,34 +258,46 @@
         document.body.style.overflow = "";
       }
       function setupClearHandler() {
-        document.getElementById("clearResultsBtn").addEventListener("click", () => {
-          document.getElementById("resultsSection").style.display = "none";
-          document.getElementById("queryInput").value = "";
-        });
+        document
+          .getElementById("clearResultsBtn")
+          .addEventListener("click", () => {
+            document.getElementById("resultsSection").style.display = "none";
+            document.getElementById("queryInput").value = "";
+          });
       }
       function setupRefreshHandler() {
-        document.getElementById("refreshPlansBtn").addEventListener("click", () => {
-          loadPlans();
-          showToast("Plans refreshed", "success");
-        });
+        document
+          .getElementById("refreshPlansBtn")
+          .addEventListener("click", () => {
+            loadPlans();
+            showToast("Plans refreshed", "success");
+          });
       }
       function setupExportHandlers() {
-        document.getElementById("exportCsvBtn").addEventListener("click", () => {
-          if (!currentResults || !currentResults.trusted_data) return;
-          exportToCsv(currentResults.trusted_data, "trustwise-results.csv");
-        });
-        document.getElementById("exportPdfBtn").addEventListener("click", () => {
-          window.print();
-        });
+        document
+          .getElementById("exportCsvBtn")
+          .addEventListener("click", () => {
+            if (!currentResults || !currentResults.trusted_data) return;
+            exportToCsv(currentResults.trusted_data, "trustwise-results.csv");
+          });
+        document
+          .getElementById("exportPdfBtn")
+          .addEventListener("click", () => {
+            window.print();
+          });
       }
       function exportToCsv(data, filename) {
         if (!data.length) return;
         const headers = Object.keys(data[0]).join(",");
-        const rows = data.map(
-          (obj) => Object.values(obj).map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")
+        const rows = data.map((obj) =>
+          Object.values(obj)
+            .map((val) => `"${String(val).replace(/"/g, '""')}"`)
+            .join(","),
         );
         const csvContent = [headers, ...rows].join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
@@ -178,7 +323,7 @@
           const response = await fetch("/api/submit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query })
+            body: JSON.stringify({ query }),
           });
           const data = await response.json();
           if (data.success) {
@@ -191,11 +336,15 @@
           }
         } catch (error) {
           console.error(error);
-          showToast("Network error: " + (error instanceof Error ? error.message : String(error)), "error");
+          showToast(
+            "Network error: " +
+              (error instanceof Error ? error.message : String(error)),
+            "error",
+          );
         } finally {
           hideLoading();
           submitBtn.disabled = false;
-          submitBtn.querySelector(".btn-text").textContent = "Run pipeline";
+          submitBtn.querySelector(".btn-text").textContent = "Run";
         }
       }
       function displayResults(data) {
@@ -204,26 +353,36 @@
         resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
         displayPlanSummary(data.plan);
         displayExecutionSummary(data.execution);
-        document.getElementById("insightsMount").innerHTML = data.insights ? renderInsightsPanelHtml(data.insights) : '<p class="text-muted">No insights object returned.</p>';
-        document.getElementById("trustMount").innerHTML = data.trust_report ? renderTrustPanelHtml(data.trust_report, data.execution) : '<p class="text-muted">No trust report.</p>';
+        document.getElementById("insightsMount").innerHTML = data.insights
+          ? renderInsightsPanelHtml(data.insights)
+          : '<p class="text-muted">No insights object returned.</p>';
+        document.getElementById("trustMount").innerHTML = data.trust_report
+          ? renderTrustPanelHtml(data.trust_report, data.execution)
+          : '<p class="text-muted">No trust report.</p>';
         displayItemCards(
           data.trusted_data || [],
           document.getElementById("taskResultsTrusted"),
-          { empty: "No trusted items (threshold not met or cache-only)." }
+          { empty: "No trusted items (threshold not met or cache-only)." },
         );
         displayItemCards(
           data.structured_data || [],
           document.getElementById("taskResultsStructured"),
-          { empty: "No structured records." }
+          { empty: "No structured records." },
         );
-        displayRawTaskResults(data.results || [], document.getElementById("taskResultsRaw"));
+        displayRawTaskResults(
+          data.results || [],
+          document.getElementById("taskResultsRaw"),
+        );
+        setTimeout(initScrollReveal, 100);
       }
       function displayPlanSummary(plan) {
         const el = document.getElementById("planSummary");
         const renderList = (items) => {
           if (!items) return "\u2014";
           if (Array.isArray(items)) {
-            return items.map((d) => `<span class="chip">${escapeHtml(d)}</span>`).join(" ");
+            return items
+              .map((d) => `<span class="chip">${escapeHtml(d)}</span>`)
+              .join(" ");
           }
           return escapeHtml(String(items));
         };
@@ -254,9 +413,15 @@
   `;
       }
       function displayExecutionSummary(execution) {
-        const cacheCard = execution.cache_hit ? `<div class="stat-card stat-card--highlight"><div class="stat-value">Yes</div><div class="stat-label">Cache hit</div></div>` : `<div class="stat-card"><div class="stat-value">No</div><div class="stat-label">Cache hit</div></div>`;
-        const enabledSources = Array.isArray(execution.enabled_research_sources) ? execution.enabled_research_sources : [];
-        const enabledSourcesHtml = enabledSources.length ? `<div class="chip-row">${enabledSources.map((s) => `<span class="chip">${escapeHtml(String(s))}</span>`).join("")}</div>` : '<span class="text-muted">\u2014</span>';
+        const cacheCard = execution.cache_hit
+          ? `<div class="stat-card stat-card--highlight"><div class="stat-value">Yes</div><div class="stat-label">Cache hit</div></div>`
+          : `<div class="stat-card"><div class="stat-value">No</div><div class="stat-label">Cache hit</div></div>`;
+        const enabledSources = Array.isArray(execution.enabled_research_sources)
+          ? execution.enabled_research_sources
+          : [];
+        const enabledSourcesHtml = enabledSources.length
+          ? `<div class="chip-row">${enabledSources.map((s) => `<span class="chip">${escapeHtml(String(s))}</span>`).join("")}</div>`
+          : '<span class="text-muted">\u2014</span>';
         document.getElementById("executionSummary").innerHTML = `
     <h3>Execution metrics</h3>
     <div class="stat-grid">
@@ -281,27 +446,38 @@
         const v = trustReport.validated_count ?? 0;
         const t = trustReport.trusted_count ?? 0;
         const d = trustReport.dropped_count ?? 0;
-        const cache = execution && execution.cache_hit ? " (served from SQLite cache)" : "";
+        const cache =
+          execution && execution.cache_hit ? " (served from SQLite cache)" : "";
         return `
     <h3>Trust validation</h3>
     <p class="trust-line"><strong>${t}</strong> trusted / <strong>${v}</strong> validated \xB7 <strong>${d}</strong> dropped${cache}</p>
   `;
       }
       function renderInsightsPanelHtml(insights) {
-        const summary = escapeHtml(insights.concise_answer || insights.summary || "\u2014");
-        const keyPoints = Array.isArray(insights.key_points) ? insights.key_points : [];
-        
-        const keyHtml = keyPoints.length ? `<ul class="insights-list">${keyPoints.map((p) => {
-          const text = typeof p === "object" ? p.text : p;
-          const consensus = typeof p === "object" && p.consensus ? `<span class="consensus-badge" title="Verified by multiple sources">✓ Consensus</span>` : "";
-          return `<li>${parseCitations(escapeHtml(text))} ${consensus}</li>`;
-        }).join("")}</ul>` : '<p class="text-muted">No key points.</p>';
-        
-        const top = Array.isArray(insights.top_sources_detailed) ? insights.top_sources_detailed : [];
-        const topHtml = top.length ? `<div class="chip-row">${top.map((x) => `<span class="chip">${escapeHtml(x.source ?? "")} (${escapeHtml(String(x.count ?? ""))})</span>`).join("")}</div>` : "";
-<<<<<<< HEAD
-        const conf = insights.confidence !== void 0 && insights.confidence !== null ? `<p class="insights-meta">Confidence: ${escapeHtml(String(insights.confidence))}</p>` : "";
-        const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links : [];
+        const summary = escapeHtml(
+          insights.concise_answer || insights.summary || "\u2014",
+        );
+        const keyPoints = Array.isArray(insights.key_points)
+          ? insights.key_points
+          : Array.isArray(insights.key_highlights)
+            ? insights.key_highlights
+            : [];
+        const keyHtml = keyPoints.length
+          ? `<ul class="insights-list">${keyPoints.map((p) => `<li>${escapeHtml(typeof p === "object" ? p.point || p.text || p.content || JSON.stringify(p) : p)}</li>`).join("")}</ul>`
+          : '<p class="text-muted">No key points.</p>';
+        const top = Array.isArray(insights.top_sources_detailed)
+          ? insights.top_sources_detailed
+          : [];
+        const topHtml = top.length
+          ? `<div class="chip-row">${top.map((x) => `<span class="chip">${escapeHtml(x.source ?? "")} (${escapeHtml(String(x.count ?? ""))})</span>`).join("")}</div>`
+          : "";
+        const conf =
+          insights.confidence !== void 0 && insights.confidence !== null
+            ? `<p class="insights-meta">Confidence: ${escapeHtml(String(insights.confidence))}</p>`
+            : "";
+        const citationLinks = Array.isArray(insights.citation_links)
+          ? insights.citation_links
+          : [];
         let citationHtml = "";
         if (citationLinks.length > 0) {
           const byCategory = {};
@@ -313,78 +489,59 @@
           let linksInner = "";
           for (const [cat, links] of Object.entries(byCategory)) {
             linksInner += `<div class="citation-category"><div class="citation-category-label">${escapeHtml(cat)}</div>`;
+            const seen = /* @__PURE__ */ new Set();
             for (const link of links) {
               const displayUrl = link.page_url || link.url || "";
               const displayName = link.name || "Source";
-              const title = link.page_title ? ` \u2014 ${escapeHtml(link.page_title)}` : "";
+              const title = link.page_title
+                ? ` \u2014 ${escapeHtml(link.page_title)}`
+                : "";
+              const key = `${String(displayUrl).trim()}|${String(displayName).trim()}|${String(link.page_title || "").trim()}`;
+              if (seen.has(key)) continue;
+              seen.add(key);
               linksInner += `<div class="citation-link"><a href="${escapeHtml(displayUrl)}" target="_blank" rel="noopener">\u{1F517} ${escapeHtml(displayName)}${title}</a></div>`;
             }
             linksInner += `</div>`;
           }
           citationHtml = `<div class="insights-block"><strong>Source Citations (${citationLinks.length} sources)</strong><div class="citation-links-grid">${linksInner}</div></div>`;
         }
-=======
-        
-        const confidence = insights.confidence ?? 0;
-        const confColor = confidence > 0.8 ? "var(--success)" : confidence > 0.5 ? "var(--warning)" : "var(--error)";
-        
->>>>>>> fe4ce3eb1f741ff58c0664526909d5e81aad47af
         return `
     <h3>Insights</h3>
-    <div class="confidence-meter-container">
-      <div class="confidence-label">Overall confidence</div>
-      <div class="confidence-meter">
-        <div class="confidence-fill" style="width: ${confidence * 100}%; background: ${confColor}"></div>
-      </div>
-      <div class="confidence-value">${Math.round(confidence * 100)}%</div>
-    </div>
-    <p class="insights-summary">${parseCitations(summary)}</p>
+    ${conf}
+    <p class="insights-summary">${summary}</p>
     <div class="insights-block"><strong>Key points</strong>${keyHtml}</div>
     ${topHtml ? `<div class="insights-block"><strong>Sources</strong>${topHtml}</div>` : ""}
     ${citationHtml}
   `;
       }
-      function parseCitations(text) {
-        if (!text) return "";
-        return text.replace(/\[Source\s+(\d+)\]/gi, (match, num) => {
-          return `<a href="#trust-card-${num}" class="citation-link" title="Jump to source ${num}">[${num}]</a>`;
-        });
-      }
       function displayItemCards(items, container, opts) {
         if (!container) return;
-        const emptyMsg = opts && opts.empty || "No items.";
+        const emptyMsg = (opts && opts.empty) || "No items.";
         if (!items || items.length === 0) {
           container.innerHTML = `<p class="text-muted">${emptyMsg}</p>`;
           return;
         }
-        container.innerHTML = items.slice(0, 24).map(
-          (item, i) => {
+        container.innerHTML = items
+          .slice(0, 24)
+          .map((item, i) => {
             const trust = item.trust;
             const content = String(item.content ?? "");
             return `
-      <div class="task-card" id="trust-card-${i + 1}" style="animation-delay:${i * 40}ms">
+      <div class="task-card" style="animation-delay:${i * 50}ms">
         <div class="task-header">
-          <div class="task-title">${item.content_type === "research_paper" ? "Research" : "Web"} \xB7 ${escapeHtml(String(item.title || "Untitled"))}</div>
-          <span class="task-badge task-badge--${item.source?.toLowerCase().replace(/\s+/g, '-') || 'item'}">${escapeHtml(String(item.source || "item"))}</span>
+          <div class="task-title">${item.content_type === "research_paper" ? "\u{1F4C4} Research" : "\u{1F310} Web"} \xB7 ${escapeHtml(String(item.title || "Untitled"))}</div>
+          <span class="task-badge">${escapeHtml(String(item.content_type || "item"))}</span>
         </div>
         <div class="task-body">
-          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">${escapeHtml(String(item.url.length > 60 ? item.url.substring(0, 60) + '...' : item.url))}</a>` : "No URL"}</div>
-          
-          <div class="relevance-container">
-            <span class="relevance-label">Relevance</span>
-            <div class="relevance-bar">
-              <div class="relevance-fill" style="width: ${(trust ? trust.relevance : 0) * 100}%"></div>
-            </div>
-            <span class="relevance-value">${Math.round((trust ? trust.relevance : 0) * 100)}%</span>
-          </div>
-
-          <div class="task-meta" style="margin-top: 0.5rem"><strong>Trust</strong> ${escapeHtml(String(trust ? (trust.score * 100).toFixed(0) : "0"))}%</div>
+          <div class="task-meta"><strong>Source</strong> ${escapeHtml(String(item.source || "\u2014"))}</div>
+          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">Open link \u2197</a>` : "No URL"}</div>
+          ${trust ? `<div class="task-meta"><strong>Trust score</strong> ${escapeHtml(String(trust.score))}</div>` : ""}
           ${item.published_at ? `<div class="task-meta"><strong>Published</strong> ${escapeHtml(String(item.published_at))}</div>` : ""}
           <div class="task-snippet">${escapeHtml(content.substring(0, 500))}${content.length > 500 ? "\u2026" : ""}</div>
         </div>
       </div>`;
-          }
-        ).join("");
+          })
+          .join("");
       }
       function displayRawTaskResults(results, el) {
         if (!el) return;
@@ -392,17 +549,18 @@
           el.innerHTML = '<p class="text-muted">No raw task results.</p>';
           return;
         }
-        el.innerHTML = results.map((result, i) => {
-          const statusClass = result.status || "unknown";
-          const agent = result.agent || "";
-          let inner = "";
-          if (result.data && result.data.length > 0) {
-            inner = `<pre class="raw-pre">${escapeHtml(JSON.stringify(result.data.slice(0, 3), null, 2))}</pre>`;
-          } else if (result.error) {
-            inner = `<p class="task-error">${escapeHtml(result.error)}</p>`;
-          }
-          return `
-        <div class="task-card">
+        el.innerHTML = results
+          .map((result, i) => {
+            const statusClass = result.status || "unknown";
+            const agent = result.agent || "";
+            let inner = "";
+            if (result.data && result.data.length > 0) {
+              inner = `<pre class="raw-pre">${escapeHtml(JSON.stringify(result.data.slice(0, 3), null, 2))}</pre>`;
+            } else if (result.error) {
+              inner = `<p class="task-error">${escapeHtml(result.error)}</p>`;
+            }
+            return `
+        <div class="task-card" style="animation-delay:${i * 50}ms">
           <div class="task-header">
             <div class="task-title">${escapeHtml(result.task_id || "task")}</div>
             <span class="task-badge task-badge--${statusClass}">${escapeHtml(statusClass)}</span>
@@ -413,7 +571,8 @@
             ${inner}
           </div>
         </div>`;
-        }).join("");
+          })
+          .join("");
       }
       async function loadPlans() {
         const plansList = document.getElementById("plansList");
@@ -422,25 +581,33 @@
           const response = await fetch("/api/plans");
           const data = await response.json();
           if (data.success && data.plans.length > 0) {
-            plansList.innerHTML = data.plans.map(
-              (plan, i) => `
-          <div class="plan-card" data-filename="${escapeHtml(plan.filename)}" style="animation-delay:${i * 40}ms">
+            plansList.innerHTML = data.plans
+              .map(
+                (plan, i) => `
+          <div class="plan-card" data-filename="${escapeHtml(plan.filename)}" style="animation-delay:${i * 50}ms">
             <div class="plan-card-title">${escapeHtml(plan.goal)}</div>
             <div class="plan-card-meta">
               <span>${formatTimestamp(plan.created_at)}</span>
               <span>${plan.tasks} tasks</span>
             </div>
             <div class="plan-card-query">${escapeHtml(plan.query)}</div>
-          </div>`
-            ).join("");
-            plansList.querySelectorAll(".plan-card[data-filename]").forEach((card) => {
-              card.addEventListener("click", () => viewPlan(card.getAttribute("data-filename")));
-            });
+          </div>`,
+              )
+              .join("");
+            plansList
+              .querySelectorAll(".plan-card[data-filename]")
+              .forEach((card) => {
+                card.addEventListener("click", () =>
+                  viewPlan(card.getAttribute("data-filename")),
+                );
+              });
           } else {
-            plansList.innerHTML = '<p class="text-muted text-center" style="padding:2rem">No saved plans yet.</p>';
+            plansList.innerHTML =
+              '<p class="text-muted text-center" style="padding:2rem">No saved plans yet.</p>';
           }
         } catch (error) {
-          plansList.innerHTML = '<p class="text-muted text-center">Failed to load plans</p>';
+          plansList.innerHTML =
+            '<p class="text-muted text-center">Failed to load plans</p>';
         }
       }
       async function viewPlan(filename) {
@@ -449,8 +616,12 @@
           const data = await response.json();
           if (data.success) {
             const plan = data.plan;
-            const domains = Array.isArray(plan.domains) ? plan.domains.join(", ") : plan.domains || "\u2014";
-            const sources = Array.isArray(plan.sources) ? plan.sources.join(", ") : plan.sources || "\u2014";
+            const domains = Array.isArray(plan.domains)
+              ? plan.domains.join(", ")
+              : plan.domains || "\u2014";
+            const sources = Array.isArray(plan.sources)
+              ? plan.sources.join(", ")
+              : plan.sources || "\u2014";
             const body = `
         <div class="detail-row"><span class="detail-label">Goal</span><span class="detail-value">${escapeHtml(plan.goal)}</span></div>
         <div class="detail-row"><span class="detail-label">Domains</span><span class="detail-value">${escapeHtml(domains)}</span></div>
@@ -470,7 +641,8 @@
         loading.style.display = "block";
         const ol = document.getElementById("pipelineSteps");
         ol.innerHTML = PIPELINE_STEPS.map(
-          (s, idx) => `<li class="pipeline-step" data-idx="${idx}"><span class="pipeline-step-num">${idx + 1}</span><div><strong>${escapeHtml(s.label)}</strong><span class="pipeline-step-detail">${escapeHtml(s.detail)}</span></div></li>`
+          (s, idx) =>
+            `<li class="pipeline-step" data-idx="${idx}"><span class="pipeline-step-num">${idx + 1}</span><div><strong>${escapeHtml(s.label)}</strong><span class="pipeline-step-detail">${escapeHtml(s.detail)}</span></div></li>`,
         ).join("");
         let active = 0;
         const steps = ol.querySelectorAll(".pipeline-step");
@@ -500,7 +672,7 @@
             month: "short",
             day: "numeric",
             hour: "2-digit",
-            minute: "2-digit"
+            minute: "2-digit",
           });
         } catch {
           return timestamp;
@@ -512,16 +684,16 @@
         div.textContent = String(text);
         return div.innerHTML;
       }
-      window.setQuery = function(query) {
+      window.setQuery = function (query) {
         document.getElementById("queryInput").value = query;
         document.getElementById("queryInput").focus();
       };
-      window.clearResults = function() {
+      window.clearResults = function () {
         document.getElementById("resultsSection").style.display = "none";
         document.getElementById("queryInput").value = "";
       };
       window.loadPlans = loadPlans;
-    }
+    },
   });
   require_main();
 })();
