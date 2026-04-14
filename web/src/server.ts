@@ -47,7 +47,7 @@ const RAW_DATA_DIR = path.join(ROOT_DIR, "data", "raw");
  */
 function callPythonBridge(
   action: string,
-  payload: Record<string, unknown> = {}
+  payload: Record<string, unknown> = {},
 ): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const input = JSON.stringify({ action, ...payload });
@@ -62,12 +62,32 @@ function callPythonBridge(
           return reject(new Error(stderr || error.message));
         }
         try {
-          const result = JSON.parse(stdout);
+          const trimmed = stdout.trim();
+          const result = JSON.parse(trimmed);
           resolve(result);
         } catch {
-          reject(new Error(`Invalid JSON from bridge: ${stdout.slice(0, 500)}`));
+          const trimmed = stdout.trim();
+          const firstBrace = trimmed.indexOf("{");
+          const lastBrace = trimmed.lastIndexOf("}");
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            const candidate = trimmed.slice(firstBrace, lastBrace + 1);
+            try {
+              const result = JSON.parse(candidate);
+              resolve(result);
+              return;
+            } catch {
+              // Fall through to error.
+            }
+          }
+
+          if (stderr && stderr.trim().length > 0) {
+            console.error(`[bridge] stderr: ${stderr}`);
+          }
+          reject(
+            new Error(`Invalid JSON from bridge: ${trimmed.slice(0, 500)}`),
+          );
         }
-      }
+      },
     ).stdin!.end(input);
   });
 }
@@ -76,7 +96,11 @@ function callPythonBridge(
  * Validate that a filename is safe (no path traversal).
  */
 function isSafeFilename(filename: string): boolean {
-  if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+  if (
+    filename.includes("..") ||
+    filename.includes("/") ||
+    filename.includes("\\")
+  ) {
     return false;
   }
   const resolved = path.resolve(PLANS_DIR, filename);
@@ -94,7 +118,7 @@ app.use(express.json());
 // Rate limiting — prevent abuse
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 60,             // 60 requests per minute per IP
+  max: 60, // 60 requests per minute per IP
   standardHeaders: true,
   legacyHeaders: false,
 });

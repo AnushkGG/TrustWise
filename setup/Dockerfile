@@ -14,6 +14,10 @@ WORKDIR /app
 COPY setup/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Crawl4AI uses Playwright for headless browsing. Download the Chromium
+# browser + required OS deps at build time so runtime crawling works.
+RUN python -m playwright install --with-deps chromium
+
 COPY web/package.json web/package-lock.json ./web/
 RUN cd web && npm ci
 
@@ -22,6 +26,7 @@ COPY . .
 RUN cd web && npm run build
 
 ENV PYTHONUNBUFFERED=1
+ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=5000
 

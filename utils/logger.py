@@ -12,8 +12,12 @@ def setup_logger(name: str):
         if level_name not in _VALID_LEVELS:
             level_name = "INFO"
         logger.setLevel(getattr(logging, level_name))
-        handler = logging.StreamHandler(sys.stdout)
+        stream_name = os.getenv("LOG_STREAM", "stderr").strip().lower()
+        stream = sys.stdout if stream_name == "stdout" else sys.stderr
+        handler = logging.StreamHandler(stream)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)
+    # Prevent duplicate logs if root logger is configured elsewhere.
+    logger.propagate = False
     return logger

@@ -9,7 +9,7 @@ This directory contains all the files necessary to initialize and configure the 
 - **`Dockerfile`**: Docker configuration for building the TrustWise image.
 - **`docker-compose.yml`**: Docker Compose configuration for running the full stack.
 - **`requirements.txt`**: Python dependencies.
-- **`.env.example`**: Template for environment variables.
+- **`.env.example`**: Template for environment variables (lives at the repository root).
 
 ## How to Setup
 
@@ -37,7 +37,7 @@ This directory contains all the files necessary to initialize and configure the 
    ```
 
 2. **Environment Variables**:
-   Copy `setup/.env.example` to the root directory as `.env` and fill in your API keys.
+   Copy the repository root `.env.example` to `.env` and fill in your API keys.
 
 3. **Docker**:
    To build and run using Docker:

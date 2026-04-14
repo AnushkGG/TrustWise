@@ -28,12 +28,12 @@ echo -e "${GREEN}✓ Directories created.${NC}"
 # 2. Environment Configuration
 echo -e "\n${YELLOW}2. Setting up environment variables...${NC}"
 if [ ! -f .env ]; then
-    if [ -f setup/.env.example ]; then
-        cp setup/.env.example .env
-        echo -e "${GREEN}✓ Created .env from setup/.env.example${NC}"
+    if [ -f .env.example ]; then
+        cp .env.example .env
+        echo -e "${GREEN}✓ Created .env from .env.example${NC}"
         echo -e "${YELLOW}⚠️  Please edit .env to add your API keys.${NC}"
     else
-        echo -e "${RED}✗ Error: setup/.env.example not found.${NC}"
+        echo -e "${RED}✗ Error: .env.example not found at repo root.${NC}"
     fi
 else
     echo -e "${GREEN}✓ .env already exists.${NC}"

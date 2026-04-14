@@ -11,7 +11,7 @@
 copy .env.example .env
 # Edit .env and set OLLAMA_BASE_URL to http://host.docker.internal:11434
 
-docker-compose up --build
+docker-compose -f setup/docker-compose.yml up --build
 ```
 Open `http://localhost:5000`.
 
