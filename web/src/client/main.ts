@@ -1,5 +1,5 @@
 /**
- * TrustWise web client — professional light UI, full pipeline visibility.
+ * TrustWise web client — premium dark UI, full pipeline visibility.
  * Build: npm run build:client (from web/)
  */
 
@@ -30,16 +30,157 @@ interface SubmitResponse {
 
 const PIPELINE_STEPS = [
   { id: "plan", label: "Planning", detail: "LLM produces JSON execution plan" },
-  { id: "agents", label: "Agents", detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)" },
-  { id: "citations", label: "Citations", detail: "Scraping curated trusted sources for query-relevant data" },
+  {
+    id: "agents",
+    label: "Agents",
+    detail: "Web + research tasks (DDG, arXiv, OpenAlex, Semantic Scholar)",
+  },
+  {
+    id: "citations",
+    label: "Citations",
+    detail: "Scraping curated trusted sources for query-relevant data",
+  },
   { id: "structure", label: "Structure", detail: "Cleaner normalizes records" },
   { id: "trust", label: "Trust", detail: "Validation and scoring" },
   { id: "store", label: "Storage", detail: "SQLite deduplication / cache" },
   { id: "insights", label: "Insights", detail: "Summary and highlights" },
 ];
 
+/* ============================================================
+   Animated Background Canvas — mesh gradient particles
+   ============================================================ */
+function initBackgroundCanvas() {
+  const canvas = document.getElementById("bgCanvas") as HTMLCanvasElement;
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+  let mouse = { x: width / 2, y: height / 2 };
+
+  window.addEventListener("resize", () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  interface Orb {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    radius: number;
+    color: string;
+    alpha: number;
+  }
+
+  const orbs: Orb[] = [];
+  const orbColors = [
+    "6, 182, 212", // cyan
+    "139, 92, 246", // violet
+    "52, 211, 153", // emerald
+    "99, 102, 241", // indigo
+  ];
+
+  for (let i = 0; i < 5; i++) {
+    orbs.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      radius: 200 + Math.random() * 250,
+      color: orbColors[i % orbColors.length],
+      alpha: 0.08 + Math.random() * 0.06,
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+
+    for (const orb of orbs) {
+      // Gentle drift + subtle mouse attraction
+      const dx = mouse.x - orb.x;
+      const dy = mouse.y - orb.y;
+      orb.vx += dx * 0.000003;
+      orb.vy += dy * 0.000003;
+
+      orb.x += orb.vx;
+      orb.y += orb.vy;
+
+      // Bounce off edges softly
+      if (orb.x < -orb.radius) orb.x = width + orb.radius;
+      if (orb.x > width + orb.radius) orb.x = -orb.radius;
+      if (orb.y < -orb.radius) orb.y = height + orb.radius;
+      if (orb.y > height + orb.radius) orb.y = -orb.radius;
+
+      const gradient = ctx.createRadialGradient(
+        orb.x,
+        orb.y,
+        0,
+        orb.x,
+        orb.y,
+        orb.radius,
+      );
+      gradient.addColorStop(0, `rgba(${orb.color}, ${orb.alpha})`);
+      gradient.addColorStop(1, `rgba(${orb.color}, 0)`);
+
+      ctx.beginPath();
+      ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+
+/* ============================================================
+   Intersection Observer — staggered reveal
+   ============================================================ */
+function initScrollReveal() {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          (entry.target as HTMLElement).style.animationPlayState = "running";
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1 },
+  );
+
+  document
+    .querySelectorAll(".task-card, .plan-card, .stat-card")
+    .forEach((el) => {
+      (el as HTMLElement).style.animationPlayState = "paused";
+      observer.observe(el);
+    });
+}
+
+/* ============================================================
+   Auto-resize textarea
+   ============================================================ */
+function initTextareaAutoResize() {
+  const textarea = document.getElementById("queryInput") as HTMLTextAreaElement;
+  if (!textarea) return;
+  textarea.addEventListener("input", () => {
+    textarea.style.height = "auto";
+    textarea.style.height = Math.min(textarea.scrollHeight, 150) + "px";
+  });
+}
+
 /** Wire up UI events and initial status/history fetches. */
 document.addEventListener("DOMContentLoaded", () => {
+  initBackgroundCanvas();
+  initTextareaAutoResize();
   loadSystemStatus();
   loadPlans();
   setupFormHandler();
@@ -53,12 +194,16 @@ document.addEventListener("DOMContentLoaded", () => {
 let currentResults: SubmitResponse | null = null;
 
 /** Show transient toast feedback in the UI. */
-function showToast(message: string, type: "info" | "success" | "error" = "info") {
+function showToast(
+  message: string,
+  type: "info" | "success" | "error" = "info",
+) {
   const container = document.getElementById("toastContainer");
   if (!container) return;
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${type === "error" ? "!" : type === "success" ? "OK" : "i"}</span> <span>${escapeHtml(message)}</span>`;
+  const icon = type === "error" ? "✕" : type === "success" ? "✓" : "i";
+  toast.innerHTML = `<span>${icon}</span> <span>${escapeHtml(message)}</span>`;
   container.appendChild(toast);
   setTimeout(() => {
     toast.classList.add("toast-exit");
@@ -85,17 +230,19 @@ async function loadSystemStatus() {
     if (provider === "ollama") {
       const ok = s.ollama_reachable === true || s.has_api_key === true;
       if (ok) {
-        statusText.textContent = `Local · Ollama · ${model}`;
+        statusText.textContent = `Ollama · ${model}`;
         statusDot.className = "status-dot status-dot--ok";
       } else {
-        statusText.textContent = "Ollama unreachable — start Ollama or check OLLAMA_BASE_URL";
+        statusText.textContent = "Ollama unreachable";
         statusDot.className = "status-dot status-dot--warn";
       }
       return;
     }
 
     if (provider === "gemini") {
-      const ok = s.gemini_configured === true || (s.has_api_key === true && !!s.llm_model);
+      const ok =
+        s.gemini_configured === true ||
+        (s.has_api_key === true && !!s.llm_model);
       if (ok) {
         statusText.textContent = `Gemini · ${model}`;
         statusDot.className = "status-dot status-dot--ok";
@@ -128,16 +275,22 @@ function setupChipHandler() {
   document.querySelectorAll(".chip[data-query]").forEach((chip) => {
     chip.addEventListener("click", () => {
       const q = chip.getAttribute("data-query");
-      const input = document.getElementById("queryInput");
+      const input = document.getElementById(
+        "queryInput",
+      ) as HTMLTextAreaElement;
       input.value = q;
       input.focus();
+      // Trigger auto-resize
+      input.dispatchEvent(new Event("input"));
     });
   });
 }
 
 function setupModalHandler() {
   const overlay = document.getElementById("planModal");
-  document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+  document
+    .getElementById("modalCloseBtn")
+    .addEventListener("click", closeModal);
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
   });
@@ -161,7 +314,7 @@ function closeModal() {
 function setupClearHandler() {
   document.getElementById("clearResultsBtn").addEventListener("click", () => {
     document.getElementById("resultsSection").style.display = "none";
-    document.getElementById("queryInput").value = "";
+    (document.getElementById("queryInput") as HTMLTextAreaElement).value = "";
   });
 }
 
@@ -205,7 +358,9 @@ function exportToCsv(data: any[], filename: string) {
 }
 
 async function submitQuery() {
-  const queryInput = document.getElementById("queryInput");
+  const queryInput = document.getElementById(
+    "queryInput",
+  ) as HTMLTextAreaElement;
   const query = queryInput.value.trim();
   if (!query) {
     showToast("Enter a research query.", "error");
@@ -213,7 +368,7 @@ async function submitQuery() {
   }
 
   showLoading();
-  const submitBtn = document.getElementById("submitBtn");
+  const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
   submitBtn.disabled = true;
   submitBtn.querySelector(".btn-text").textContent = "Running…";
 
@@ -234,11 +389,15 @@ async function submitQuery() {
     }
   } catch (error: unknown) {
     console.error(error);
-    showToast("Network error: " + (error instanceof Error ? error.message : String(error)), "error");
+    showToast(
+      "Network error: " +
+        (error instanceof Error ? error.message : String(error)),
+      "error",
+    );
   } finally {
     hideLoading();
     submitBtn.disabled = false;
-    submitBtn.querySelector(".btn-text").textContent = "Run pipeline";
+    submitBtn.querySelector(".btn-text").textContent = "Run";
   }
 }
 
@@ -271,7 +430,13 @@ function displayResults(data: SubmitResponse) {
     { empty: "No structured records." },
   );
 
-  displayRawTaskResults(data.results || [], document.getElementById("taskResultsRaw"));
+  displayRawTaskResults(
+    data.results || [],
+    document.getElementById("taskResultsRaw"),
+  );
+
+  // Initialize scroll reveal for new cards
+  setTimeout(initScrollReveal, 100);
 }
 
 function displayPlanSummary(plan: Record<string, unknown>) {
@@ -279,7 +444,9 @@ function displayPlanSummary(plan: Record<string, unknown>) {
   const renderList = (items) => {
     if (!items) return "—";
     if (Array.isArray(items)) {
-      return items.map((d) => `<span class="chip">${escapeHtml(d)}</span>`).join(" ");
+      return items
+        .map((d) => `<span class="chip">${escapeHtml(d)}</span>`)
+        .join(" ");
     }
     return escapeHtml(String(items));
   };
@@ -344,11 +511,15 @@ function displayExecutionSummary(execution: Record<string, unknown>) {
   `;
 }
 
-function renderTrustPanelHtml(trustReport: Record<string, unknown>, execution?: Record<string, unknown>) {
+function renderTrustPanelHtml(
+  trustReport: Record<string, unknown>,
+  execution?: Record<string, unknown>,
+) {
   const v = trustReport.validated_count ?? 0;
   const t = trustReport.trusted_count ?? 0;
   const d = trustReport.dropped_count ?? 0;
-  const cache = execution && execution.cache_hit ? " (served from SQLite cache)" : "";
+  const cache =
+    execution && execution.cache_hit ? " (served from SQLite cache)" : "";
   return `
     <h3>Trust validation</h3>
     <p class="trust-line"><strong>${t}</strong> trusted / <strong>${v}</strong> validated · <strong>${d}</strong> dropped${cache}</p>
@@ -356,20 +527,27 @@ function renderTrustPanelHtml(trustReport: Record<string, unknown>, execution?: 
 }
 
 function renderInsightsPanelHtml(insights: Record<string, unknown>) {
-  const summary = escapeHtml(insights.concise_answer || insights.summary || "—");
+  const summary = escapeHtml(
+    insights.concise_answer || insights.summary || "—",
+  );
   const keyPoints = Array.isArray(insights.key_points)
     ? insights.key_points
     : Array.isArray(insights.key_highlights)
       ? insights.key_highlights
       : [];
   const keyHtml = keyPoints.length
-    ? `<ul class="insights-list">${keyPoints.map((p) => `<li>${escapeHtml(typeof p === "object" ? (p.point || p.text || p.content || JSON.stringify(p)) : p)}</li>`).join("")}</ul>`
+    ? `<ul class="insights-list">${keyPoints.map((p) => `<li>${escapeHtml(typeof p === "object" ? p.point || p.text || p.content || JSON.stringify(p) : p)}</li>`).join("")}</ul>`
     : '<p class="text-muted">No key points.</p>';
 
-  const top = Array.isArray(insights.top_sources_detailed) ? insights.top_sources_detailed : [];
+  const top = Array.isArray(insights.top_sources_detailed)
+    ? insights.top_sources_detailed
+    : [];
   const topHtml = top.length
     ? `<div class="chip-row">${top
-        .map((x: { source?: string; count?: number }) => `<span class="chip">${escapeHtml(x.source ?? "")} (${escapeHtml(String(x.count ?? ""))})</span>`)
+        .map(
+          (x: { source?: string; count?: number }) =>
+            `<span class="chip">${escapeHtml(x.source ?? "")} (${escapeHtml(String(x.count ?? ""))})</span>`,
+        )
         .join("")}</div>`
     : "";
 
@@ -379,7 +557,9 @@ function renderInsightsPanelHtml(insights: Record<string, unknown>) {
       : "";
 
   // Citation links section
-  const citationLinks = Array.isArray(insights.citation_links) ? insights.citation_links : [];
+  const citationLinks = Array.isArray(insights.citation_links)
+    ? insights.citation_links
+    : [];
   let citationHtml = "";
   if (citationLinks.length > 0) {
     // Group by category
@@ -393,10 +573,16 @@ function renderInsightsPanelHtml(insights: Record<string, unknown>) {
     let linksInner = "";
     for (const [cat, links] of Object.entries(byCategory)) {
       linksInner += `<div class="citation-category"><div class="citation-category-label">${escapeHtml(cat)}</div>`;
+      const seen = new Set<string>();
       for (const link of links) {
         const displayUrl = link.page_url || link.url || "";
         const displayName = link.name || "Source";
-        const title = link.page_title ? ` — ${escapeHtml(link.page_title)}` : "";
+        const title = link.page_title
+          ? ` — ${escapeHtml(link.page_title)}`
+          : "";
+        const key = `${String(displayUrl).trim()}|${String(displayName).trim()}|${String(link.page_title || "").trim()}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         linksInner += `<div class="citation-link"><a href="${escapeHtml(displayUrl)}" target="_blank" rel="noopener">🔗 ${escapeHtml(displayName)}${title}</a></div>`;
       }
       linksInner += `</div>`;
@@ -429,30 +615,31 @@ function displayItemCards(
 
   container.innerHTML = items
     .slice(0, 24)
-    .map(
-      (item, i) => {
-        const trust = item.trust as { score?: number } | undefined;
-        const content = String(item.content ?? "");
-        return `
-      <div class="task-card" style="animation-delay:${i * 40}ms">
+    .map((item, i) => {
+      const trust = item.trust as { score?: number } | undefined;
+      const content = String(item.content ?? "");
+      return `
+      <div class="task-card" style="animation-delay:${i * 50}ms">
         <div class="task-header">
-          <div class="task-title">${item.content_type === "research_paper" ? "Research" : "Web"} · ${escapeHtml(String(item.title || "Untitled"))}</div>
+          <div class="task-title">${item.content_type === "research_paper" ? "📄 Research" : "🌐 Web"} · ${escapeHtml(String(item.title || "Untitled"))}</div>
           <span class="task-badge">${escapeHtml(String(item.content_type || "item"))}</span>
         </div>
         <div class="task-body">
           <div class="task-meta"><strong>Source</strong> ${escapeHtml(String(item.source || "—"))}</div>
-          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">Open link</a>` : "No URL"}</div>
+          <div class="task-meta">${item.url ? `<a href="${escapeHtml(String(item.url))}" target="_blank" rel="noopener">Open link ↗</a>` : "No URL"}</div>
           ${trust ? `<div class="task-meta"><strong>Trust score</strong> ${escapeHtml(String(trust.score))}</div>` : ""}
           ${item.published_at ? `<div class="task-meta"><strong>Published</strong> ${escapeHtml(String(item.published_at))}</div>` : ""}
           <div class="task-snippet">${escapeHtml(content.substring(0, 500))}${content.length > 500 ? "…" : ""}</div>
         </div>
       </div>`;
-      },
-    )
+    })
     .join("");
 }
 
-function displayRawTaskResults(results: Record<string, unknown>[], el: HTMLElement | null) {
+function displayRawTaskResults(
+  results: Record<string, unknown>[],
+  el: HTMLElement | null,
+) {
   if (!el) return;
   if (!results || results.length === 0) {
     el.innerHTML = '<p class="text-muted">No raw task results.</p>';
@@ -470,7 +657,7 @@ function displayRawTaskResults(results: Record<string, unknown>[], el: HTMLEleme
         inner = `<p class="task-error">${escapeHtml(result.error)}</p>`;
       }
       return `
-        <div class="task-card">
+        <div class="task-card" style="animation-delay:${i * 50}ms">
           <div class="task-header">
             <div class="task-title">${escapeHtml(result.task_id || "task")}</div>
             <span class="task-badge task-badge--${statusClass}">${escapeHtml(statusClass)}</span>
@@ -495,7 +682,7 @@ async function loadPlans() {
       plansList.innerHTML = data.plans
         .map(
           (plan, i) => `
-          <div class="plan-card" data-filename="${escapeHtml(plan.filename)}" style="animation-delay:${i * 40}ms">
+          <div class="plan-card" data-filename="${escapeHtml(plan.filename)}" style="animation-delay:${i * 50}ms">
             <div class="plan-card-title">${escapeHtml(plan.goal)}</div>
             <div class="plan-card-meta">
               <span>${formatTimestamp(plan.created_at)}</span>
@@ -505,15 +692,20 @@ async function loadPlans() {
           </div>`,
         )
         .join("");
-      plansList.querySelectorAll(".plan-card[data-filename]").forEach((card) => {
-        card.addEventListener("click", () => viewPlan(card.getAttribute("data-filename")));
-      });
+      plansList
+        .querySelectorAll(".plan-card[data-filename]")
+        .forEach((card) => {
+          card.addEventListener("click", () =>
+            viewPlan(card.getAttribute("data-filename")),
+          );
+        });
     } else {
       plansList.innerHTML =
         '<p class="text-muted text-center" style="padding:2rem">No saved plans yet.</p>';
     }
   } catch (error) {
-    plansList.innerHTML = '<p class="text-muted text-center">Failed to load plans</p>';
+    plansList.innerHTML =
+      '<p class="text-muted text-center">Failed to load plans</p>';
   }
 }
 
@@ -523,8 +715,12 @@ async function viewPlan(filename) {
     const data = await response.json();
     if (data.success) {
       const plan = data.plan;
-      const domains = Array.isArray(plan.domains) ? plan.domains.join(", ") : plan.domains || "—";
-      const sources = Array.isArray(plan.sources) ? plan.sources.join(", ") : plan.sources || "—";
+      const domains = Array.isArray(plan.domains)
+        ? plan.domains.join(", ")
+        : plan.domains || "—";
+      const sources = Array.isArray(plan.sources)
+        ? plan.sources.join(", ")
+        : plan.sources || "—";
       const body = `
         <div class="detail-row"><span class="detail-label">Goal</span><span class="detail-value">${escapeHtml(plan.goal)}</span></div>
         <div class="detail-row"><span class="detail-label">Domains</span><span class="detail-value">${escapeHtml(domains)}</span></div>
@@ -594,11 +790,11 @@ function escapeHtml(text) {
 }
 
 window.setQuery = function (query) {
-  document.getElementById("queryInput").value = query;
+  (document.getElementById("queryInput") as HTMLTextAreaElement).value = query;
   document.getElementById("queryInput").focus();
 };
 window.clearResults = function () {
   document.getElementById("resultsSection").style.display = "none";
-  document.getElementById("queryInput").value = "";
+  (document.getElementById("queryInput") as HTMLTextAreaElement).value = "";
 };
 window.loadPlans = loadPlans;
