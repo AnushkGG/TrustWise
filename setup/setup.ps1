@@ -27,12 +27,12 @@ foreach ($dir in $dirs) {
 # 2. Environment Configuration
 Write-Host "`n2. Setting up environment variables..." -ForegroundColor Yellow
 if (-not (Test-Path ".env")) {
-    if (Test-Path "setup/.env.example") {
-        Copy-Item "setup/.env.example" ".env"
-        Write-Host "   ✓ Created .env from setup/.env.example" -ForegroundColor Green
+    if (Test-Path ".env.example") {
+        Copy-Item ".env.example" ".env"
+        Write-Host "   ✓ Created .env from .env.example" -ForegroundColor Green
         Write-Host "   ⚠️  Please edit .env to add your API keys." -ForegroundColor Yellow
     } else {
-        Write-Host "   ❌ Error: setup/.env.example not found." -ForegroundColor Red
+        Write-Host "   ❌ Error: .env.example not found at repo root." -ForegroundColor Red
     }
 } else {
     Write-Host "   ✓ .env already exists." -ForegroundColor Green

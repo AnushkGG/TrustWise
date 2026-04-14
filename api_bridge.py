@@ -56,6 +56,30 @@ from utils.retry import execute_with_retry
 logger = setup_logger(__name__)
 
 
+def _safe_user_error(err: Exception) -> str:
+    """Return a user-facing error message without leaking internals."""
+    msg = (str(err) or "").strip()
+    if not msg:
+        return "An internal error occurred."
+
+    # Common, safe, actionable configuration/runtime failures.
+    safe_prefixes = (
+        "GEMINI_API_KEY not set.",
+        "Invalid API key detected.",
+        "Ollama returned HTTP 404",
+        "Ollama unavailable",
+        "google-generativeai required.",
+        "requests package required.",
+        "Unsupported LLM provider",
+        "LLM did not return valid JSON",
+    )
+    if msg.startswith(safe_prefixes):
+        return msg
+
+    # Avoid dumping stack traces, file paths, or huge payloads.
+    return "An internal error occurred while processing the query."
+
+
 def _keyed_research_snapshot(source_stats: dict) -> dict:
     """Per-keyed-provider config flags + last-run counts (from aggregated research_source_stats)."""
     key_cfg = {
@@ -91,7 +115,11 @@ def handle_submit(payload: dict) -> dict:
     logger.info(f"Bridge: Processing query: {query}")
 
     # Step 1: Generate Plan
-    plan = generate_plan(query)
+    try:
+        plan = generate_plan(query)
+    except Exception as e:
+        logger.error(f"Bridge: Plan generation failed: {e}", exc_info=True)
+        return {"success": False, "error": _safe_user_error(e)}
 
     # Step 1.5: Check cache
     if Config.ENABLE_DB_CACHE:
