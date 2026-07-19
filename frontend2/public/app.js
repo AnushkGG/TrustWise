@@ -9,30 +9,40 @@ function initBackgroundVideo() {
   const video = document.getElementById('heroBgVideo');
   if (!video) return;
 
-  // Fade loop: 0.5s fade-in at start, 0.5s fade-out at end
-  // The video element has transition: opacity 0.5s ease in CSS.
-  
-  video.addEventListener('loadeddata', () => {
-    video.style.opacity = '1';
-  });
+  let animationFrameId;
+  const FADE_DURATION = 0.5;
 
-  video.addEventListener('timeupdate', () => {
-    const timeRemaining = video.duration - video.currentTime;
-    if (timeRemaining <= 0.5 && video.style.opacity !== '0') {
-      video.style.opacity = '0';
+  function loop() {
+    if (video.readyState >= 1) { // metadata loaded
+      const duration = video.duration || 0;
+      const current = video.currentTime || 0;
+      
+      let opacity = 1;
+
+      // 0.5s fade-in at start
+      if (current < FADE_DURATION) {
+        opacity = current / FADE_DURATION;
+      }
+      // 0.5s fade-out at end
+      else if (duration > 0 && current > duration - FADE_DURATION) {
+        opacity = (duration - current) / FADE_DURATION;
+      }
+
+      video.style.opacity = Math.max(0, Math.min(1, opacity)).toString();
     }
-  });
+    animationFrameId = requestAnimationFrame(loop);
+  }
 
   video.addEventListener('ended', () => {
     video.style.opacity = '0';
     setTimeout(() => {
       video.currentTime = 0;
-      video.play();
-      setTimeout(() => {
-        video.style.opacity = '1';
-      }, 50); // slight delay to ensure it's playing before fade in
+      video.play().catch(() => {});
     }, 100);
   });
+
+  video.play().catch(() => {});
+  loop();
 }
 
 // ── Toast Notifications ──

@@ -59,7 +59,6 @@ body {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 0.5s ease;
 }
 
 /* ── Grain Overlay ── */
@@ -280,20 +279,18 @@ body {
 
 .hero-headline {
   font-family: var(--font-display);
-  font-size: clamp(80px, 12vw, 160px);
-  font-weight: 500;
+  font-size: clamp(60px, 10vw, 150px);
+  font-weight: 400;
   line-height: 1.02;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.024em;
   margin-bottom: 20px;
 }
 
 .headline-plain {
   color: var(--fg);
-  display: block;
 }
 
 .headline-gradient {
-  display: block;
   background: linear-gradient(to left, var(--indigo), var(--purple), var(--amber));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -418,7 +415,9 @@ body {
    MAIN APP
 ══════════════════════════════════════════════ */
 .main-app {
-  background: var(--bg-2);
+  background: rgba(12, 6, 26, 0.5); /* Deep translucent purple/black */
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
   border-top: 1px solid var(--border);
   padding: 48px 32px;
   max-width: 1280px;
@@ -848,19 +847,22 @@ body {
 
 /* Task Card */
 .task-card {
-  background: var(--card-bg);
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px 20px;
   transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   animation: cardIn 0.4s ease both;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
 }
 
 .task-card:hover {
-  background: var(--card-hover);
+  background: rgba(255,255,255,0.06);
   border-color: var(--border-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.1);
 }
 
 @keyframes cardIn {
@@ -963,19 +965,23 @@ body {
 }
 
 .plan-card {
-  background: var(--card-bg);
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px 20px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   animation: cardIn 0.4s ease both;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
 }
 
 .plan-card:hover {
-  background: var(--card-hover);
-  border-color: rgba(99,102,241,0.3);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(99,102,241,0.4);
   transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.1);
 }
 
 .plan-card-goal {
