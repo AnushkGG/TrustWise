@@ -86,8 +86,26 @@ def _build_summary_context(items: List[Dict[str, Any]], max_items: int = 5, max_
         title = (item.get("title") or "Untitled").strip()
         source = (item.get("source") or "unknown").strip()
         
-        # Use a more descriptive prefix to help the LLM cite correctly
+        # Extract rich metadata properties
+        authors = ", ".join(item.get("authors") or []) if item.get("authors") else ""
+        pub_date = item.get("published_at") or ""
+        journal = item.get("journal") or ""
+        citations = item.get("citation_count")
+        
+        meta_parts = []
+        if authors:
+            meta_parts.append(f"Authors: {authors}")
+        if pub_date:
+            meta_parts.append(f"Date: {pub_date}")
+        if journal:
+            meta_parts.append(f"Journal: {journal}")
+        if citations is not None and citations > 0:
+            meta_parts.append(f"Citations: {citations}")
+            
+        meta_str = " | ".join(meta_parts)
         prefix = f"[Source {idx}] ({source}: {title})"
+        if meta_str:
+            prefix += f"\nMetadata: {meta_str}"
         
         content = _normalize_sentence((item.get("content") or "").replace("\n", " "))
         snippet = content[:max_chars]

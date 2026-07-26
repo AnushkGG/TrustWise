@@ -18,7 +18,7 @@ Visual overview (Mermaid diagrams): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## Runtime Capabilities
 
-- Provider modes: Ollama, Gemini, or both (`LLM_PROVIDER`); Gemini model resolution via `GEMINI_MODEL` / `LLM_MODEL` (`Config.get_gemini_model()`).
+- Provid    er modes: Ollama, Gemini, or both (`LLM_PROVIDER`); Gemini model resolution via `GEMINI_MODEL` / `LLM_MODEL` (`Config.get_gemini_model()`).
 - Query-derived mock planning when allowed (`ALLOW_MOCK_FALLBACK=true`) and the planner cannot use the real provider (for example missing Gemini key, Ollama connection failure, or Ollama HTTP 404 on both chat and generate endpoints when mock is enabled).
 - Optional key-gated research/web adapters (Tavily, Exa, Firecrawl, Jina, Scopus, DeepSeek): no key means empty contribution without failing the run; metrics appear under `execution.keyed_research_providers` on submit.
 - Raw, structured, trusted, and DB persistence controls via `.env`.

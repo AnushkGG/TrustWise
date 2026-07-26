@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 from orchestrator.orchestrator import generate_plan
 from chunker.chunker import chunk_tasks
-from scheduler.scheduler import schedule
+from scheduler.scheduler import schedule, execute_chunks
 from agents import web_agent, research_agent
 from cleaner import normalize_results
 from trust import validate_structured_data
@@ -31,6 +31,13 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
 logger = setup_logger(__name__)
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS, PUT, DELETE'
+    return response
 
 # Store active execution state
 execution_state = {
@@ -120,49 +127,11 @@ def submit_query():
                 return jsonify(response)
         
         # Step 2: Chunk Tasks
-        tasks = chunk_tasks(plan)
+        chunks = chunk_tasks(plan)
         
-        # Step 3: Schedule Tasks
-        web_tasks, paper_tasks = schedule(tasks)
-        
-        # Step 4: Execute Tasks
-        results = []
-        
-        # Execute web tasks (with retry on transient failures)
-        for task in web_tasks:
-            try:
-                result = execute_with_retry(
-                    web_agent.run, task,
-                    max_retries=2, base_delay=1.0,
-                    retryable_exceptions=(ConnectionError, TimeoutError, OSError),
-                )
-                results.append(result)
-                execution_state["current_results"].append(result)
-            except Exception as e:
-                logger.error(f"Web task {task.get('task_id')} failed: {e}")
-                results.append({
-                    "task_id": task.get('task_id'),
-                    "status": "failed",
-                    "error": str(e)
-                })
-        
-        # Execute research tasks (with retry on transient failures)
-        for task in paper_tasks:
-            try:
-                result = execute_with_retry(
-                    research_agent.run, task,
-                    max_retries=2, base_delay=1.0,
-                    retryable_exceptions=(ConnectionError, TimeoutError, OSError),
-                )
-                results.append(result)
-                execution_state["current_results"].append(result)
-            except Exception as e:
-                logger.error(f"Research task {task.get('task_id')} failed: {e}")
-                results.append({
-                    "task_id": task.get('task_id'),
-                    "status": "failed",
-                    "error": str(e)
-                })
+        # Step 3 & 4: Schedule and Execute Chunks Concurrently
+        results = execute_chunks(chunks)
+        execution_state["current_results"] = results
 
         # Step 5: Clean and structure outputs (Phase 2)
         structured_data = normalize_results(results, query=query)

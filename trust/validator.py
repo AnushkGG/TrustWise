@@ -74,11 +74,42 @@ def _score_item(item: Dict[str, Any], trusted_domains: Set[str], query_terms: Se
     if item.get("content_type") == "research_paper":
         sl = source.lower()
         if "arxiv" in sl or sl in {"arxiv", "arxiv.org"}:
-            score += 0.40
+            score += 0.38
             reasons.append("Research source recognized (arXiv)")
         elif "openalex" in sl or "semantic" in sl:
             score += 0.38
             reasons.append("Research source recognized (OpenAlex / Semantic Scholar)")
+        elif "pubmed" in sl or sl in {"pubmed", "ncbi"}:
+            score += 0.38
+            reasons.append("Research source recognized (PubMed)")
+        elif "scopus" in sl:
+            score += 0.38
+            reasons.append("Research source recognized (Scopus)")
+        else:
+            score += 0.30
+            reasons.append("Research source recognized")
+
+        # Metadata richness bonuses
+        if item.get("doi"):
+            score += 0.05
+            reasons.append("Metadata bonus: DOI present")
+            
+        kw = item.get("keywords") or item.get("categories") or item.get("mesh_terms")
+        if kw:
+            score += 0.05
+            reasons.append("Metadata bonus: keywords/categories present")
+            
+        if item.get("journal"):
+            score += 0.02
+            reasons.append("Metadata bonus: journal name present")
+            
+        cit_count = item.get("citation_count") or 0
+        if cit_count >= 10:
+            score += 0.05
+            reasons.append(f"Metadata bonus: high citation count ({cit_count})")
+        elif cit_count > 0:
+            score += 0.03
+            reasons.append(f"Metadata bonus: cited ({cit_count})")
     elif domain in trusted_domains:
         score += 0.45
         reasons.append(f"Trusted domain: {domain}")

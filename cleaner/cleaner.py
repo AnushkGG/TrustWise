@@ -73,6 +73,10 @@ def _normalize_research_item(item: Dict[str, Any]) -> Dict[str, Any]:
         "categories": item.get("categories", []),
         "arxiv_id": item.get("arxiv_id", ""),
         "doi": item.get("doi", ""),
+        "journal": item.get("journal", ""),
+        "citation_count": item.get("citation_count", 0),
+        "keywords": item.get("keywords", []),
+        "mesh_terms": item.get("mesh_terms", []),
     }
 
 

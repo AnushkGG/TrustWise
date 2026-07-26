@@ -46,14 +46,27 @@ def phase1_python() -> None:
 
 def phase1_npm() -> None:
     print("\n=== Phase 1b: Web npm ci + build ===")
-    web = ROOT / "web"
+    web = ROOT / "frontend"
     kwargs: dict = {"cwd": web, "check": True}
+    
+    has_build = False
+    pkg_json_path = web / "package.json"
+    if pkg_json_path.exists():
+        try:
+            with open(pkg_json_path, "r", encoding="utf-8") as f:
+                pkg = json.load(f)
+                has_build = "build" in pkg.get("scripts", {})
+        except Exception:
+            pass
+
     if sys.platform == "win32":
         subprocess.run("npm ci", shell=True, **kwargs)
-        subprocess.run("npm run build", shell=True, **kwargs)
+        if has_build:
+            subprocess.run("npm run build", shell=True, **kwargs)
     else:
         subprocess.run(["npm", "ci"], **kwargs)
-        subprocess.run(["npm", "run", "build"], **kwargs)
+        if has_build:
+            subprocess.run(["npm", "run", "build"], **kwargs)
     print("[PASS] web build")
 
 

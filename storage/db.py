@@ -37,6 +37,12 @@ def init_db() -> None:
         cols = [row[1] for row in conn.execute("PRAGMA table_info(trusted_items)").fetchall()]
         if "query_key" not in cols:
             conn.execute("ALTER TABLE trusted_items ADD COLUMN query_key TEXT")
+        if "journal" not in cols:
+            conn.execute("ALTER TABLE trusted_items ADD COLUMN journal TEXT")
+        if "citation_count" not in cols:
+            conn.execute("ALTER TABLE trusted_items ADD COLUMN citation_count INTEGER DEFAULT 0")
+        if "keywords" not in cols:
+            conn.execute("ALTER TABLE trusted_items ADD COLUMN keywords TEXT")
 
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_trusted_items_query_key_created_at "
@@ -68,6 +74,12 @@ def save_trusted_items(items: List[Dict[str, Any]], query: str) -> Dict[str, int
             published_at = item.get("published_at")
             content_type = item.get("content_type")
             trust_score = (item.get("trust") or {}).get("score")
+            
+            # Additional metadata fields
+            journal = item.get("journal") or ""
+            citation_count = int(item.get("citation_count") or 0)
+            kws = item.get("keywords") or []
+            keywords = ",".join(kws) if isinstance(kws, list) else str(kws)
 
             if not title or not content:
                 skipped += 1
@@ -80,8 +92,9 @@ def save_trusted_items(items: List[Dict[str, Any]], query: str) -> Dict[str, int
                     """
                     INSERT INTO trusted_items (
                         query, query_key, title, content, source, url, published_at,
-                        content_type, trust_score, content_hash, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        content_type, trust_score, content_hash, created_at,
+                        journal, citation_count, keywords
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         query,
@@ -95,6 +108,9 @@ def save_trusted_items(items: List[Dict[str, Any]], query: str) -> Dict[str, int
                         trust_score,
                         content_hash,
                         datetime.utcnow().isoformat(),
+                        journal,
+                        citation_count,
+                        keywords,
                     ),
                 )
                 inserted += 1
@@ -119,7 +135,8 @@ def get_cached_trusted_items(query: str, min_items: int = 3, limit: int = 8) -> 
 
     normalized_query = _normalize_query(query)
     sql = (
-        "SELECT title, content, source, url, published_at, content_type, trust_score, created_at "
+        "SELECT title, content, source, url, published_at, content_type, trust_score, created_at, "
+        "journal, citation_count, keywords "
         "FROM trusted_items "
         "WHERE query_key = ? OR LOWER(query) = ? "
         "ORDER BY created_at DESC LIMIT ?"
@@ -154,6 +171,9 @@ def get_cached_trusted_items(query: str, min_items: int = 3, limit: int = 8) -> 
                     "relevance": 1.0,
                 },
                 "cached_at": row[7],
+                "journal": row[8] or "",
+                "citation_count": int(row[9] or 0),
+                "keywords": [k.strip() for k in (row[10] or "").split(",") if k.strip()] if row[10] else [],
             }
         )
 

@@ -6,7 +6,7 @@ from chunker.chunker import chunk_tasks
 from cleaner import normalize_results
 from insights import generate_insights
 from orchestrator.orchestrator import generate_plan
-from scheduler.scheduler import schedule
+from scheduler.scheduler import schedule, execute_chunks
 from storage import save_trusted_items
 from trust import validate_structured_data
 from utils.config import Config
@@ -18,22 +18,8 @@ logger = setup_logger(__name__)
 def execute_query_pipeline(query: str) -> Dict[str, Any]:
     """Run the full pipeline for one query (Phase 1-6)."""
     plan = generate_plan(query)
-    tasks = chunk_tasks(plan)
-    web_tasks, paper_tasks = schedule(tasks)
-
-    results: List[Dict[str, Any]] = []
-
-    for task in web_tasks:
-        try:
-            results.append(web_agent.run(task))
-        except Exception as e:
-            logger.error("[Continuous] Web task failed: %s", e)
-
-    for task in paper_tasks:
-        try:
-            results.append(research_agent.run(task))
-        except Exception as e:
-            logger.error("[Continuous] Research task failed: %s", e)
+    chunks = chunk_tasks(plan)
+    results = execute_chunks(chunks)
 
     structured = normalize_results(results, query=query)
     trust_report = validate_structured_data(structured, query=query)
