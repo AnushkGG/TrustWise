@@ -8,7 +8,7 @@ echo.
 echo Building TypeScript server...
 echo.
 
-cd /d "%~dp0..\web"
+cd /d "%~dp0..\frontend"
 call npm run build
 if errorlevel 1 (
     echo Build failed

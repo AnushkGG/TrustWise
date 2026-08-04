@@ -61,13 +61,13 @@ Write-Host "   ✓ Python dependencies installed." -ForegroundColor Green
 # 4. Node.js Setup (Web UI)
 Write-Host "`n4. Installing Web UI dependencies..." -ForegroundColor Yellow
 if (Get-Command npm -ErrorAction SilentlyContinue) {
-    if (Test-Path "web") {
-        Push-Location "web"
+    if (Test-Path "frontend") {
+        Push-Location "frontend"
         npm install
         Pop-Location
         Write-Host "   ✓ Node.js dependencies installed." -ForegroundColor Green
     } else {
-        Write-Host "   ℹ️  Warning: 'web' directory not found. Skipping UI setup." -ForegroundColor Yellow
+        Write-Host "   ℹ️  Warning: 'frontend' directory not found. Skipping UI setup." -ForegroundColor Yellow
     }
 } else {
     Write-Host "   ℹ️  Warning: npm is not installed. Skipping UI setup." -ForegroundColor Yellow
@@ -80,4 +80,4 @@ Write-Host "`nNext steps:"
 Write-Host "1. Edit .env and set your GEMINI_API_KEY."
 Write-Host "2. Activate venv: .\venv\Scripts\Activate.ps1"
 Write-Host "3. Run 'python main.py' to start the system."
-Write-Host "4. Navigate to 'web/' and run 'npm run dev' for the UI."
+Write-Host "4. Navigate to 'frontend/' and run 'npm run dev' for the UI."

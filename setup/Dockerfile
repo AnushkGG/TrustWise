@@ -18,18 +18,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 # browser + required OS deps at build time so runtime crawling works.
 RUN python -m playwright install --with-deps chromium
 
-COPY web/package.json web/package-lock.json ./web/
-RUN cd web && npm ci
+COPY frontend/package.json frontend/package-lock.json ./frontend/
+RUN cd frontend && npm ci
 
 COPY . .
 
-RUN cd web && npm run build
+RUN cd frontend && npm run build --if-present
 
 ENV PYTHONUNBUFFERED=1
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
-ENV PORT=5000
+ENV PORT=5001
 
-EXPOSE 5000
+EXPOSE 5001
 
-CMD ["sh", "-c", "cd /app/web && node dist/server.js"]
+CMD ["sh", "-c", "cd /app/frontend && node server.js"]

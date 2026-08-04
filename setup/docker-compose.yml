@@ -1,10 +1,11 @@
 services:
-  trustwise:
+  backend:
     build:
       context: ..
       dockerfile: setup/Dockerfile
     image: trustwise:latest
-    container_name: trustwise-local
+    container_name: trustwise-backend
+    command: ["python", "legacy/app.py"]
     ports:
       - "5000:5000"
     env_file:
@@ -13,7 +14,6 @@ services:
       # Inside Docker, "localhost" points to the container, not your host.
       # Default Ollama to the host bridge so planning works out-of-the-box.
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      # Ensure the Express server binds on all interfaces inside the container.
       HOST: ${HOST:-0.0.0.0}
     volumes:
       - ../data:/app/data
@@ -22,10 +22,27 @@ services:
     stop_grace_period: 30s
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5000/api/status"]
+      test: [ "CMD", "curl", "-fsS", "http://127.0.0.1:5000/api/status" ]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 40s
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: setup/Dockerfile
+    image: trustwise:latest
+    container_name: trustwise-frontend
+    ports:
+      - "5001:5001"
+    env_file:
+      - ../.env
+    init: true
+    stop_grace_period: 30s
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
