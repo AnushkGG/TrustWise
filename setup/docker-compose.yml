@@ -14,9 +14,19 @@ services:
       # Inside Docker, "localhost" points to the container, not your host.
       # Default Ollama to the host bridge so planning works out-of-the-box.
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      FREELLMAPI_BASE_URL: ${FREELLMAPI_BASE_URL:-http://host.docker.internal:3001/v1}
       HOST: ${HOST:-0.0.0.0}
       PYTHONPATH: /app
     volumes:
+      - ../agents:/app/agents
+      - ../orchestrator:/app/orchestrator
+      - ../insights:/app/insights
+      - ../trust:/app/trust
+      - ../utils:/app/utils
+      - ../legacy:/app/legacy
+      - ../static:/app/static
+      - ../frontend/public:/app/frontend/public
+      - ../api_bridge.py:/app/api_bridge.py
       - ../data:/app/data
       - ../logs:/app/logs
     init: true
@@ -38,6 +48,8 @@ services:
       - "5001:5001"
     env_file:
       - ../.env
+    volumes:
+      - ../frontend/public:/app/frontend/public
     init: true
     stop_grace_period: 30s
     restart: unless-stopped

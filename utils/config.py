@@ -117,6 +117,19 @@ class Config:
         """Resolved model name for FreeLLMAPI (per-provider override or shared default)."""
         return cls.FREELLMAPI_MODEL or cls.LLM_MODEL
 
+    _LAST_ACTIVE_MODEL = None
+
+    @classmethod
+    def set_active_model(cls, model_name: str):
+        """Record the actual runtime model returned by the LLM provider."""
+        if model_name:
+            cls._LAST_ACTIVE_MODEL = str(model_name)
+
+    @classmethod
+    def get_active_model(cls) -> str:
+        """Return the last active runtime model, or configured model name."""
+        return cls._LAST_ACTIVE_MODEL or cls.get_freellmapi_model() if cls.LLM_PROVIDER == "freellmapi" else (cls._LAST_ACTIVE_MODEL or cls.LLM_MODEL)
+
     @classmethod
     def validate(cls):
         """Validate required configuration."""

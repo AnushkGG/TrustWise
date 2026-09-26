@@ -30,12 +30,40 @@ from utils.config import Config
 from utils.logger import setup_logger
 from utils.retry import execute_with_retry
 
+import threading
+
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
 logger = setup_logger(__name__)
+
+def _probe_freellmapi_async():
+    """Probe FreeLLMAPI in background to resolve the active router model name."""
+    def _probe():
+        if Config.LLM_PROVIDER == "freellmapi" and Config.FREELLMAPI_API_KEY and not Config._LAST_ACTIVE_MODEL:
+            try:
+                import openai
+                client = openai.OpenAI(
+                    api_key=Config.FREELLMAPI_API_KEY,
+                    base_url=Config.FREELLMAPI_BASE_URL.rstrip("/"),
+                    timeout=8.0,
+                )
+                res = client.chat.completions.create(
+                    model=Config.get_freellmapi_model(),
+                    messages=[{"role": "user", "content": "ping"}],
+                    max_tokens=1,
+                )
+                if hasattr(res, "model") and res.model:
+                    Config.set_active_model(res.model)
+                    logger.info("[FreeLLMAPI] Resolved dynamic active model: %s", res.model)
+            except Exception as e:
+                logger.debug("[FreeLLMAPI] Dynamic probe skipped: %s", e)
+    threading.Thread(target=_probe, daemon=True).start()
+
+# Kick off background probe immediately on module load
+_probe_freellmapi_async()
 
 @app.after_request
 def add_cors_headers(response):
@@ -331,12 +359,15 @@ def get_status():
             providers_available.append("ollama")
         if freellmapi_configured:
             providers_available.append("freellmapi")
+            if not Config._LAST_ACTIVE_MODEL:
+                _probe_freellmapi_async()
 
         return jsonify({
             'success': True,
             'status': {
                 'llm_provider': Config.LLM_PROVIDER,
                 'llm_model': Config.LLM_MODEL,
+                'active_model': Config.get_active_model(),
                 'has_api_key': has_api_key,
                 'ollama_reachable': ollama_reachable,
                 'gemini_configured': gemini_configured,

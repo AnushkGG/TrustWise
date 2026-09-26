@@ -225,6 +225,9 @@ def _freellmapi_summary(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
         max_tokens=500,
         response_format={"type": "json_object"},
     )
+    if hasattr(response, "model") and response.model:
+        Config.set_active_model(response.model)
+
     content = response.choices[0].message.content or ""
     return _parse_json_response(content)
 

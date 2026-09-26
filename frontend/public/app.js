@@ -162,7 +162,10 @@ async function loadSystemStatus() {
 
     const s = data.status || {};
     const provider = (s.llm_provider || "Unknown").toLowerCase();
-    const model = s.llm_model || "";
+    let model = s.active_model || s.freellmapi_model || s.llm_model || "";
+    if (s.llm_model === "auto" && s.active_model && s.active_model !== "auto") {
+      model = `${s.active_model} (auto)`;
+    }
 
     statusText.textContent = `${provider} · ${model}`;
     statusDot.className = "status-dot status-dot--ok";
@@ -304,6 +307,7 @@ async function submitQuery() {
       currentResults = data;
       displayResults(data);
       loadPlans();
+      loadSystemStatus();
       showToast('Pipeline completed successfully.', 'success');
     } else {
       showToast(data.error || 'Request failed', 'error');
@@ -353,18 +357,28 @@ function displayResults(data) {
   // Insights
   const ins = data.insights || {};
   let insightsHtml = '';
-  if (ins.summary) {
+  if (ins.concise_answer || ins.summary || (ins.key_points && ins.key_points.length)) {
+    const mainAnswer = ins.concise_answer || ins.summary || '';
+    const points = Array.isArray(ins.key_points) && ins.key_points.length ? ins.key_points : (ins.key_highlights || []);
+    const pointsHtml = points.length ? `
+      <ul class="insight-highlight-list" style="margin-top:12px;line-height:1.6;">
+        ${points.map(p => {
+          const text = typeof p === 'object' ? (p.text || p.point || p.content || '') : p;
+          return text ? `<li>${escapeHtml(text)}</li>` : '';
+        }).filter(Boolean).join('')}
+      </ul>` : '';
+    const metaNote = ins.summary && ins.summary !== mainAnswer ? 
+      `<div style="font-size:12px;color:var(--fg-muted, #8b949e);margin-top:10px;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;">${escapeHtml(ins.summary)}</div>` : '';
+
     insightsHtml += `
       <div class="panel-inner">
         <div class="panel-title-row">
           <div class="panel-title-text">Research Synthesis</div>
         </div>
         <div class="panel-body">
-          <p>${escapeHtml(ins.summary)}</p>
-          ${ins.key_highlights && ins.key_highlights.length ? 
-            `<ul class="insight-highlight-list">
-              ${ins.key_highlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}
-             </ul>` : ''}
+          <p style="font-size:15px;line-height:1.6;font-weight:450;">${escapeHtml(mainAnswer)}</p>
+          ${pointsHtml}
+          ${metaNote}
         </div>
       </div>
     `;

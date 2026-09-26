@@ -309,11 +309,14 @@ def _call_freellmapi(user_prompt: str, model_override: Optional[str] = None) -> 
         logger.error("Failed to connect to FreeLLMAPI at %s", base_url)
         raise
 
+    if hasattr(response, "model") and response.model:
+        Config.set_active_model(response.model)
+
     content = response.choices[0].message.content or ""
     if not content:
         raise ValueError("FreeLLMAPI returned empty response")
 
-    logger.info("FreeLLMAPI response received")
+    logger.info("FreeLLMAPI response received using model: %s", getattr(response, "model", model_name))
     return content
 
 
