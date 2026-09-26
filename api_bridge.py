@@ -260,8 +260,8 @@ def handle_submit(payload: dict) -> dict:
             "total_tasks": len(plan.get("tasks", [])),
         },
         "execution": {
-            "web_tasks": len(web_tasks),
-            "paper_tasks": len(paper_tasks),
+            "web_tasks": sum(1 for t in plan.get("tasks", []) if t.get("type") == "web"),
+            "paper_tasks": sum(1 for t in plan.get("tasks", []) if t.get("type") == "paper"),
             "total_results": len(results),
             "successful": sum(1 for r in results if r.get("status") == "success"),
             "structured_items": len(structured_data),
@@ -294,6 +294,7 @@ def handle_status(_payload: dict) -> dict:
     """Return system status."""
     ollama_reachable = False
     gemini_configured = bool(Config.GEMINI_API_KEY)
+    freellmapi_configured = bool(Config.FREELLMAPI_API_KEY)
 
     try:
         import requests
@@ -308,6 +309,8 @@ def handle_status(_payload: dict) -> dict:
         has_api_key = gemini_configured
     elif Config.LLM_PROVIDER == "ollama":
         has_api_key = ollama_reachable
+    elif Config.LLM_PROVIDER == "freellmapi":
+        has_api_key = freellmapi_configured
     else:
         has_api_key = False
 
@@ -316,6 +319,8 @@ def handle_status(_payload: dict) -> dict:
         providers_available.append("gemini")
     if ollama_reachable:
         providers_available.append("ollama")
+    if freellmapi_configured:
+        providers_available.append("freellmapi")
 
     return {
         "success": True,
@@ -325,6 +330,7 @@ def handle_status(_payload: dict) -> dict:
             "has_api_key": has_api_key,
             "ollama_reachable": ollama_reachable,
             "gemini_configured": gemini_configured,
+            "freellmapi_configured": freellmapi_configured,
             "providers_available": providers_available,
             "save_plans": Config.SAVE_PLANS,
             "save_raw_data": Config.SAVE_RAW_DATA,

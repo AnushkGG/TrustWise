@@ -15,6 +15,7 @@ services:
       # Default Ollama to the host bridge so planning works out-of-the-box.
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       HOST: ${HOST:-0.0.0.0}
+      PYTHONPATH: /app
     volumes:
       - ../data:/app/data
       - ../logs:/app/logs
@@ -31,9 +32,6 @@ services:
       - "host.docker.internal:host-gateway"
 
   frontend:
-    build:
-      context: ..
-      dockerfile: setup/Dockerfile
     image: trustwise:latest
     container_name: trustwise-frontend
     ports:
@@ -46,3 +44,4 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+

@@ -182,6 +182,17 @@
             }
             return;
           }
+          if (provider === "freellmapi") {
+            const ok = s.freellmapi_configured === true || s.has_api_key === true;
+            if (ok) {
+              statusText.textContent = `FreeLLMAPI \xB7 ${model}`;
+              statusDot.className = "status-dot status-dot--ok";
+            } else {
+              statusText.textContent = "FreeLLMAPI not configured";
+              statusDot.className = "status-dot status-dot--warn";
+            }
+            return;
+          }
           statusText.textContent = `${provider || "LLM"} \xB7 ${model}`;
           statusDot.className = "status-dot status-dot--ok";
         } catch (error) {

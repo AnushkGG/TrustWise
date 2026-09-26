@@ -204,6 +204,31 @@ def _gemini_summary(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
     return _parse_json_response(content)
 
 
+def _freellmapi_summary(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+    """Call FreeLLMAPI (OpenAI-compatible) for an insight summary."""
+    import openai
+
+    model_name = Config.get_freellmapi_model()
+    base_url = Config.FREELLMAPI_BASE_URL.rstrip("/")
+    client = openai.OpenAI(
+        api_key=Config.FREELLMAPI_API_KEY,
+        base_url=base_url,
+        timeout=90.0,
+    )
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.1,
+        max_tokens=500,
+        response_format={"type": "json_object"},
+    )
+    content = response.choices[0].message.content or ""
+    return _parse_json_response(content)
+
+
 # ---------------------------------------------------------------------------
 # Merge helpers for insight summaries
 # ---------------------------------------------------------------------------
@@ -332,6 +357,13 @@ def _call_llm_for_summary(query: str, context: str) -> Dict[str, Any]:
             return _ollama_summary(sys_p, usr_p)
         except Exception as exc:
             logger.warning("[Insights] Ollama summary failed: %s", exc)
+            return {}
+
+    if provider == "freellmapi" and Config.FREELLMAPI_API_KEY:
+        try:
+            return _freellmapi_summary(sys_p, usr_p)
+        except Exception as exc:
+            logger.warning("[Insights] FreeLLMAPI summary failed: %s", exc)
             return {}
 
     if provider == "gemini" and Config.GEMINI_API_KEY:

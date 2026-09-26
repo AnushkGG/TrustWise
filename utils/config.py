@@ -22,8 +22,8 @@ class Config:
     DB_PATH = DATA_DIR / "trustwise.db"
     CONFIG_DIR = BASE_DIR / "config"
     
-    # LLM Settings — Gemini (cloud), Ollama (local), or both; default is local Ollama
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")  # gemini, ollama, or both
+    # LLM Settings — Gemini (cloud), Ollama (local), FreeLLMAPI (gateway), or both; default is local Ollama
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")  # gemini, ollama, freellmapi, or both
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     LLM_MODEL: str = os.getenv("LLM_MODEL", "llama3.2")
@@ -31,6 +31,10 @@ class Config:
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "")   # per-provider override (falls back to LLM_MODEL)
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.0"))
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
+    # FreeLLMAPI — OpenAI-compatible gateway (proxies Groq, OpenRouter, etc.)
+    FREELLMAPI_API_KEY: Optional[str] = os.getenv("FREELLMAPI_API_KEY") or None
+    FREELLMAPI_BASE_URL: str = os.getenv("FREELLMAPI_BASE_URL") or "http://localhost:3001/v1"
+    FREELLMAPI_MODEL: str = os.getenv("FREELLMAPI_MODEL", "")  # per-provider override (falls back to LLM_MODEL)
     
     # Agent Settings
     WEB_SCRAPER_TIMEOUT: int = int(os.getenv("WEB_SCRAPER_TIMEOUT", "10"))
@@ -109,12 +113,19 @@ class Config:
         return cls.OLLAMA_MODEL or cls.LLM_MODEL
 
     @classmethod
+    def get_freellmapi_model(cls) -> str:
+        """Resolved model name for FreeLLMAPI (per-provider override or shared default)."""
+        return cls.FREELLMAPI_MODEL or cls.LLM_MODEL
+
+    @classmethod
     def validate(cls):
         """Validate required configuration."""
         if cls.LLM_PROVIDER in ("gemini", "both") and not cls.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is required when LLM_PROVIDER is 'gemini' or 'both'")
-        if cls.LLM_PROVIDER not in ("gemini", "ollama", "both"):
-            raise ValueError(f"Invalid LLM_PROVIDER: {cls.LLM_PROVIDER}. Must be 'gemini', 'ollama', or 'both'")
+        if cls.LLM_PROVIDER == "freellmapi" and not cls.FREELLMAPI_API_KEY:
+            raise ValueError("FREELLMAPI_API_KEY is required when LLM_PROVIDER is 'freellmapi'")
+        if cls.LLM_PROVIDER not in ("gemini", "ollama", "freellmapi", "both"):
+            raise ValueError(f"Invalid LLM_PROVIDER: {cls.LLM_PROVIDER}. Must be 'gemini', 'ollama', 'freellmapi', or 'both'")
 
 # Initialize directories on import
 Config.ensure_directories()

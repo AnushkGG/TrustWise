@@ -85,9 +85,10 @@ def call_llm(user_query: str) -> str:
     Calls the configured LLM to generate a structured execution plan.
 
     Supported providers:
-      - ``gemini``  -- Google Gemini API (cloud, requires GEMINI_API_KEY)
-      - ``ollama``  -- Local Ollama server (no API key needed)
-      - ``both``    -- Call Gemini + Ollama in parallel, merge results
+      - ``gemini``      -- Google Gemini API (cloud, requires GEMINI_API_KEY)
+      - ``ollama``      -- Local Ollama server (no API key needed)
+      - ``freellmapi``  -- OpenAI-compatible gateway (requires FREELLMAPI_API_KEY)
+      - ``both``        -- Call Gemini + Ollama in parallel, merge results
 
     Falls back to a mock response when the required API key is missing
     or when authentication fails.
@@ -95,6 +96,9 @@ def call_llm(user_query: str) -> str:
 
     if Config.LLM_PROVIDER in ("gemini", "both") and not Config.GEMINI_API_KEY:
         return _maybe_mock_or_raise(user_query, "GEMINI_API_KEY not set.")
+
+    if Config.LLM_PROVIDER == "freellmapi" and not Config.FREELLMAPI_API_KEY:
+        return _maybe_mock_or_raise(user_query, "FREELLMAPI_API_KEY not set.")
 
     if Config.LLM_PROVIDER == "both":
         return _call_both(user_query)
@@ -122,6 +126,20 @@ def call_llm(user_query: str) -> str:
                 raise
             except (req_lib.exceptions.ConnectionError, req_lib.exceptions.Timeout) as e:
                 return _maybe_mock_or_raise(user_query, f"Ollama unavailable ({e}).")
+        elif Config.LLM_PROVIDER == "freellmapi":
+            try:
+                return _call_freellmapi(user_prompt)
+            except Exception as e:
+                error_str = str(e)
+                if "401" in error_str or "403" in error_str or "authentication" in error_str.lower():
+                    return _maybe_mock_or_raise(user_query, "FreeLLMAPI authentication failed.")
+                if "429" in error_str or "rate" in error_str.lower():
+                    return _maybe_mock_or_raise(user_query, f"FreeLLMAPI rate limit hit ({e}).")
+                if "timeout" in error_str.lower() or "timed out" in error_str.lower():
+                    return _maybe_mock_or_raise(user_query, f"FreeLLMAPI request timed out ({e}).")
+                if "connect" in error_str.lower():
+                    return _maybe_mock_or_raise(user_query, f"FreeLLMAPI unreachable ({e}).")
+                raise
         else:
             raise ValueError(f"Unsupported LLM provider: {Config.LLM_PROVIDER}")
     except Exception as e:
@@ -247,6 +265,56 @@ def _call_ollama(user_prompt: str, model_override: Optional[str] = None) -> str:
     except requests.exceptions.Timeout:
         logger.error("Ollama request timed out")
         raise
+
+
+def _call_freellmapi(user_prompt: str, model_override: Optional[str] = None) -> str:
+    """Call FreeLLMAPI via OpenAI-compatible /v1/chat/completions endpoint."""
+    try:
+        import openai
+    except ImportError:
+        logger.error("openai package not installed. Run: pip install openai")
+        raise ImportError("openai package required for FreeLLMAPI. Install with: pip install openai")
+
+    model_name = model_override or Config.get_freellmapi_model()
+    base_url = Config.FREELLMAPI_BASE_URL.rstrip("/")
+    logger.info("Calling FreeLLMAPI model %s at %s...", model_name, base_url)
+
+    client = openai.OpenAI(
+        api_key=Config.FREELLMAPI_API_KEY,
+        base_url=base_url,
+        timeout=120.0,
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=Config.LLM_TEMPERATURE,
+            max_tokens=Config.LLM_MAX_TOKENS,
+            response_format={"type": "json_object"},
+        )
+    except openai.AuthenticationError:
+        logger.error("FreeLLMAPI authentication failed (invalid API key)")
+        raise
+    except openai.RateLimitError:
+        logger.error("FreeLLMAPI rate limit exceeded")
+        raise
+    except openai.APITimeoutError:
+        logger.error("FreeLLMAPI request timed out")
+        raise
+    except openai.APIConnectionError:
+        logger.error("Failed to connect to FreeLLMAPI at %s", base_url)
+        raise
+
+    content = response.choices[0].message.content or ""
+    if not content:
+        raise ValueError("FreeLLMAPI returned empty response")
+
+    logger.info("FreeLLMAPI response received")
+    return content
 
 
 # ---------------------------------------------------------------------------

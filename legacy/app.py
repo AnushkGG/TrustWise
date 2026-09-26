@@ -7,9 +7,14 @@ Provides a user-friendly UI for submitting queries and viewing results.
 
 import json
 import os
+import sys
 import secrets
 from datetime import datetime
 from pathlib import Path
+
+# Ensure the project root is on sys.path so imports work when run from legacy/.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 
@@ -162,8 +167,8 @@ def submit_query():
                 'total_tasks': len(plan.get('tasks', []))
             },
             'execution': {
-                'web_tasks': len(web_tasks),
-                'paper_tasks': len(paper_tasks),
+                'web_tasks': sum(1 for t in plan.get('tasks', []) if t.get('type') == 'web'),
+                'paper_tasks': sum(1 for t in plan.get('tasks', []) if t.get('type') == 'paper'),
                 'total_results': len(results),
                 'successful': sum(1 for r in results if r.get('status') == 'success'),
                 'structured_items': len(structured_data),
@@ -299,6 +304,7 @@ def get_status():
     """
     try:
         gemini_configured = bool(Config.GEMINI_API_KEY)
+        freellmapi_configured = bool(Config.FREELLMAPI_API_KEY)
         ollama_reachable = False
         try:
             import requests
@@ -313,6 +319,8 @@ def get_status():
             has_api_key = gemini_configured
         elif Config.LLM_PROVIDER == "ollama":
             has_api_key = ollama_reachable
+        elif Config.LLM_PROVIDER == "freellmapi":
+            has_api_key = freellmapi_configured
         else:
             has_api_key = False
 
@@ -321,6 +329,8 @@ def get_status():
             providers_available.append("gemini")
         if ollama_reachable:
             providers_available.append("ollama")
+        if freellmapi_configured:
+            providers_available.append("freellmapi")
 
         return jsonify({
             'success': True,
@@ -330,6 +340,7 @@ def get_status():
                 'has_api_key': has_api_key,
                 'ollama_reachable': ollama_reachable,
                 'gemini_configured': gemini_configured,
+                'freellmapi_configured': freellmapi_configured,
                 'providers_available': providers_available,
                 'save_plans': Config.SAVE_PLANS,
                 'save_raw_data': Config.SAVE_RAW_DATA,
@@ -401,17 +412,24 @@ if __name__ == '__main__':
             resp = requests.get(f"{Config.OLLAMA_BASE_URL}/api/tags", timeout=2)
             if resp.status_code == 200:
                 models = [m['name'] for m in resp.json().get('models', [])]
-                print(f"✓ Ollama is running — available models: {', '.join(models)}")
+                print(f"[OK] Ollama is running - available models: {', '.join(models)}")
             else:
-                print("⚠️  Ollama server responded but returned an error")
+                print("[WARN] Ollama server responded but returned an error")
         except Exception:
-            print("⚠️  Cannot connect to Ollama. Make sure 'ollama serve' is running")
+            print("[WARN] Cannot connect to Ollama. Make sure 'ollama serve' is running")
+    elif Config.LLM_PROVIDER == "freellmapi":
+        print(f"FreeLLMAPI URL: {Config.FREELLMAPI_BASE_URL}")
+        print(f"FreeLLMAPI Model: {Config.get_freellmapi_model()}")
+        if Config.FREELLMAPI_API_KEY:
+            print("[OK] FreeLLMAPI API key configured")
+        else:
+            print("[WARN] FREELLMAPI_API_KEY not set")
     else:
         try:
             Config.validate()
-            print("✓ Using real LLM API")
+            print("[OK] Using real LLM API")
         except ValueError:
-            print("⚠️  Using mock LLM responses (no API key configured)")
+            print("[WARN] Using mock LLM responses (no API key configured)")
     
     print("\nStarting server on http://localhost:5000")
     print("Press Ctrl+C to stop")

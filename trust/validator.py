@@ -183,7 +183,8 @@ def _suspicious_penalty(content: str) -> float:
 def _extract_query_terms(query: str) -> Set[str]:
     words = re.findall(r"[a-zA-Z0-9]+", query.lower())
     stop = {
-        "tell", "me", "about", "latest", "recent", "find", "get", "show", "the", "a", "an", "on", "in", "for"
+        "tell", "me", "about", "latest", "recent", "find", "get", "show", "the", "a", "an", "on", "in", "for",
+        "search", "fetch", "retrieve", "what", "how", "why", "are", "is", "trends", "analysis",
     }
     return {w for w in words if len(w) > 2 and w not in stop}
 
