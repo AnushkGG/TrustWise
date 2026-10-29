@@ -58,13 +58,13 @@ echo -e "${GREEN}✓ Python dependencies installed.${NC}"
 # 4. Node.js Setup (Web UI)
 echo -e "\n${YELLOW}4. Installing Web UI dependencies...${NC}"
 if command -v npm &> /dev/null; then
-    if [ -d "web" ]; then
-        cd web
+    if [ -d "frontend" ]; then
+        cd frontend
         npm install
         cd ..
         echo -e "${GREEN}✓ Node.js dependencies installed.${NC}"
     else
-        echo -e "${YELLOW}ℹ️  Warning: 'web' directory not found. Skipping UI setup.${NC}"
+        echo -e "${YELLOW}ℹ️  Warning: 'frontend' directory not found. Skipping UI setup.${NC}"
     fi
 else
     echo -e "${YELLOW}ℹ️  Warning: npm is not installed. Skipping UI setup.${NC}"
@@ -77,4 +77,4 @@ echo -e "\nNext steps:"
 echo -e "1. Edit .env and set your GEMINI_API_KEY."
 echo -e "2. Run 'source venv/bin/activate' to enter the environment."
 echo -e "3. Run 'python main.py' to start the system."
-echo -e "4. Navigate to 'web/' and run 'npm run dev' for the UI."
+echo -e "4. Navigate to 'frontend/' and run 'npm run dev' for the UI."

@@ -65,32 +65,57 @@ def test_schema_validation():
         return True
 
 def test_chunker():
-    """Test task chunking."""
+    """Test task chunking and DAG dependency generation."""
     print("\nTesting chunker...")
     from chunker.chunker import chunk_tasks
     
     plan = {
-        "goal": "Test",
+        "goal": "Explain how transformer models improve medical diagnosis",
         "tasks": [
-            {"task_id": "t1", "prompt": "test1"},
-            {"task_id": "t2", "prompt": "test2"}
+            {"task_id": "t1", "source_type": "web", "prompt": "Search web for recent diagnostic transformer developments"},
+            {"task_id": "t2", "source_type": "web", "prompt": "Search web for recent diagnostic transformer developments"}, # duplicate
+            {"task_id": "t3", "source_type": "research_papers", "prompt": "Retrieve PubMed papers about transformer models"},
+            {"task_id": "t4", "source_type": "research_papers", "prompt": "Compare and synthesize findings of t1 and t3"}, # dependency
         ]
     }
     
-    tasks = chunk_tasks(plan)
+    chunks = chunk_tasks(plan)
     
-    if len(tasks) == 2:
-        print("   ✓ Chunker works correctly")
+    try:
+        # Check deduplication (t1 and t2 should merge/dedupe)
+        assert len(chunks) == 3, f"Expected 3 chunks after dedup, got {len(chunks)}"
+        
+        # Check normalization keys
+        for c in chunks:
+            assert "chunk_id" in c
+            assert "parent_query" in c
+            assert "dependencies" in c
+            assert "agent" in c
+            assert "retry_policy" in c
+            assert "trust_constraints" in c
+            
+        # Check dependency resolution (t4 is synthesis and contains compare, should depend on t1 and t3/PubMed chunk)
+        t4_chunks = [c for c in chunks if "t4" in c["chunk_id"] or "compare" in c["description"].lower()]
+        assert len(t4_chunks) == 1
+        t4 = t4_chunks[0]
+        assert len(t4["dependencies"]) >= 2
+        
+        print("   ✓ Chunker deduplication and dependency resolution OK")
         return True
-    else:
-        print(f"   ✗ Expected 2 tasks, got {len(tasks)}")
+    except AssertionError as e:
+        print(f"   ✗ Chunker validation failed: {e}")
+        return False
+    except Exception as e:
+        print(f"   ✗ Chunker test error: {e}")
         return False
 
 def test_scheduler():
-    """Test task scheduling."""
+    """Test scheduling and parallel executor."""
     print("\nTesting scheduler...")
-    from scheduler.scheduler import schedule
+    from scheduler.scheduler import schedule, execute_chunks
+    from unittest.mock import patch
     
+    # Test routing compatibility
     tasks = [
         {"task_id": "t1", "source_type": "web"},
         {"task_id": "t2", "source_type": "research_papers"},
@@ -98,12 +123,58 @@ def test_scheduler():
     ]
     
     web_tasks, paper_tasks = schedule(tasks)
+    assert len(web_tasks) == 2 and len(paper_tasks) == 1
     
-    if len(web_tasks) == 2 and len(paper_tasks) == 1:
-        print("   ✓ Scheduler routing works correctly")
+    # Test DAG Execution with mocked agents
+    chunks = [
+        {
+            "chunk_id": "c1",
+            "parent_query": "test",
+            "title": "c1",
+            "description": "test",
+            "priority": 3,
+            "dependencies": [],
+            "agent": "web_agent",
+            "source_types": ["web"],
+            "trust_constraints": {"min_trust_score": 0.6},
+            "expected_output": "markdown",
+            "retry_policy": {"max_retries": 1, "backoff_factor": 1.0}
+        },
+        {
+            "chunk_id": "c2",
+            "parent_query": "test",
+            "title": "c2",
+            "description": "test",
+            "priority": 3,
+            "dependencies": ["c1"], # c2 depends on c1
+            "agent": "research_agent",
+            "source_types": ["arxiv"],
+            "trust_constraints": {"min_trust_score": 0.6},
+            "expected_output": "metadata_json",
+            "retry_policy": {"max_retries": 1, "backoff_factor": 1.0}
+        }
+    ]
+    
+    def mock_run_web(chunk):
+        return {"status": "success", "agent": "web_agent", "data": "web data"}
+        
+    def mock_run_research(chunk):
+        return {"status": "success", "agent": "research_agent", "data": "research data"}
+        
+    with patch("agents.web_agent.run", side_effect=mock_run_web), \
+         patch("agents.research_agent.run", side_effect=mock_run_research):
+         
+        results = execute_chunks(chunks)
+        
+    try:
+        assert len(results) == 2, f"Expected 2 results, got {len(results)}"
+        res_map = {r["task_id"]: r for r in results}
+        assert res_map["c1"]["status"] == "success"
+        assert res_map["c2"]["status"] == "success"
+        print("   ✓ Scheduler routing and concurrent DAG execution OK")
         return True
-    else:
-        print(f"   ✗ Expected 2 web, 1 paper. Got {len(web_tasks)} web, {len(paper_tasks)} paper")
+    except AssertionError as e:
+        print(f"   ✗ Scheduler validation failed: {e}")
         return False
 
 def test_config():
@@ -295,6 +366,151 @@ def test_merge_summaries():
         print(f"   ✗ Summary merge error: {e}")
         return False
 
+def test_academic_retrieval():
+    """Test PubMed XML parsing and Scopus complete/standard fallback logic."""
+    print("\nTesting academic retrieval enhancement...")
+    from agents.research_sources import _parse_pubmed_efetch_xml
+    from agents.keyed_adapters import fetch_scopus
+    from utils.config import Config
+    from unittest.mock import patch
+    from agents.keyed_http import KeyedAdapterError
+
+    # 1. PubMed XML Parsing Tests
+    xml_with_abstract = """
+    <PubmedArticleSet>
+      <PubmedArticle>
+        <MedlineCitation>
+          <PMID>11111</PMID>
+          <Article>
+            <Journal>
+              <Title>Journal of TrustWise Medicine</Title>
+              <JournalIssue>
+                <PubDate>
+                  <Year>2024</Year>
+                </PubDate>
+              </JournalIssue>
+            </Journal>
+            <ArticleTitle>AI in Diagnostics</ArticleTitle>
+            <Abstract>
+              <AbstractText Label="OBJECTIVE">To test diagnostics.</AbstractText>
+              <AbstractText Label="CONCLUSION">Conclusion of test.</AbstractText>
+            </Abstract>
+            <AuthorList>
+              <Author>
+                <LastName>Doe</LastName>
+                <ForeName>John</ForeName>
+              </Author>
+            </AuthorList>
+            <KeywordList>
+              <Keyword>Deep Learning</Keyword>
+            </KeywordList>
+          </Article>
+          <MeshHeadingList>
+            <MeshHeading>
+              <DescriptorName>Diagnostics</DescriptorName>
+            </MeshHeading>
+          </MeshHeadingList>
+        </MedlineCitation>
+        <PubmedData>
+          <ArticleIdList>
+            <ArticleId IdType="doi">10.1111/tw.123</ArticleId>
+          </ArticleIdList>
+        </PubmedData>
+      </PubmedArticle>
+    </PubmedArticleSet>
+    """
+    
+    papers = _parse_pubmed_efetch_xml(xml_with_abstract)
+    try:
+        assert len(papers) == 1
+        p = papers[0]
+        assert p["pubmed_id"] == "11111"
+        assert p["title"] == "AI in Diagnostics"
+        assert "OBJECTIVE: To test diagnostics." in p["abstract"]
+        assert "CONCLUSION: Conclusion of test." in p["abstract"]
+        assert p["authors"] == ["John Doe"]
+        assert p["journal"] == "Journal of TrustWise Medicine"
+        assert p["published"] == "2024"
+        assert p["doi"] == "10.1111/tw.123"
+        assert "Deep Learning" in p["keywords"]
+        assert "Diagnostics" in p["mesh_terms"]
+    except AssertionError as e:
+        print(f"   ✗ PubMed XML parsing with abstract failed: {e}")
+        return False
+
+    # XML without abstract
+    xml_no_abstract = """
+    <PubmedArticleSet>
+      <PubmedArticle>
+        <MedlineCitation>
+          <PMID>22222</PMID>
+          <Article>
+            <ArticleTitle>No Abstract Article</ArticleTitle>
+          </Article>
+        </MedlineCitation>
+      </PubmedArticle>
+    </PubmedArticleSet>
+    """
+    papers_no = _parse_pubmed_efetch_xml(xml_no_abstract)
+    try:
+        assert len(papers_no) == 1
+        assert papers_no[0]["pubmed_id"] == "22222"
+        assert papers_no[0]["abstract"] == ""
+    except AssertionError as e:
+        print(f"   ✗ PubMed XML parsing without abstract failed: {e}")
+        return False
+
+    # Invalid XML
+    assert _parse_pubmed_efetch_xml("<invalid>") == []
+
+    # 2. Scopus Fallback and complete view test
+    original_key = Config.SCOPUS_API_KEY
+    Config.SCOPUS_API_KEY = "test_key"
+    
+    complete_err = KeyedAdapterError("HTTP Error", http_status=403, error_type="http_error")
+    
+    def mock_request(method, url, session, params):
+        if params.get("view") == "COMPLETE":
+            raise complete_err
+        return {
+            "search-results": {
+                "entry": [
+                    {
+                        "dc:title": "Scopus Fallback Hit",
+                        "dc:creator": ["Alice Smith"],
+                        "prism:coverDate": "2024-05-12",
+                        "prism:doi": "10.5555/scp.123",
+                        "dc:description": "Scopus abstract fallback",
+                        "authkeywords": "Machine Learning|Healthcare",
+                        "citedby-count": "15"
+                    }
+                ]
+            }
+        }, {"http_status": 200, "retries_used": 1, "ok": True}
+
+    with patch("agents.keyed_adapters.safe_request_json", side_effect=mock_request):
+        rows, meta = fetch_scopus("test query", limit=1)
+        
+    try:
+        assert meta["ok"] is True
+        assert len(rows) == 1
+        r = rows[0]
+        assert r["title"] == "Scopus Fallback Hit"
+        assert r["authors"] == ["Alice Smith"]
+        assert r["published"] == "2024-05-12"
+        assert r["doi"] == "10.5555/scp.123"
+        assert r["abstract"] == "Scopus abstract fallback"
+        assert r["journal"] == ""
+        assert r["citation_count"] == 15
+        assert "Machine Learning" in r["keywords"]
+        print("   ✓ PubMed & Scopus metadata parsing and fallback execution OK")
+        return True
+    except AssertionError as e:
+        print(f"   ✗ Scopus complete to standard fallback failed: {e}")
+        return False
+    finally:
+        Config.SCOPUS_API_KEY = original_key
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -311,6 +527,7 @@ def main():
         test_mock_llm,
         test_merge_plans,
         test_merge_summaries,
+        test_academic_retrieval,
     ]
     
     results = []

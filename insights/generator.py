@@ -86,8 +86,26 @@ def _build_summary_context(items: List[Dict[str, Any]], max_items: int = 5, max_
         title = (item.get("title") or "Untitled").strip()
         source = (item.get("source") or "unknown").strip()
         
-        # Use a more descriptive prefix to help the LLM cite correctly
+        # Extract rich metadata properties
+        authors = ", ".join(item.get("authors") or []) if item.get("authors") else ""
+        pub_date = item.get("published_at") or ""
+        journal = item.get("journal") or ""
+        citations = item.get("citation_count")
+        
+        meta_parts = []
+        if authors:
+            meta_parts.append(f"Authors: {authors}")
+        if pub_date:
+            meta_parts.append(f"Date: {pub_date}")
+        if journal:
+            meta_parts.append(f"Journal: {journal}")
+        if citations is not None and citations > 0:
+            meta_parts.append(f"Citations: {citations}")
+            
+        meta_str = " | ".join(meta_parts)
         prefix = f"[Source {idx}] ({source}: {title})"
+        if meta_str:
+            prefix += f"\nMetadata: {meta_str}"
         
         content = _normalize_sentence((item.get("content") or "").replace("\n", " "))
         snippet = content[:max_chars]
@@ -183,6 +201,34 @@ def _gemini_summary(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
     )
     response = model.generate_content(user_prompt)
     content = response.text or ""
+    return _parse_json_response(content)
+
+
+def _freellmapi_summary(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+    """Call FreeLLMAPI (OpenAI-compatible) for an insight summary."""
+    import openai
+
+    model_name = Config.get_freellmapi_model()
+    base_url = Config.FREELLMAPI_BASE_URL.rstrip("/")
+    client = openai.OpenAI(
+        api_key=Config.FREELLMAPI_API_KEY,
+        base_url=base_url,
+        timeout=90.0,
+    )
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.1,
+        max_tokens=500,
+        response_format={"type": "json_object"},
+    )
+    if hasattr(response, "model") and response.model:
+        Config.set_active_model(response.model)
+
+    content = response.choices[0].message.content or ""
     return _parse_json_response(content)
 
 
@@ -314,6 +360,13 @@ def _call_llm_for_summary(query: str, context: str) -> Dict[str, Any]:
             return _ollama_summary(sys_p, usr_p)
         except Exception as exc:
             logger.warning("[Insights] Ollama summary failed: %s", exc)
+            return {}
+
+    if provider == "freellmapi" and Config.FREELLMAPI_API_KEY:
+        try:
+            return _freellmapi_summary(sys_p, usr_p)
+        except Exception as exc:
+            logger.warning("[Insights] FreeLLMAPI summary failed: %s", exc)
             return {}
 
     if provider == "gemini" and Config.GEMINI_API_KEY:

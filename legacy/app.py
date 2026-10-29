@@ -7,15 +7,20 @@ Provides a user-friendly UI for submitting queries and viewing results.
 
 import json
 import os
+import sys
 import secrets
 from datetime import datetime
 from pathlib import Path
+
+# Ensure the project root is on sys.path so imports work when run from legacy/.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 
 from orchestrator.orchestrator import generate_plan
 from chunker.chunker import chunk_tasks
-from scheduler.scheduler import schedule
+from scheduler.scheduler import schedule, execute_chunks
 from agents import web_agent, research_agent
 from cleaner import normalize_results
 from trust import validate_structured_data
@@ -25,12 +30,47 @@ from utils.config import Config
 from utils.logger import setup_logger
 from utils.retry import execute_with_retry
 
+import threading
+
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
 logger = setup_logger(__name__)
+
+def _probe_freellmapi_async():
+    """Probe FreeLLMAPI in background to resolve the active router model name."""
+    def _probe():
+        if Config.LLM_PROVIDER == "freellmapi" and Config.FREELLMAPI_API_KEY and not Config._LAST_ACTIVE_MODEL:
+            try:
+                import openai
+                client = openai.OpenAI(
+                    api_key=Config.FREELLMAPI_API_KEY,
+                    base_url=Config.FREELLMAPI_BASE_URL.rstrip("/"),
+                    timeout=8.0,
+                )
+                res = client.chat.completions.create(
+                    model=Config.get_freellmapi_model(),
+                    messages=[{"role": "user", "content": "ping"}],
+                    max_tokens=1,
+                )
+                if hasattr(res, "model") and res.model:
+                    Config.set_active_model(res.model)
+                    logger.info("[FreeLLMAPI] Resolved dynamic active model: %s", res.model)
+            except Exception as e:
+                logger.debug("[FreeLLMAPI] Dynamic probe skipped: %s", e)
+    threading.Thread(target=_probe, daemon=True).start()
+
+# Kick off background probe immediately on module load
+_probe_freellmapi_async()
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS, PUT, DELETE'
+    return response
 
 # Store active execution state
 execution_state = {
@@ -120,49 +160,11 @@ def submit_query():
                 return jsonify(response)
         
         # Step 2: Chunk Tasks
-        tasks = chunk_tasks(plan)
+        chunks = chunk_tasks(plan)
         
-        # Step 3: Schedule Tasks
-        web_tasks, paper_tasks = schedule(tasks)
-        
-        # Step 4: Execute Tasks
-        results = []
-        
-        # Execute web tasks (with retry on transient failures)
-        for task in web_tasks:
-            try:
-                result = execute_with_retry(
-                    web_agent.run, task,
-                    max_retries=2, base_delay=1.0,
-                    retryable_exceptions=(ConnectionError, TimeoutError, OSError),
-                )
-                results.append(result)
-                execution_state["current_results"].append(result)
-            except Exception as e:
-                logger.error(f"Web task {task.get('task_id')} failed: {e}")
-                results.append({
-                    "task_id": task.get('task_id'),
-                    "status": "failed",
-                    "error": str(e)
-                })
-        
-        # Execute research tasks (with retry on transient failures)
-        for task in paper_tasks:
-            try:
-                result = execute_with_retry(
-                    research_agent.run, task,
-                    max_retries=2, base_delay=1.0,
-                    retryable_exceptions=(ConnectionError, TimeoutError, OSError),
-                )
-                results.append(result)
-                execution_state["current_results"].append(result)
-            except Exception as e:
-                logger.error(f"Research task {task.get('task_id')} failed: {e}")
-                results.append({
-                    "task_id": task.get('task_id'),
-                    "status": "failed",
-                    "error": str(e)
-                })
+        # Step 3 & 4: Schedule and Execute Chunks Concurrently
+        results = execute_chunks(chunks)
+        execution_state["current_results"] = results
 
         # Step 5: Clean and structure outputs (Phase 2)
         structured_data = normalize_results(results, query=query)
@@ -193,8 +195,8 @@ def submit_query():
                 'total_tasks': len(plan.get('tasks', []))
             },
             'execution': {
-                'web_tasks': len(web_tasks),
-                'paper_tasks': len(paper_tasks),
+                'web_tasks': sum(1 for t in plan.get('tasks', []) if t.get('type') == 'web'),
+                'paper_tasks': sum(1 for t in plan.get('tasks', []) if t.get('type') == 'paper'),
                 'total_results': len(results),
                 'successful': sum(1 for r in results if r.get('status') == 'success'),
                 'structured_items': len(structured_data),
@@ -330,6 +332,7 @@ def get_status():
     """
     try:
         gemini_configured = bool(Config.GEMINI_API_KEY)
+        freellmapi_configured = bool(Config.FREELLMAPI_API_KEY)
         ollama_reachable = False
         try:
             import requests
@@ -344,6 +347,8 @@ def get_status():
             has_api_key = gemini_configured
         elif Config.LLM_PROVIDER == "ollama":
             has_api_key = ollama_reachable
+        elif Config.LLM_PROVIDER == "freellmapi":
+            has_api_key = freellmapi_configured
         else:
             has_api_key = False
 
@@ -352,15 +357,21 @@ def get_status():
             providers_available.append("gemini")
         if ollama_reachable:
             providers_available.append("ollama")
+        if freellmapi_configured:
+            providers_available.append("freellmapi")
+            if not Config._LAST_ACTIVE_MODEL:
+                _probe_freellmapi_async()
 
         return jsonify({
             'success': True,
             'status': {
                 'llm_provider': Config.LLM_PROVIDER,
                 'llm_model': Config.LLM_MODEL,
+                'active_model': Config.get_active_model(),
                 'has_api_key': has_api_key,
                 'ollama_reachable': ollama_reachable,
                 'gemini_configured': gemini_configured,
+                'freellmapi_configured': freellmapi_configured,
                 'providers_available': providers_available,
                 'save_plans': Config.SAVE_PLANS,
                 'save_raw_data': Config.SAVE_RAW_DATA,
@@ -432,17 +443,24 @@ if __name__ == '__main__':
             resp = requests.get(f"{Config.OLLAMA_BASE_URL}/api/tags", timeout=2)
             if resp.status_code == 200:
                 models = [m['name'] for m in resp.json().get('models', [])]
-                print(f"✓ Ollama is running — available models: {', '.join(models)}")
+                print(f"[OK] Ollama is running - available models: {', '.join(models)}")
             else:
-                print("⚠️  Ollama server responded but returned an error")
+                print("[WARN] Ollama server responded but returned an error")
         except Exception:
-            print("⚠️  Cannot connect to Ollama. Make sure 'ollama serve' is running")
+            print("[WARN] Cannot connect to Ollama. Make sure 'ollama serve' is running")
+    elif Config.LLM_PROVIDER == "freellmapi":
+        print(f"FreeLLMAPI URL: {Config.FREELLMAPI_BASE_URL}")
+        print(f"FreeLLMAPI Model: {Config.get_freellmapi_model()}")
+        if Config.FREELLMAPI_API_KEY:
+            print("[OK] FreeLLMAPI API key configured")
+        else:
+            print("[WARN] FREELLMAPI_API_KEY not set")
     else:
         try:
             Config.validate()
-            print("✓ Using real LLM API")
+            print("[OK] Using real LLM API")
         except ValueError:
-            print("⚠️  Using mock LLM responses (no API key configured)")
+            print("[WARN] Using mock LLM responses (no API key configured)")
     
     print("\nStarting server on http://localhost:5000")
     print("Press Ctrl+C to stop")
@@ -450,4 +468,5 @@ if __name__ == '__main__':
     print()
     
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
-    app.run(debug=debug_mode, host='127.0.0.1', port=5000)
+    host = os.getenv("HOST", "0.0.0.0")
+    app.run(debug=debug_mode, host=host, port=5000)

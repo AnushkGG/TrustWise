@@ -61,7 +61,8 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
         Dict with task results including status and raw data
     """
     task_id = task.get("task_id", "unknown")
-    prompt = task.get("prompt", "")
+    # Chunker stores the task text under 'description'; fall back to it when 'prompt' is absent
+    prompt = task.get("prompt") or task.get("description") or ""
 
     logger.info(f"[WebAgent] Processing task: {task_id}")
     logger.info(f"[WebAgent] Prompt: {prompt}")
@@ -453,6 +454,15 @@ def _load_trusted_sources() -> list:
 
 def _extract_search_terms(prompt: str) -> str:
     """Extract key search terms from the task prompt."""
+    if not prompt:
+        return ""
+
+    # Mock-plan prompts look like: "Find recent web sources ... related to: <QUERY>"
+    # Extract the subject after the colon for much better search accuracy.
+    colon_match = re.search(r"(?:related to|about|for|regarding|on):\s*(.+)", prompt, re.IGNORECASE)
+    if colon_match:
+        return colon_match.group(1).strip()
+
     stop_words = {
         "fetch", "retrieve", "find", "get", "search", "for", "about",
         "articles", "papers", "from", "top", "blogs", "websites",
@@ -460,6 +470,7 @@ def _extract_search_terms(prompt: str) -> str:
         "on", "at", "to", "a", "an", "reputable", "online", "sources",
         "that", "have", "been", "with", "their", "this", "these",
         "those", "such", "also", "other", "some", "many", "more",
+        "web", "news", "documentation", "related",
     }
     words = prompt.lower().split()
     terms = [w for w in words if w not in stop_words and (len(w) > 2 or w in {"ai", "ml"})]
@@ -467,7 +478,14 @@ def _extract_search_terms(prompt: str) -> str:
 
 
 def _extract_query_terms(prompt: str) -> List[str]:
-    words = re.findall(r"[a-zA-Z0-9]+", (prompt or "").lower())
+    if not prompt:
+        return []
+
+    # Mock-plan prompts: extract the real subject after the colon.
+    colon_match = re.search(r"(?:related to|about|for|regarding|on):\s*(.+)", prompt, re.IGNORECASE)
+    effective_prompt = colon_match.group(1).strip() if colon_match else prompt
+
+    words = re.findall(r"[a-zA-Z0-9]+", effective_prompt.lower())
     stop_words = {
         "fetch", "retrieve", "find", "get", "search", "for", "about", "articles", "papers",
         "from", "top", "blogs", "websites", "published", "recent", "latest", "the", "and",
@@ -562,6 +580,10 @@ def _is_relevant_content(content: str, query_terms: List[str], url: str) -> bool
 
 def _fetch_from_wikipedia(search_terms: str) -> str:
     """Fetch content from Wikipedia API."""
+    if not search_terms or not search_terms.strip():
+        logger.warning("[WebAgent] Skipping Wikipedia fetch — empty search terms")
+        return ""
+
     try:
         import requests
     except ImportError:

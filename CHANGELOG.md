@@ -8,19 +8,35 @@ where versioning applies.
 
 ## [Unreleased]
 
-### Changed
+## [0.3.0] - 2026-07-26
 
-- Documentation: added standard project files (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT), GitHub templates, and `docs/README.md` index.
+### Added
+- **Academic Retrieval Enhancements (Sprint 03)**:
+  - Replaced the PubMed placeholder summary API with PubMed EFetch XML querying, enabling full abstract, DOI, keywords, MeSH terms, journal, and author extraction.
+  - Upgraded the Scopus adapter to retrieve COMPLETE details (abstract, citation count, keywords, journal) with automatic authentication fallbacks.
+  - Added SQLite migration checks for `journal`, `citation_count`, and `keywords` columns.
+  - Expanded Trust scoring heuristics to evaluate academic metadata metrics.
+  - Enriched RAG generator summary context with rich authors/journal/citations metadata details.
+  - Added new unit test validations for XML parsing and credential fallback errors.
+
+## [0.2.0] - 2026-07-26
+
+### Added
+- **DAG Chunker & Scheduler Upgrades (Sprint 02)**:
+  - Designed task decomposition, overlap-ratio deduplication, and dependency checking.
+  - Implemented parallel chunk executor using ThreadPoolExecutor for concurrent web/paper queries.
+  - Integrated Flask, CLI, API bridge, and continuous updates.
+
+### Changed
+- LLM defaults changed to Gemini (`gemini-1.5-flash`).
+- Enabled CORS support on Flask backend API.
 
 ## [0.1.0] - 2026-03-31
 
 ### Added
-
 - Baseline TrustWise pipeline: orchestrator, agents, cleaner, trust, storage, insights, `api_bridge.py`, and TypeScript web server under `web/`.
 - Operational and verification documentation (`QUICKSTART`, `implementationtest`, deployment readiness notes, implementation phase pack).
 
 ---
 
 Earlier granular history is available in the Git commit log and in [implementation-phases/](implementation-phases/README.md) where applicable.
-
-When you publish releases, add compare URLs at the bottom of this file for `[Unreleased]` and each tag.

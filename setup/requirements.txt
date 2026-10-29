@@ -1,6 +1,7 @@
 # Python: use 3.10-3.12 or 3.11 (CI) for reliable wheels (e.g. lxml on Windows).
 # LLM Providers
 google-generativeai>=0.8.0
+openai>=1.0.0
 
 # Web Scraping
 requests>=2.31.0

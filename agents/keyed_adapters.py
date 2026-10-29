@@ -275,18 +275,37 @@ def fetch_scopus(query: str, limit: int) -> Tuple[List[Dict[str, Any]], Dict[str
         "normalized_count": 0,
         "provider": "scopus",
     }
+    
+    params = {
+        "query": f"TITLE-ABS-KEY({query})",
+        "count": min(limit, 25),
+        "apiKey": Config.SCOPUS_API_KEY,
+        "httpAccept": "application/json",
+        "view": "COMPLETE",
+    }
+    
     try:
-        data, http_meta = safe_request_json(
-            "GET",
-            "https://api.elsevier.com/content/search/scopus",
-            session=_SESSION,
-            params={
-                "query": f"TITLE-ABS-KEY({query})",
-                "count": min(limit, 25),
-                "apiKey": Config.SCOPUS_API_KEY,
-                "httpAccept": "application/json",
-            },
-        )
+        try:
+            data, http_meta = safe_request_json(
+                "GET",
+                "https://api.elsevier.com/content/search/scopus",
+                session=_SESSION,
+                params=params,
+            )
+        except KeyedAdapterError as e:
+            # Fall back to STANDARD view if COMPLETE view is blocked by api key permission tier
+            if e.http_status in (400, 401, 403):
+                logger.info("[Scopus] view=COMPLETE failed with status %s. Falling back to standard view...", e.http_status)
+                params.pop("view", None)
+                data, http_meta = safe_request_json(
+                    "GET",
+                    "https://api.elsevier.com/content/search/scopus",
+                    session=_SESSION,
+                    params=params,
+                )
+            else:
+                raise
+                
         meta.update({k: http_meta.get(k) for k in ("http_status", "retries_used", "ok") if k in http_meta})
         entries = (data.get("search-results") or {}).get("entry") or []
         if isinstance(entries, dict):
@@ -305,20 +324,47 @@ def fetch_scopus(query: str, limit: int) -> Tuple[List[Dict[str, Any]], Dict[str
                 authors = [creators] if creators else []
             date = (ent.get("prism:coverDate") or ent.get("prism:coverDisplayDate") or "")[:16]
             doi = (ent.get("prism:doi") or ent.get("article-number") or "") or ""
+            
+            # Extract abstract from complete details
+            abstract = (ent.get("dc:description") or ent.get("description") or "").strip()
+            
+            # Extract keywords (separated by '|' in Scopus output)
+            keywords_raw = ent.get("authkeywords") or ""
+            keywords = []
+            if isinstance(keywords_raw, str):
+                keywords = [k.strip() for k in keywords_raw.split("|") if k.strip()]
+                
+            # Extract citations count
+            citation_count = 0
+            citedby = ent.get("citedby-count")
+            if citedby is not None:
+                try:
+                    citation_count = int(citedby)
+                except (ValueError, TypeError):
+                    pass
+            
             landing = ""
             for link in ent.get("link") or []:
                 if isinstance(link, dict) and link.get("@href"):
                     landing = link["@href"]
                     break
+            
+            extra = {
+                "journal": ent.get("prism:publicationName") or "",
+                "citation_count": citation_count,
+                "keywords": keywords,
+            }
+            
             rows.append(
                 _paper(
                     title=title or "Scopus result",
                     source="Scopus",
                     url=landing,
-                    abstract="",
+                    abstract=abstract,
                     authors=authors,
                     published=date,
                     doi=str(doi) if doi else "",
+                    extra=extra,
                 )
             )
             if len(rows) >= limit:

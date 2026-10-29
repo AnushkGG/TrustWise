@@ -42,7 +42,7 @@ _logger_mod.setup_logger = _patched_setup_logger
 
 from orchestrator.orchestrator import generate_plan
 from chunker.chunker import chunk_tasks
-from scheduler.scheduler import schedule
+from scheduler.scheduler import schedule, execute_chunks
 from agents import web_agent, research_agent
 from agents.citation_scraper import scrape_citations
 from cleaner import normalize_results
@@ -189,42 +189,9 @@ def handle_submit(payload: dict) -> dict:
                 },
             }
 
-    # Step 2-4: Chunk, Schedule, Execute
-    tasks = chunk_tasks(plan)
-    web_tasks, paper_tasks = schedule(tasks)
-
-    results = []
-    for task in web_tasks:
-        try:
-            result = execute_with_retry(
-                web_agent.run,
-                task,
-                max_retries=2,
-                base_delay=1.0,
-                retryable_exceptions=(ConnectionError, TimeoutError, OSError),
-            )
-            results.append(result)
-        except Exception as e:
-            logger.error(f"Web task {task.get('task_id')} failed: {e}")
-            results.append(
-                {"task_id": task.get("task_id"), "status": "failed", "error": str(e)}
-            )
-
-    for task in paper_tasks:
-        try:
-            result = execute_with_retry(
-                research_agent.run,
-                task,
-                max_retries=2,
-                base_delay=1.0,
-                retryable_exceptions=(ConnectionError, TimeoutError, OSError),
-            )
-            results.append(result)
-        except Exception as e:
-            logger.error(f"Research task {task.get('task_id')} failed: {e}")
-            results.append(
-                {"task_id": task.get("task_id"), "status": "failed", "error": str(e)}
-            )
+    # Step 2-4: Chunk, Schedule, Execute Concurrently
+    chunks = chunk_tasks(plan)
+    results = execute_chunks(chunks)
 
     # Step 4.5: Scrape trusted citation sources for multi-source data
     citation_result = {"scraped_items": [], "source_links": [], "sources_used": 0}
@@ -293,8 +260,8 @@ def handle_submit(payload: dict) -> dict:
             "total_tasks": len(plan.get("tasks", [])),
         },
         "execution": {
-            "web_tasks": len(web_tasks),
-            "paper_tasks": len(paper_tasks),
+            "web_tasks": sum(1 for t in plan.get("tasks", []) if t.get("type") == "web"),
+            "paper_tasks": sum(1 for t in plan.get("tasks", []) if t.get("type") == "paper"),
             "total_results": len(results),
             "successful": sum(1 for r in results if r.get("status") == "success"),
             "structured_items": len(structured_data),
@@ -327,6 +294,7 @@ def handle_status(_payload: dict) -> dict:
     """Return system status."""
     ollama_reachable = False
     gemini_configured = bool(Config.GEMINI_API_KEY)
+    freellmapi_configured = bool(Config.FREELLMAPI_API_KEY)
 
     try:
         import requests
@@ -341,6 +309,8 @@ def handle_status(_payload: dict) -> dict:
         has_api_key = gemini_configured
     elif Config.LLM_PROVIDER == "ollama":
         has_api_key = ollama_reachable
+    elif Config.LLM_PROVIDER == "freellmapi":
+        has_api_key = freellmapi_configured
     else:
         has_api_key = False
 
@@ -349,6 +319,8 @@ def handle_status(_payload: dict) -> dict:
         providers_available.append("gemini")
     if ollama_reachable:
         providers_available.append("ollama")
+    if freellmapi_configured:
+        providers_available.append("freellmapi")
 
     return {
         "success": True,
@@ -358,6 +330,7 @@ def handle_status(_payload: dict) -> dict:
             "has_api_key": has_api_key,
             "ollama_reachable": ollama_reachable,
             "gemini_configured": gemini_configured,
+            "freellmapi_configured": freellmapi_configured,
             "providers_available": providers_available,
             "save_plans": Config.SAVE_PLANS,
             "save_raw_data": Config.SAVE_RAW_DATA,

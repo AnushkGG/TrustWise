@@ -1,0 +1,252 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustWise | The Editorial of Research</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <style>
+        @import url('https://api.fontshare.com/v2/css?f[]=gambetta@400,500,600,700&f[]=satoshi@300,400,500,700&f[]=tabular@400&display=swap');
+
+        :root {
+            --paper-dark: #0c0c0c;
+            --accent-warm: #d4d4d8;
+            --accent-gold: #c5a059;
+        }
+
+        .font-serif { font-family: 'Gambetta', serif; }
+        .font-sans { font-family: 'Satoshi', sans-serif; }
+        .font-mono { font-family: 'Tabular', monospace; }
+
+        .editorial-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2rem;
+        }
+
+        .tracking-editorial { letter-spacing: -0.04em; }
+        
+        .grain {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .input-underline {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(212, 212, 216, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-underline:focus {
+            border-bottom-color: var(--accent-gold);
+            outline: none;
+        }
+
+        .asymmetric-card {
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .asymmetric-card:hover {
+            transform: translateY(-8px);
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen bg-[#0c0c0c] text-[#d4d4d8] font-sans selection:bg-[#c5a059] selection:text-black">
+        <div class="grain"></div>
+        
+        <!-- Header: Minimal Editorial -->
+        <header class="relative z-40 flex justify-between items-center px-8 py-10 max-w-[1440px] mx-auto">
+            <div class="flex items-center gap-10">
+                <a href="#" id="nav-logo-link" class="flex items-center gap-2 group">
+                    <div class="w-8 h-8 border border-zinc-700 flex items-center justify-center rotate-45 group-hover:rotate-0 transition-transform duration-500">
+                        <iconify-icon icon="lucide:shield" class="-rotate-45 group-hover:rotate-0 transition-transform text-zinc-400 group-hover:text-amber-500"></iconify-icon>
+                    </div>
+                    <span class="font-serif text-2xl tracking-tighter">TrustWise</span>
+                </a>
+                <nav class="hidden lg:flex items-center gap-8 text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+                    <a href="#" id="nav-journal-link" class="hover:text-zinc-100 transition-colors">Journal</a>
+                    <a href="#" id="nav-archive-link" class="hover:text-zinc-100 transition-colors">Archive</a>
+                    <a href="#" id="nav-protocol-link" class="hover:text-zinc-100 transition-colors">Protocol</a>
+                </nav>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2 px-4 py-1.5 border border-zinc-800 rounded-full">
+                    <span class="relative flex h-1.5 w-1.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                    </span>
+                    <span class="text-[10px] font-mono tracking-wider opacity-60 uppercase">Ollama Remote Active</span>
+                </div>
+                <button class="text-xs font-bold uppercase tracking-widest px-6 py-2 border border-zinc-700 hover:bg-zinc-100 hover:text-black transition-all duration-300">Sign In</button>
+            </div>
+        </header>
+
+        <!-- Hero: Asymmetric Typography -->
+        <main class="relative z-10 max-w-[1440px] mx-auto px-8 py-20">
+            <div class="editorial-grid items-end">
+                <div class="col-span-12 lg:col-span-8">
+                    <div class="inline-flex items-center gap-3 mb-10 opacity-60">
+                        <span class="h-[1px] w-12 bg-zinc-700"></span>
+                        <span class="text-[11px] font-mono uppercase tracking-[0.3em]">Protocol v1.0 / Auditable Intelligence Registry</span>
+                    </div>
+                    <h1 class="font-serif text-7xl md:text-8xl lg:text-[140px] leading-[0.85] tracking-editorial mb-12">
+                        Research <br/>
+                        <span class="italic font-light opacity-80">with</span> confidence.
+                    </h1>
+                </div>
+                <div class="col-span-12 lg:col-span-4 pb-4">
+                    <div class="border-l border-zinc-800 pl-8 mb-12">
+                        <p class="text-lg lg:text-xl text-zinc-400 font-light leading-relaxed max-w-sm mb-4">
+                            Synthesize across disparate sources with 99.2% provenance accuracy. Every result is auditable by design.
+                        </p>
+                        <div class="flex gap-6 font-mono text-[9px] uppercase tracking-wider text-amber-500/80">
+                            <span>[ Trust Index: 0.98 ]</span>
+                            <span>[ Citations: 4.2k ]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search: Integrated UI -->
+            <div class="mt-24 border-t border-zinc-900 pt-16">
+                <div class="max-w-4xl">
+                    <div class="group relative">
+                        <iconify-icon icon="lucide:search" class="absolute left-0 top-1/2 -translate-y-1/2 text-3xl text-zinc-600 group-focus-within:text-amber-500 transition-colors"></iconify-icon>
+                        <input 
+                            type="text" 
+                            placeholder="INITIATE_BRIEFING: Define research objective for evidence collection..."
+                            class="w-full pl-12 pr-40 py-6 text-2xl lg:text-3xl font-serif bg-transparent border-b border-zinc-800 focus:border-amber-500 focus:outline-none placeholder:text-zinc-800 transition-all"
+                        >
+                        <button id="cta-run-btn" class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-amber-500 hover:text-white transition-colors">
+                            Begin Audit
+                            <iconify-icon icon="lucide:shield-check" class="text-2xl"></iconify-icon>
+                        </button>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-x-8 gap-y-4 mt-10">
+                        <span class="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Hot Subjects:</span>
+                        <a href="#" id="tag-link-1" class="text-xs font-medium hover:text-amber-500 transition-colors border-b border-transparent hover:border-amber-500/30">Quantum Mesh Networks</a>
+                        <a href="#" id="tag-link-2" class="text-xs font-medium hover:text-amber-500 transition-colors border-b border-transparent hover:border-amber-500/30">Bio-Synthetic Ethics</a>
+                        <a href="#" id="tag-link-3" class="text-xs font-medium hover:text-amber-500 transition-colors border-b border-transparent hover:border-amber-500/30">Transformer Scaling</a>
+                        <a href="#" id="tag-link-4" class="text-xs font-medium hover:text-amber-500 transition-colors border-b border-transparent hover:border-amber-500/30">Zero-Knowledge RAG</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Featured Section: Asymmetric Cards -->
+        <section class="bg-[#090909] py-32 border-t border-zinc-900 overflow-hidden">
+            <div class="max-w-[1440px] mx-auto px-8">
+                <div class="flex justify-between items-end mb-20">
+                    <h2 class="font-serif text-5xl lg:text-6xl tracking-tight">Evidence <span class="italic font-light">Registry</span></h2>
+                    <a href="#" id="view-all-link" class="text-xs font-bold uppercase tracking-widest border-b border-zinc-700 pb-1">View Collection</a>
+                </div>
+
+                <div class="editorial-grid">
+                    <!-- Card 1: Large Image Focus -->
+                    <div class="col-span-12 lg:col-span-7">
+                        <div class="asymmetric-card">
+                            <div class="aspect-[16/9] bg-zinc-900 relative mb-8 overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10 opacity-60"></div>
+                                <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200" alt="Neural Patterns" class="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700">
+                                <div class="absolute bottom-8 left-8 z-20">
+                                    <div class="flex gap-2 mb-3">
+                                        <span class="text-[10px] font-mono uppercase tracking-[0.2em] bg-amber-500 text-black px-2 py-1 inline-block">Validated</span>
+                                        <span class="text-[10px] font-mono uppercase tracking-[0.2em] border border-white/20 text-white px-2 py-1 inline-block">94% Trust</span>
+                                    </div>
+                                    <h3 class="text-3xl font-serif tracking-tight text-white">Neural Architecture Topology</h3>
+                                </div>
+                            </div>
+                            <p class="text-zinc-500 text-sm leading-relaxed max-w-lg mb-4">
+                                A comprehensive study on the spatial complexity of high-dimensional attention mechanisms in late-stage LLMs.
+                            </p>
+                            <div class="font-mono text-[9px] text-zinc-600 uppercase tracking-widest">
+                                Provenance: 42 Academic Papers / 12 Web Nodes / 0 Hallucinations Detected
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column for smaller stacked items -->
+                    <div class="col-span-12 lg:col-span-5 flex flex-col gap-12 pt-12 lg:pt-0">
+                        <div class="border-l border-zinc-800 pl-8">
+                            <span class="text-[10px] font-mono text-zinc-600 mb-2 block uppercase">02 Oct ΓÇö 2024</span>
+                            <h4 class="text-xl font-serif mb-1 hover:text-amber-500 cursor-pointer transition-colors">Ethical Constraint Mapping in Healthcare AI</h4>
+                            <span class="text-[9px] font-mono text-amber-500 uppercase tracking-tighter block mb-3">Trust Score: 98.2% // High Confidence</span>
+                            <div class="flex gap-4">
+                                <span class="text-[10px] py-1 px-2 border border-zinc-800 rounded uppercase">Auditable</span>
+                                <span class="text-[10px] py-1 px-2 border border-zinc-800 rounded uppercase">Multi-Source</span>
+                            </div>
+                        </div>
+
+                        <div class="border-l border-zinc-800 pl-8 opacity-60 hover:opacity-100 transition-opacity">
+                            <span class="text-[10px] font-mono text-zinc-600 mb-2 block uppercase">29 Sep ΓÇö 2024</span>
+                            <h4 class="text-xl font-serif mb-1 hover:text-amber-500 cursor-pointer transition-colors">The Genesis of Synthetic Consciousness Policies</h4>
+                            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-tighter block mb-3">Processing: Stage 4/5 (Summarization)</span>
+                            <p class="text-xs text-zinc-600 line-clamp-2 mb-4">Analyzing legislative responses to emergent properties in large-scale cognitive clusters.</p>
+                            <a href="#" id="read-more-link-1" class="text-[10px] uppercase font-bold tracking-widest">Read Archive</a>
+                        </div>
+
+                        <div class="border-l border-zinc-800 pl-8">
+                            <span class="text-[10px] font-mono text-zinc-600 mb-2 block uppercase">15 Sep ΓÇö 2024</span>
+                            <h4 class="text-xl font-serif mb-4 hover:text-amber-500 cursor-pointer transition-colors">Real-time Pipeline Efficiency in Sub-arctic Data Centers</h4>
+                            <a href="#" id="read-more-link-2" class="text-[10px] uppercase font-bold tracking-widest">Read Archive</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer: Fine Print -->
+        <footer class="py-20 max-w-[1440px] mx-auto px-8 border-t border-zinc-900">
+            <div class="flex flex-col lg:flex-row justify-between items-start gap-12">
+                <div class="max-w-xs">
+                    <span class="font-serif text-2xl tracking-tighter block mb-6">TrustWise</span>
+                    <p class="text-xs text-zinc-600 leading-relaxed uppercase tracking-wider">
+                        Building the definitive ledger for artificial intelligence research and auditable discovery.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-20">
+                    <div>
+                        <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-8 block">Network</span>
+                        <ul class="flex flex-col gap-4 text-xs font-medium">
+                            <li><a href="#" id="f-link-1" class="hover:text-amber-500">Directory</a></li>
+                            <li><a href="#" id="f-link-2" class="hover:text-amber-500">Whitepaper</a></li>
+                            <li><a href="#" id="f-link-3" class="hover:text-amber-500">API Nodes</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-8 block">Legal</span>
+                        <ul class="flex flex-col gap-4 text-xs font-medium">
+                            <li><a href="#" id="f-link-4" class="hover:text-amber-500">Privacy</a></li>
+                            <li><a href="#" id="f-link-5" class="hover:text-amber-500">Terms</a></li>
+                            <li><a href="#" id="f-link-6" class="hover:text-amber-500">Compliance</a></li>
+                        </ul>
+                    </div>
+                    <div class="hidden md:block">
+                        <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-8 block">Social</span>
+                        <ul class="flex flex-col gap-4 text-xs font-medium">
+                            <li><a href="#" id="f-link-7" class="hover:text-amber-500">Substack</a></li>
+                            <li><a href="#" id="f-link-8" class="hover:text-amber-500">Twitter</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-32 pt-12 border-t border-zinc-900 flex justify-between items-center text-[10px] font-mono text-zinc-700 tracking-[0.2em] uppercase">
+                <span>┬⌐ 2024 TrustWise Protocols</span>
+                <span>Evidence-First Protocol // Integrity Secured</span>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

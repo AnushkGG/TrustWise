@@ -2,7 +2,7 @@ import json
 from dotenv import load_dotenv
 from orchestrator.orchestrator import generate_plan
 from chunker.chunker import chunk_tasks
-from scheduler.scheduler import schedule
+from scheduler.scheduler import schedule, execute_chunks
 from agents import web_agent, research_agent
 from cleaner import normalize_results
 from trust import validate_structured_data
@@ -87,49 +87,16 @@ def main():
         
         # Step 2: Chunk Tasks
         logger.info("Chunking tasks...")
-        tasks = chunk_tasks(plan)
+        chunks = chunk_tasks(plan)
         
-        # Step 3: Schedule Tasks
-        logger.info("Scheduling tasks to agents...")
-        web_tasks, paper_tasks = schedule(tasks)
-
-        print(f"📊 Scheduled {len(web_tasks)} web tasks and {len(paper_tasks)} research tasks")
+        # Step 3 & 4: Schedule and Execute Chunks Concurrently
+        logger.info("Scheduling and executing chunks concurrently...")
+        print("⚡ Executing Chunks in Parallel...")
+        results = execute_chunks(chunks)
+        for r in results:
+            status_icon = "✓" if r.get("status") == "success" else "✗"
+            print(f"   {status_icon} {r.get('task_id')}: {r.get('status')}")
         print()
-
-        # Step 4: Execute Tasks
-        results = []
-        
-        if web_tasks:
-            print("🌐 Executing Web Tasks...")
-            for task in web_tasks:
-                try:
-                    result = execute_with_retry(
-                        web_agent.run, task,
-                        max_retries=2, base_delay=1.0,
-                        retryable_exceptions=(ConnectionError, TimeoutError, OSError),
-                    )
-                    results.append(result)
-                    print(f"   ✓ {task['task_id']}: {result['status']}")
-                except Exception as e:
-                    logger.error(f"Web task {task.get('task_id')} failed: {e}")
-                    print(f"   ✗ {task['task_id']}: failed - {e}")
-            print()
-
-        if paper_tasks:
-            print("📚 Executing Research Tasks...")
-            for task in paper_tasks:
-                try:
-                    result = execute_with_retry(
-                        research_agent.run, task,
-                        max_retries=2, base_delay=1.0,
-                        retryable_exceptions=(ConnectionError, TimeoutError, OSError),
-                    )
-                    results.append(result)
-                    print(f"   ✓ {task['task_id']}: {result['status']}")
-                except Exception as e:
-                    logger.error(f"Research task {task.get('task_id')} failed: {e}")
-                    print(f"   ✗ {task['task_id']}: failed - {e}")
-            print()
 
         # Step 5: Clean and structure outputs (Phase 2)
         print("🧹 Structuring collected data...")

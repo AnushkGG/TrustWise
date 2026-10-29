@@ -23,7 +23,8 @@ def run(task: Dict[str, Any]) -> Dict[str, Any]:
         Dictionary with task results including status and paper data
     """
     task_id = task.get("task_id", "unknown")
-    prompt = task.get("prompt", "")
+    # Chunker stores the task text under 'description'; fall back to it when 'prompt' is absent
+    prompt = task.get("prompt") or task.get("description") or ""
     
     logger.info(f"[ResearchAgent] Processing task: {task_id}")
     logger.info(f"[ResearchAgent] Prompt: {prompt}")
@@ -74,28 +75,35 @@ def _extract_search_query(prompt: str) -> str:
     """
     Extract search keywords from task prompt.
 
-    Uses deterministic keyword filtering without any LLM dependency.
-    
-    Args:
-        prompt: Task prompt
-        
-    Returns:
-        Search query string
+    Handles two cases:
+    1. Mock-plan prompts: "Search academic papers and preprints related to: <QUERY>"
+       → extracts everything after the colon as the actual query.
+    2. Free-form LLM-generated prompts: uses keyword filtering on the full text.
     """
-    # Remove common instruction words and generic research descriptors
-    stop_words = {
-        'search', 'find', 'papers', 'on', 'about', 'for', 'the', 'a', 'an', 
+    if not prompt:
+        return ""
+
+    # Case 1: Extract the subject after an explicit colon delimiter.
+    # Handles patterns like "...related to: X", "...about: X", "...for: X"
+    colon_match = re.search(r"(?:related to|about|for|regarding|on):\s*(.+)", prompt, re.IGNORECASE)
+    if colon_match:
+        subject = colon_match.group(1).strip()
+        logger.info(f"[ResearchAgent] Extracted subject from prompt: {subject}")
+        return subject
+
+    # Case 2: Keyword filtering on free-form prompts.
+    instruction_stop = {
+        'search', 'find', 'papers', 'on', 'about', 'for', 'the', 'a', 'an',
         'in', 'of', 'and', 'to', 'with', 'from', 'at', 'retrieve', 'research',
-        'published', 'recent', 'past', 'year', 'focusing', 'peer-reviewed',
-        'journals', 'articles', 'extract', 'get', 'fetch', 'latest', 'advancements',
-        'trends', 'implications', 'impact', 'perspective', 'review', 'analysis'
+        'published', 'recent', 'past', 'year', 'focusing', 'peer',
+        'journals', 'articles', 'extract', 'get', 'fetch', 'latest',
+        'implications', 'perspective', 'review', 'web', 'sources', 'news',
+        'documentation', 'related', 'academic', 'preprints', 'scholarly',
     }
-    
     words = re.findall(r"[a-z0-9]+", prompt.lower())
-    keywords = [w for w in words if w not in stop_words and len(w) > 2]
-    
-    # Return joined keywords (limit to top 3 for precision).
-    query = ' '.join(keywords[:3])  
+    keywords = [w for w in words if w not in instruction_stop and len(w) > 2]
+    # Increased from 3 → 6 to preserve multi-word topic context.
+    query = ' '.join(keywords[:6])
     logger.info(f"[ResearchAgent] Filtered keywords: {query}")
     return query
 

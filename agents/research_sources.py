@@ -224,9 +224,106 @@ def fetch_crossref(query: str, limit: int) -> List[Dict[str, Any]]:
     return out
 
 
+def _parse_pubmed_efetch_xml(xml_text: str) -> List[Dict[str, Any]]:
+    import xml.etree.ElementTree as ET
+    try:
+        root = ET.fromstring(xml_text)
+    except Exception as e:
+        logger.warning("[PubMed] Failed to parse XML: %s", e)
+        return []
+        
+    papers = []
+    for article in root.findall(".//PubmedArticle"):
+        pmid = ""
+        pmid_el = article.find(".//MedlineCitation/PMID")
+        if pmid_el is not None:
+            pmid = (pmid_el.text or "").strip()
+            
+        title = ""
+        title_el = article.find(".//ArticleTitle")
+        if title_el is not None:
+            title = "".join(title_el.itertext()).strip()
+            
+        abstract_parts = []
+        for abs_el in article.findall(".//AbstractText"):
+            label = abs_el.get("Label")
+            text = "".join(abs_el.itertext()).strip()
+            if text:
+                if label:
+                    abstract_parts.append(f"{label}: {text}")
+                else:
+                    abstract_parts.append(text)
+        abstract = "\n".join(abstract_parts)
+        
+        authors = []
+        for auth_el in article.findall(".//AuthorList/Author"):
+            last = auth_el.find("LastName")
+            fore = auth_el.find("ForeName")
+            initials = auth_el.find("Initials")
+            last_text = last.text if last is not None else ""
+            fore_text = fore.text if fore is not None else (initials.text if initials is not None else "")
+            name = f"{fore_text} {last_text}".strip()
+            if name:
+                authors.append(name)
+                
+        journal = ""
+        journal_el = article.find(".//Journal/Title")
+        if journal_el is not None:
+            journal = (journal_el.text or "").strip()
+            
+        year = ""
+        year_el = article.find(".//JournalIssue/PubDate/Year")
+        if year_el is not None:
+            year = (year_el.text or "").strip()
+        else:
+            medline_el = article.find(".//JournalIssue/PubDate/MedlineDate")
+            if medline_el is not None and medline_el.text:
+                m = re.search(r"\b(19|20)\d{2}\b", medline_el.text)
+                if m:
+                    year = m.group(0)
+                    
+        doi = ""
+        for aid_el in article.findall(".//PubmedData/ArticleIdList/ArticleId"):
+            if aid_el.get("IdType") == "doi":
+                doi = (aid_el.text or "").strip()
+                break
+                
+        keywords = []
+        for kw_el in article.findall(".//KeywordList/Keyword"):
+            text = "".join(kw_el.itertext()).strip()
+            if text:
+                keywords.append(text)
+                
+        mesh = []
+        for mesh_el in article.findall(".//MeshHeadingList/MeshHeading/DescriptorName"):
+            text = (mesh_el.text or "").strip()
+            if text:
+                mesh.append(text)
+                
+        landing = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else ""
+        
+        papers.append({
+            "title": title,
+            "authors": authors,
+            "abstract": abstract,
+            "published": year,
+            "pdf_url": landing,
+            "url": landing,
+            "categories": keywords + mesh,
+            "source": "PubMed",
+            "doi": doi,
+            "pubmed_id": pmid,
+            "journal": journal,
+            "keywords": keywords,
+            "mesh_terms": mesh
+        })
+    return papers
+
+
 def fetch_pubmed(query: str, limit: int) -> List[Dict[str, Any]]:
     if limit <= 0 or not query.strip():
         return []
+        
     # 1) ESearch to retrieve PMIDs.
     search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     search_params = {"db": "pubmed", "retmode": "json", "retmax": min(limit, 20), "term": query}
@@ -240,55 +337,19 @@ def fetch_pubmed(query: str, limit: int) -> List[Dict[str, Any]]:
     if not ids:
         return []
 
-    # 2) ESummary for metadata.
-    summary_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
-    summary_params = {"db": "pubmed", "retmode": "json", "id": ",".join(ids)}
+    # 2) EFetch for detailed XML metadata (including abstract)
+    fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+    fetch_params = {"db": "pubmed", "retmode": "xml", "id": ",".join(ids)}
     try:
-        r = _SESSION.get(summary_url, params=summary_params, timeout=_TIMEOUT)
+        r = _SESSION.get(fetch_url, params=fetch_params, timeout=_TIMEOUT)
         r.raise_for_status()
-        data = r.json()
+        xml_content = r.text
     except Exception as e:
-        logger.warning("[PubMed] esummary failed: %s", e)
+        logger.warning("[PubMed] efetch failed: %s", e)
         return []
-
-    out: List[Dict[str, Any]] = []
-    result = data.get("result") or {}
-    for pmid in ids:
-        item = result.get(str(pmid)) or {}
-        title = (item.get("title") or "").strip()
-        if not title:
-            continue
-        authors = []
-        for a in item.get("authors") or []:
-            if isinstance(a, dict) and a.get("name"):
-                authors.append(a["name"])
-        pubdate = (item.get("pubdate") or "").strip()
-        year = pubdate[:4] if pubdate else ""
-        article_ids = item.get("articleids") or []
-        doi = ""
-        for aid in article_ids:
-            if isinstance(aid, dict) and (aid.get("idtype") or "").lower() == "doi":
-                doi = aid.get("value") or ""
-                break
-        landing = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
-        out.append(
-            {
-                "title": title,
-                "authors": authors,
-                "abstract": "",
-                "published": year,
-                "arxiv_id": "",
-                "pdf_url": landing,
-                "url": landing,
-                "categories": [],
-                "source": "PubMed",
-                "doi": doi,
-                "pubmed_id": str(pmid),
-            }
-        )
-        if len(out) >= limit:
-            break
-    return out
+        
+    papers = _parse_pubmed_efetch_xml(xml_content)
+    return papers[:limit]
 
 
 def _norm_title(t: str) -> str:
